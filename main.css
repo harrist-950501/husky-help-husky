@@ -1,0 +1,111 @@
+aside {
+  flex: 0 0 240px;
+  background: #F4F1FA;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  border-right: 1.5px solid #E0DAF3;
+}
+
+aside header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+aside h1 {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.2em;
+  color: #7E6FCF;
+  margin: 0;
+}
+
+aside ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+aside li {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+aside li:hover {
+  background-color: #E8E3F5;
+}
+
+aside footer button {
+  background: linear-gradient(90deg, #A39BD8, #C8BFE7);
+  border: none;
+  padding: 8px 14px;
+  color: white;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* ===== Right Content ===== */
+#content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 30px;
+}
+
+/* ===== Top Bar ===== */
+#content header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+#search-bar {
+  width: 60%;
+  padding: 10px 15px;
+  border: 1.5px solid #D9D4EF;
+  border-radius: 10px;
+  font-size: 0.95em;
+  outline: none;
+}
+
+#search-bar:focus {
+  border-color: #A39BD8;
+}
+
+#profile-pic {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #A39BD8;
+}
+
+/* ===== Item Grid ===== */
+#item-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.item {
+  background: #F9F8FF;
+  border: 1.5px solid #E0DAF3;
+  border-radius: 15px;
+  padding: 40px 0;
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  color: #6D61B5;
+  transition: 0.25s;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: #ECE7FA;
+  transform: translateY(-2px);
+}
