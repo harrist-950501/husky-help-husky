@@ -79,9 +79,10 @@
   function renderItems(items) {
     const grid = document.getElementById("item-grid");
     if (!grid) {
-      /* If the expected container is missing, nothing to render.
-      Keep the behavior silent for the UI but log to aid debugging.
-      */
+      /*
+       * If the expected container is missing, nothing to render.
+       * Keep the behavior silent for the UI but log to aid debugging.
+       */
       console.log("renderItems: #item-grid not found");
       return;
     }
@@ -159,7 +160,9 @@
     return function() {
       clearTimeout(timer);
       const args = arguments;
-      timer = setTimeout(function() {fn.apply(null, args);}, ms || MSECOND * 2);
+      timer = setTimeout(function() {
+        fn.apply(null, args);
+      }, ms || MSECOND * 2);
     };
   }
 })();
