@@ -6,6 +6,7 @@
  * - #layout-toggle (optional)
  * - #item-grid
  */
+
 "use strict";
 
 (function() {

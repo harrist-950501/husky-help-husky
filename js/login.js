@@ -3,6 +3,7 @@
  * - If username and password are non-empty -> go to main.html
  * - Else show .error
  */
+
 "use strict";
 
 (function() {

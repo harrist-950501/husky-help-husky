@@ -2,6 +2,7 @@
  * Toggle theme live without saving preference.
  * - Button with id="theme-toggle" toggles data-theme="dark" on <html>.
  */
+
 "use strict";
 
 (function() {
