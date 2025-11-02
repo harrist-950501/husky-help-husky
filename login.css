@@ -1,10 +1,15 @@
+h1 span {
+  font-weight: bolder;
+}
+
 #welcome-area {
   flex: 2;
-  background-image: linear-gradient(
-    rgba(255, 255, 255, 0.35),
-    rgba(255, 255, 255, 0.35)
-  ),
-  url("img/uw_fountain.jpg");
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.35),
+      rgba(255, 255, 255, 0.35)
+    ),
+    url("img/uw_fountain.jpg");
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -29,7 +34,6 @@
   flex-direction: column;
   padding: 5%;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
   max-width: 320px;
@@ -39,7 +43,7 @@
   color: #A39BD8;
 }
 
-#login-area form{
+#login-area form {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,11 +68,6 @@
   padding: 6px 0;
   align-self: center;
   background: linear-gradient(90deg, #A39BD8, #C8BFE7);
-  border: none;
-  border-radius: 999px;
-  color: #fff;
-  font-weight: 500;
-  cursor: pointer;
 }
 
 #login-area button:hover {

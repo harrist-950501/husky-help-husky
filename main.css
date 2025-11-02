@@ -1,11 +1,12 @@
+/* ===== Left Navigation ===== */
 aside {
-  flex: 0 0 240px;
+  flex-basis: 240px;
   background: #F4F1FA;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 20px;
-  border-right: 1.5px solid #E0DAF3;
+  border-right: 2px solid #E0DAF3;
 }
 
 aside header {
@@ -16,7 +17,7 @@ aside header {
 
 aside h1 {
   font-family: "Poppins", sans-serif;
-  font-size: 1.2em;
+  font-size: 1.5em;
   color: #7E6FCF;
   margin: 0;
 }
@@ -24,7 +25,6 @@ aside h1 {
 aside ul {
   list-style: none;
   padding: 0;
-  margin-top: 20px;
 }
 
 aside li {
@@ -32,20 +32,13 @@ aside li {
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s;
+  transition-property: transform, background-color;
+  transition-duration: 0s, 0.3s;
 }
 
 aside li:hover {
   background-color: #E8E3F5;
-}
-
-aside footer button {
-  background: linear-gradient(90deg, #A39BD8, #C8BFE7);
-  border: none;
-  padding: 8px 14px;
-  color: white;
-  border-radius: 999px;
-  cursor: pointer;
+  transform: scale(1.1);
 }
 
 /* ===== Right Content ===== */
@@ -72,15 +65,16 @@ aside footer button {
   border-radius: 10px;
   font-size: 0.95em;
   outline: none;
+  transition: 0.3s;
 }
 
 #search-bar:focus {
   border-color: #A39BD8;
+  box-shadow: 0 0 8px rgba(163, 155, 216, 0.3);
 }
 
 #profile-pic {
   width: 50px;
-  height: 50px;
   border-radius: 50%;
   border: 2px solid #A39BD8;
 }
@@ -88,7 +82,7 @@ aside footer button {
 /* ===== Item Grid ===== */
 #item-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
@@ -101,11 +95,12 @@ aside footer button {
   font-family: "Poppins", sans-serif;
   font-weight: 500;
   color: #6D61B5;
-  transition: 0.25s;
+  transition-duration: 0.25s;
   cursor: pointer;
 }
 
 .item:hover {
   background: #ECE7FA;
   transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(163, 155, 216, 0.25);
 }

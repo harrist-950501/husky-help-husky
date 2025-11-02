@@ -2,7 +2,6 @@ html, body {
   height: 100%;
 }
 
-
 body {
   margin: 0;
   background: radial-gradient(circle at top left, #DAD3EE 0%, #C8BFE7 60%, #F4F1FA 100%);
@@ -16,7 +15,7 @@ body {
   font-size: 12px;
 }
 
-h1, h2{
+h1, h2 {
   font-family: "Poppins", sans-serif;
   font-style: normal;
   font-weight: 600;
@@ -26,10 +25,44 @@ main {
   width: 90%;
   height: 80%;
   background: #fff;
-  border: 5px solid #A39BD8 ;
+  border: 5px solid #A39BD8;
   border-radius: 30px;
   display: flex;
   justify-content: space-around;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(163,155,216,0.2);
+}
+
+button {
+  background: linear-gradient(90deg, #A39BD8, #C8BFE7);
+  border: none;
+  color: white;
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.hidden {
+  display: none;
+}
+
+.error {
+  background-color: #fdecea;       /* 淡紅背景 */
+  color: #b71c1c;                  /* 深紅文字 */
+  border: 1.5px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin: 10px 0;
+  font-size: 1.2em;
+}
+
+.error p {
+  margin: 0;
 }

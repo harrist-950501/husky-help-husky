@@ -1,0 +1,72 @@
+body {
+  flex-direction: column;
+}
+
+main {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 30px;
+}
+
+
+/* ===== Header ===== */
+header {
+  display: flex;
+  width: 90%;
+  padding: 20px 0;
+  position: relative;
+}
+
+#profile-pic {
+  margin-left: auto;
+  margin-right: auto;
+  width: 180px;
+  padding: 5px;
+  border-radius: 50%;
+  border: 5px solid #A39BD8;
+  object-fit: cover;
+}
+
+#back {
+  position: absolute;
+}
+
+/* ===== Basic information ===== */
+#basic-information {
+  width: 90%;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 30px;
+}
+
+#basic-information h2, #basic-information address {
+  width: 40%;
+  background-color: #fff;
+  border: 2px solid #C8BFE7;
+  border-radius: 999px;
+  color: #4b3f80;
+}
+
+#basic-information h2 {
+  font-size: 1.4em;
+  margin: 0;
+  padding: 4px 8px;
+}
+
+#basic-information address {
+  font-size: 1.1em;
+  padding: 6px 8px;
+}
+
+/* ===== Other information ===== */
+#other-information {
+  width: 90%;
+  background: #F9F8FF;
+  border: 2px solid #E0DAF3;
+  border-radius: 20px;
+  padding: 25px;
+  color: #5d519e;
+  line-height: 1.6em;
+}

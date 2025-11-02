@@ -1,0 +1,81 @@
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  gap: 25px;
+  font-family: "Inter", sans-serif;
+  color: #4b3f80;
+}
+
+/* ===== Header ===== */
+header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 90%;
+  margin-top: 20px;
+}
+
+#search-bar {
+  width: 40%;
+  padding: 10px 15px;
+  border: 2px solid #c8bfe7;
+  border-radius: 999px;
+  outline: none;
+  transition: 0.3s;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#search-bar:focus {
+  border-color: #a39bd8;
+  box-shadow: 0 0 8px rgba(163, 155, 216, 0.3);
+}
+
+#back {
+  position: absolute;
+}
+
+/* ===== Sorting ===== */
+#transaction-sorting {
+  width: 75%;
+  text-align: center;
+  border: 2px solid #c8bfe7;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background-color: #fff;
+  outline: none;
+  transition: 0.3s;
+}
+
+#transaction-sorting:hover, #transaction-sorting:focus {
+  border-color: #a39bd8;
+  box-shadow: 0 0 6px rgba(163, 155, 216, 0.25);
+}
+
+/* ===== Transaction board ===== */
+#transaction-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 90%;
+}
+
+.transaction {
+  width: 60%;
+  background-color: #faf8ff;
+  border: 2px solid #c8bfe7;
+  border-radius: 20px;
+  padding: 14px 20px;
+  font-size: 1.2em;
+  text-align: center;
+  transition: 0.3s;
+}
+
+.transaction:hover {
+  background-color: #f1edfd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(163, 155, 216, 0.25);
+}

@@ -12,7 +12,7 @@
   <body>
     <main>
       <section id="welcome-area">
-        <h1>Welcome to <b>Husky Help Husky</b></h1>
+        <h1>Welcome to <span>Husky Help Husky</span></h1>
         <p>
           A community where UW students can easily trade, share, and reuse second-hand goods.
           <br>
@@ -22,10 +22,17 @@
       <section id="login-area">
         <h2>User Login</h2>
           <form>
-            <label for="username">Username <input id='username' name="user" type='text' required></label>
-            <label for="password">Password <input id='password' name="password" type='password' required></label>
+            <label for="username">
+              Username <input id='username' name="user" type='text' required>
+            </label>
+            <label for="password">
+              Password<input id='password' name="password" type='password' required>
+            </label>
             <button><a href="main.html" target="_blank">Login</a></button>
           </form>
+          <section class="error hidden">
+            <p>Login unsuccessful</p>
+          </section>
       </section>
     </main>
   </body>
