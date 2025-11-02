@@ -13,12 +13,47 @@ body {
   font-weight: 400;
   font-style: normal;
   font-size: 12px;
+  transition: all 0.3s ease;
 }
 
 h1, h2 {
   font-family: "Poppins", sans-serif;
   font-style: normal;
   font-weight: 600;
+}
+
+#theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background-color: #463e9a;
+  border: 1px solid #7e689e;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+}
+
+#theme-toggle:hover {
+  background-color: #C8BFE7;
+  color: #fff;
+}
+
+/* Dark theme styles */
+html[data-theme="dark"] body {
+  background: radial-gradient(circle at top left, #2C2541 0%, #1A1625 60%, #342B4A 100%);
+  color: #b2b7d7; /*font color*/
+}
+
+html[data-theme="dark"] #theme-toggle {
+  background-color: #342B4A;
+  color: #1c0978;
+  border-color: #5335bc;
+}
+
+html[data-theme="dark"] main {
+  background: #3e3d40;
+  border: 5px solid #57565b;
 }
 
 main {
