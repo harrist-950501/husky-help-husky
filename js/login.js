@@ -1,4 +1,5 @@
-/* login.js (frontend-only)
+/*
+ * login.js
  * Basic client-side "login" check:
  * - If username and password are non-empty -> go to main.html
  * - Else show .error
@@ -11,7 +12,9 @@
 
   function init() {
     const form = document.querySelector("form");
-    if (!form) return;
+    if (!form) {
+      return "Cannot select form";
+    }
     form.addEventListener("submit", onSubmit);
   }
 
@@ -23,6 +26,7 @@
     if (!userName || !password) {
       return showError("Please enter both username and password.");
     }
+
     // Simulate success: navigate to main page
     window.location.href = "main.html";
   }

@@ -1,4 +1,4 @@
-/* 
+/*
  * main.js (frontend-only)
  * Renders a small static list of items, with basic search and a layout toggle.
  * No networking, no storage.
@@ -21,13 +21,17 @@
     {id: "cs-500", name: "Laptop Stand", price: 12, image: "", tags: ["accessories"]}
   ];
 
-  const SECOND = 1000;
+  const MSECOND = 100;
 
+  /**
+   * Initialize toggle functionality.
+   * Rendering item list on main page
+   */
   function init() {
     renderItems(ITEMS);
     const search = document.getElementById("search-bar");
     if (search) {
-      search.addEventListener("input", debounce(onSearch, 200));
+      search.addEventListener("input", debounce(onSearch, MSECOND * 2));
     }
     const layoutBtn = document.getElementById("layout-toggle");
     if (layoutBtn) {
@@ -75,8 +79,9 @@
   function renderItems(items) {
     const grid = document.getElementById("item-grid");
     if (!grid) {
-      // If the expected container is missing, nothing to render.
-      // Keep the behavior silent for the UI but log to aid debugging.
+      /* If the expected container is missing, nothing to render.
+      Keep the behavior silent for the UI but log to aid debugging.
+      */
       console.log("renderItems: #item-grid not found");
       return;
     }
@@ -129,10 +134,10 @@
     body.appendChild(h3);
 
     if (it.price !== null && it.price !== undefined) {
-      const p = document.createElement("p");
-      p.className = "price";
-      p.textContent = "$" + it.price;
-      body.appendChild(p);
+      const pTag = document.createElement("p");
+      pTag.className = "price";
+      pTag.textContent = "$" + it.price;
+      body.appendChild(pTag);
     }
 
     card.appendChild(media);
@@ -151,10 +156,10 @@
    */
   function debounce(fn, ms) {
     let timer = null;
-    return function(){
+    return function() {
       clearTimeout(timer);
       const args = arguments;
-      timer = setTimeout(function() { fn.apply(null, args); }, ms || SECOND);
+      timer = setTimeout(function() {fn.apply(null, args);}, ms || MSECOND * 2);
     };
   }
 })();
