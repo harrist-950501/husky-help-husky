@@ -1,16 +1,10 @@
 /**
  * login.js - Simple Login Form Handler
- * 
+ *
  * This module implements a basic client-side login form validation.
  * Note: This is a minimal demo implementation - it only checks for non-empty
  * fields and does not perform actual authentication.
- * 
- * Expected DOM Structure:
- * - <form> element containing:
- *   - input#username
- *   - input#password
- * - .error element for displaying validation messages (with .hidden support)
- * 
+ *
  * Page Flow:
  * 1. User enters credentials
  * 2. On submit:
@@ -26,7 +20,7 @@
   /**
    * Initialize the login form handler.
    * Sets up the submit event listener on the form.
-   * 
+   *
    * @returns {void}
    * @throws {Error} If the form element is not found in the DOM
    */
@@ -41,7 +35,7 @@
   /**
    * Handle form submission events.
    * Validates the form and either shows an error or redirects to main.html.
-   * 
+   *
    * @param {SubmitEvent} evt - The form submission event
    * @returns {void}
    */
@@ -60,7 +54,7 @@
 
   /**
    * Get the trimmed value of an input element.
-   * 
+   *
    * @param {string} sel - CSS selector for the input element
    * @returns {string} The trimmed value of the input, or empty string if
    *                   the element is not found
@@ -72,7 +66,7 @@
 
   /**
    * Display an error message in the .error element.
-   * 
+   *
    * @param {string} msg - The error message to display
    */
   function showError(msg) {

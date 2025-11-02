@@ -83,8 +83,7 @@
        * If the expected container is missing, nothing to render.
        * Keep the behavior silent for the UI but log to aid debugging.
        */
-      console.log("renderItems: #item-grid not found");
-      return;
+      return "renderItems: #item-grid not found";
     }
 
     // Clear existing children without using innerHTML for safety.
