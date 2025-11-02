@@ -1,4 +1,5 @@
-/* api.js (frontend-only minimal)
+/* 
+ * api.js (frontend-only minimal)
  * Small fetch helpers used by the frontend. Keep this file minimal — it
  * centralizes basic response checking and a convenience JSON GET helper.
  *
