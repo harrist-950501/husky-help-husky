@@ -73,6 +73,7 @@
    *
    * @param {Array<Object>} items - Array of item objects to render. Each item
    *   is expected to have `id`, `name`, `price`, `image`, and `tags` fields.
+   * @returns {String} An warning of grid not found and nothing to render.
    *
    * If `items` is empty, the function inserts a muted "No items found." message.
    */
