@@ -22,7 +22,6 @@ h1, h2 {
   font-weight: 600;
 }
 
-
 #theme-toggle {
   position: fixed;
   top: 20px;
@@ -32,7 +31,7 @@ h1, h2 {
 /* Dark theme styles */
 html[data-theme="dark"] body {
   background: radial-gradient(circle at top left, #2C2541 0%, #1A1625 60%, #342B4A 100%);
-  color: #b2b7d7; /*font color*/
+  color: #b2b7d7;
 }
 
 html[data-theme="dark"] #theme-toggle {
@@ -54,7 +53,7 @@ main {
   display: flex;
   justify-content: space-around;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(163,155,216,0.2);
+  box-shadow: 0 0 20px rgba(163, 155, 216, 0.2);
 }
 
 button {
