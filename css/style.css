@@ -1,3 +1,7 @@
+/*
+  This is the overall css for the entire website of Husky Help Husky. It apllies a Lavender Purple
+  theme to make a sence of calm, trustworthy, and comfortable.
+*/
 html, body {
   height: 100%;
 }
@@ -14,6 +18,7 @@ body {
   font-style: normal;
   font-size: 12px;
   transition: all 0.3s ease;
+  color: #1c0978;
 }
 
 h1, h2 {

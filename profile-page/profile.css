@@ -1,3 +1,7 @@
+/*
+  This is the css file for the profile page. It help establish a well structure profile page where user
+  can easily check and modify their settings.
+*/
 body {
   flex-direction: column;
 }
