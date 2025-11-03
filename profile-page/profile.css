@@ -44,7 +44,7 @@ header {
   gap: 30px;
 }
 
-#basic-information h2, #basic-information address {
+#basic-information .name-display, #basic-information .address-display {
   width: 40%;
   background-color: #fff;
   border: 2px solid #C8BFE7;
