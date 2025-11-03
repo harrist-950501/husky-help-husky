@@ -27,7 +27,7 @@
     id("address-display").classList.add("hidden");
     id("name-edit").classList.remove("hidden");
     id("address-edit").classList.remove("hidden");
-    
+
     // Show save and cancel buttons, hide edit button
     id("edit-btn").classList.add("hidden");
     id("save-btn").classList.remove("hidden");
