@@ -22,21 +22,11 @@ h1, h2 {
   font-weight: 600;
 }
 
+
 #theme-toggle {
   position: fixed;
   top: 20px;
   right: 20px;
-  padding: 8px 16px;
-  background-color: #463e9a;
-  border: 1px solid #7e689e;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: "Inter", sans-serif;
-}
-
-#theme-toggle:hover {
-  background-color: #C8BFE7;
-  color: #fff;
 }
 
 /* Dark theme styles */
@@ -48,7 +38,6 @@ html[data-theme="dark"] body {
 html[data-theme="dark"] #theme-toggle {
   background-color: #342B4A;
   color: #1c0978;
-  border-color: #5335bc;
 }
 
 html[data-theme="dark"] main {
@@ -89,8 +78,8 @@ button:hover {
 }
 
 .error {
-  background-color: #fdecea;       /* 淡紅背景 */
-  color: #b71c1c;                  /* 深紅文字 */
+  background-color: #fdecea;
+  color: #b71c1c;
   border: 1.5px solid #f5c6cb;
   border-radius: 8px;
   padding: 10px 15px;

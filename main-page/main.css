@@ -90,11 +90,10 @@ aside li:hover {
   background: #F9F8FF;
   border: 1.5px solid #E0DAF3;
   border-radius: 15px;
-  padding: 40px 0;
+  padding: 10px 5px;
   text-align: center;
   font-family: "Poppins", sans-serif;
   font-weight: 500;
-  color: #6D61B5;
   transition-duration: 0.25s;
   cursor: pointer;
 }

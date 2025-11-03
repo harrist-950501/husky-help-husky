@@ -49,7 +49,7 @@
     }
 
     // Simulate success: navigate to main page
-    window.location.href = "main.html";
+    window.location.href = "../main-page/main.html";
   }
 
   /**

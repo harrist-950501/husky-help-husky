@@ -1,4 +1,4 @@
-/*
+/**
  * main.js (frontend-only)
  * Renders a small static list of items, with basic search and a layout toggle.
  * No networking, no storage.
@@ -6,6 +6,10 @@
  * - #search-bar
  * - #layout-toggle (optional)
  * - #item-grid
+ *
+ * It allows following interactivity:
+ *    A logout button to login page
+ *    In navigation bar, move to the target page
  */
 
 "use strict";
@@ -29,14 +33,38 @@
    */
   function init() {
     renderItems(ITEMS);
-    const search = document.getElementById("search-bar");
+    const search = id("search-bar");
     if (search) {
       search.addEventListener("input", debounce(onSearch, MSECOND * 2));
     }
-    const layoutBtn = document.getElementById("layout-toggle");
+    const layoutBtn = id("layout-toggle");
     if (layoutBtn) {
       layoutBtn.addEventListener("click", toggleLayout);
     }
+    id("logout-btn").addEventListener("click", logout);
+    id("open-history-page").addEventListener("click", openHistroyPage);
+    id("open-profile-page").addEventListener("click", openProfilePage);
+  }
+
+  /**
+   * Logout. Back to login page
+   */
+  function logout() {
+    window.location.href = "../login-page/login.html";
+  }
+
+  /**
+   * Open transaction histroy page
+   */
+  function openHistroyPage() {
+    window.location.href = "../history-page/history.html";
+  }
+
+  /**
+   * Open profile page
+   */
+  function openProfilePage() {
+    window.location.href = "../profile-page/profile.html";
   }
 
   /**
@@ -61,7 +89,7 @@
    * the project should define styles for `.list` to change the layout.
    */
   function toggleLayout() {
-    const grid = document.getElementById("item-grid");
+    const grid = id("item-grid");
     if (grid) {
       grid.classList.toggle("list");
     }
@@ -78,7 +106,7 @@
    * If `items` is empty, the function inserts a muted "No items found." message.
    */
   function renderItems(items) {
-    const grid = document.getElementById("item-grid");
+    const grid = id("item-grid");
     if (!grid) {
       /*
        * If the expected container is missing, nothing to render.
@@ -116,7 +144,7 @@
    */
   function createCardElement(it) {
     const card = document.createElement("article");
-    card.className = "item-card";
+    card.classList.add("item");
 
     const media = document.createElement("div");
     media.className = "card-media";
@@ -164,5 +192,14 @@
         fn.apply(null, args);
       }, ms || MSECOND * 2);
     };
+  }
+
+  /**
+   * Returns the element that has the ID attribute with the specified value.
+   * @param {string} id - element ID.
+   * @returns {object} - DOM object associated with id.
+   */
+  function id(id) {
+    return document.getElementById(id);
   }
 })();

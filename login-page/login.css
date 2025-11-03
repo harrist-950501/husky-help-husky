@@ -9,7 +9,7 @@ h1 span {
       rgba(255, 255, 255, 0.35),
       rgba(255, 255, 255, 0.35)
     ),
-    url("img/uw_fountain.jpg");
+    url("../img/uw_fountain.jpg");
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
