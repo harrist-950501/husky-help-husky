@@ -1,61 +1,241 @@
-This is the API document for CSE154 final project.
+Husky Help Husky API Documentation
+This API powers the Husky Help Husky campus marketplace web app. It allows clients to authenticate users, browse and search items for sale, view detailed item information, confirm and submit purchases, and retrieve a user’s transaction history.
+Additional optional features include user registration and item ratings.
+All data is stored in a server-side relational database.
 
-Existing APIs
-1.statusCheck - Check a fetch Response and throw for non-OK HTTP statuses.
-2.getJSON - Perform a GET request and parse the response as JSON.
+1. Login
+Request Format: /auth/login
+Request Type: POST
+Returned Data Format: JSON
+Description:
+Checks provided credentials against the server database. If valid, returns user identity and a session token (or sets an authentication cookie). Supports JSON, form-data, or URL-encoded request bodies.
+Example Request (JSON Body):
+{
+  "username": "dubs@uw.edu",
+  "password": "woofwoof"
+}
+Example Response:
+{
+  "userId": "u_1027",
+  "username": "dubs@uw.edu",
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+Error Handling:
+400 Bad Request
+Missing username or password.
+Error: Missing 'username' or 'password'.
 
-Will be work on
-1. POST /auth/login
-Checks username/password; creates a simple token. Satisfies “Endpoint to check credentials” for login.
-Params (body; support JSON/FormData/URL -> encoded??):
-username (string, UW email format)
-password (string)
-Returns: { "userId": "...", "username": "...", "token": "..." }
-Errors: 400 missing fields, 401 invalid creds, 415 bad content-type.
-Why: Required Feature 2 (login) needs a server check.
-2. GET /auth/session
-Verifies current login state.
-Returns: { "authenticated": true, "userId": "...", "username": "..." }
-Errors: 401 if not logged in.
-Why: You must “make sure the user is logged in” for protected flows.
-3. GET /items
-Lists items for the main view (with pagination + filters + search). Fulfills “Endpoint to retrieve all items” and “Endpoint to search database.”
-Query params (all optional):
-q (string; keyword search across at least 3 columns such as name, description, seller)
-category (string)
-minPrice / maxPrice (number)
-condition (enum: new/used/… )
-sort (enum: price_asc|price_desc|newest|popular)
-limit (int, default 20), offset (int, default 0)
-Returns: { "items":[...], "total":123, "limit":20, "offset":0 }
-Errors: 400 invalid filters; 500 db error.
-Why: Feature 1 (display items) + Feature 5 (search/filter; 3+ columns), both backed by a single flexible endpoint.
-4. GET /items/:id
-Detailed info for one item (at least 4 fields: name, image, description, price, availability, seller, etc.).
-Returns: { "id":"...", "name":"...", "price":..., "available":true, "imageUrl":"...", "description":"...", "seller":"...", ... }
-Errors: 404 not found.
-Why: Required Feature 3 (detail view) needs an item-details endpoint.
-5. POST /transactions/confirm
-“Confirm” step before purchase (locks current price/quantity snapshot and returns a short-lived confirmation token).
-Params:
-itemId (string)
-quantity (int; default 1)
-Auth: required (/auth/session).
-Returns: { "confirmationToken":"...", "item":{"id":"...","name":"...","price":...}, "expiresAt":"..." }
-Errors: 401 unauthenticated, 400 bad quantity.
-Why: Spec separates “confirm” and “submit”; confirm prevents silent changes between steps.
-6. POST /transactions/submit
-Submits a purchase after a successful confirm; decrements stock and returns a unique alphanumeric confirmation code.
-Params:
-confirmationToken (string)
-Auth: required.
-Returns: { "transactionId":"...", "confirmationCode":"AB12CD34", "itemId":"...", "quantity":1, "total":... }
-Errors: 401 unauthenticated, 400 invalid token.
-Why: Required Feature 4: determine success/failure, update DB, and return confirmation code; ensure unavailable items cannot be purchased.
-7. GET /transactions
-Returns the logged-in user’s transaction history (name of item, confirmation number, timestamp, price).
-Query (optional): q (keyword), sort (e.g., time_desc|price_desc|price_asc), limit, offset.
-Auth: required.
-Returns: { "transactions":[{"id":"...","confirmationCode":"...","itemName":"...","time":"...","total":...}], "total":..., "limit":..., "offset":... }
-Errors: 401 unauthenticated.
-Why: Required Feature 6 (history).
+2. Check Session Status
+Request Format: /auth/session
+Request Type: GET
+Returned Data Format: JSON
+Description:
+Verifies whether the current client session is authenticated. Used for pages that require login.
+Example Request:
+GET /auth/session
+Example Response:
+{
+  "authenticated": true,
+  "userId": "u_1027",
+  "username": "dubs@uw.edu"
+}
+Error Handling:
+401 Unauthorized
+{ "error": "Not authenticated." }
+Item List (Search & Filter)
+Request Format: /items?q=&category=&minPrice=&maxPrice=&condition=&sort=&limit=&offset=
+Request Type: GET
+Returned Data Format: JSON
+Description:
+Returns a paginated list of marketplace items. Supports keyword search, multiple filters, and sorting by price or recency.
+Example Request:
+GET /items?q=laptop&category=electronics&minPrice=200&sort=price_asc&limit=10
+Example Response:
+{
+  "items": [
+    {
+      "id": "it_301",
+      "name": "Used MacBook Air",
+      "price": 499.99,
+      "available": true,
+      "capacity": 3,
+      "imageUrl": "/img/air13.jpg",
+      "description": "2019 model, good condition",
+      "seller": "u_2001",
+      "category": "electronics",
+      "condition": "used",
+      "createdAt": "2025-10-15T20:12:11Z"
+    }
+  ],
+  "total": 42,
+  "limit": 10,
+  "offset": 0
+}
+Error Handling:
+400 Bad Request
+Error: Invalid filter or pagination parameters.
+500 Server Error
+{ "error": "Failed to load items. Please try again later." }
+
+3. Item Details
+Request Format: /items/:id
+Request Type: GET
+Returned Data Format: JSON
+Description:
+Returns detailed information about a specific item, including name, price, capacity, seller, description, category, condition, and image.
+Example Request:
+GET /items/it_301
+Example Response:
+{
+  "id": "it_301",
+  "name": "Used MacBook Air",
+  "price": 499.99,
+  "available": true,
+  "capacity": 3,
+  "imageUrl": "/img/air13.jpg",
+  "description": "2019 model, good condition",
+  "seller": {
+    "userId": "u_2001",
+    "username": "sarah@uw.edu"
+  },
+  "category": "electronics",
+  "condition": "used",
+  "createdAt": "2025-10-15T20:12:11Z"
+}
+Error Handling:
+404 Not Found
+{ "error": "Item not found." }
+
+4. Confirm Purchase
+Request Format: /transactions/confirm
+Request Type: POST
+Returned Data Format: JSON
+Description:
+Verifies that an item is still available at its current capacity/price. If valid, returns a temporary confirmation token that must be used in the final purchase step.
+Example Request (JSON Body):
+{
+  "itemId": "it_301",
+  "quantity": 1
+}
+Example Response:
+{
+  "confirmationToken": "cfm_7b7f2b9f",
+  "item": {
+    "id": "it_301",
+    "name": "Used MacBook Air",
+    "price": 499.99
+  },
+  "quantity": 1,
+  "expiresAt": "2025-11-16T08:00:00Z"
+}
+Error Handling:
+401 Unauthorized
+{ "error": "Not authenticated." }
+400 Bad Request
+Error: Invalid 'itemId' or 'quantity'.
+500 Internal Server Error
+{ "error": "Failed to confirm purchase." }
+
+5. Submit Purchase
+Request Format: /transactions/submit
+Request Type: POST
+Returned Data Format: JSON
+Description:
+Creates a final transaction record using a valid confirmationToken. Decrements item capacity and returns a unique alphanumeric confirmation code.
+Example Request (JSON Body):
+{
+  "confirmationToken": "cfm_7b7f2b9f"
+}
+Example Response:
+{
+  "transactionId": "tx_8842",
+  "confirmationCode": "AB12CD34",
+  "itemId": "it_301",
+  "quantity": 1,
+  "total": 499.99,
+  "time": "2025-11-16T07:12:44Z"
+}
+Error Handling:
+401 Unauthorized
+{ "error": "Not authenticated." }
+400 Bad Request
+Error: Missing or invalid 'confirmationToken'.
+500 Internal Server Error
+{ "error": "Failed to complete purchase." }
+
+6. Transaction History
+Request Format: /transactions?q=&sort=&limit=&offset=
+Request Type: GET
+Returned Data Format: JSON
+Description:
+Returns a logged-in user’s past transactions. Supports keyword search and sorting (e.g., by time or price).
+Example Request:
+GET /transactions?sort=time_desc&limit=10
+Example Response:
+{
+  "transactions": [
+    {
+      "id": "tx_8842",
+      "confirmationCode": "AB12CD34",
+      "itemName": "Used MacBook Air",
+      "time": "2025-11-16T07:12:44Z",
+      "total": 499.99
+    }
+  ],
+  "total": 6,
+  "limit": 10,
+  "offset": 0
+}
+Error Handling:
+401 Unauthorized
+{ "error": "Not authenticated." }
+500 Internal Server Error
+{ "error": "Failed to load transactions." }
+
+7. Optional Feature 1: User Registration
+Request Format: /users
+Request Type: POST
+Returned Data Format: JSON
+Description:
+Creates a new user account, validating uniqueness of username/email.
+Example Request:
+{
+  "username": "sarah@uw.edu",
+  "email": "sarah@uw.edu",
+  "password": "p@ssw0rd!"
+}
+Example Response:
+{
+  "userId": "u_2001",
+  "username": "sarah@uw.edu"
+}
+Error Handling:
+400 Bad Request
+Error: Provide valid 'username', 'email', and 'password'.
+500 Internal Server Error
+{ "error": "Failed to create user." }
+
+8. Optional Feature 2: Ratings — Retrieve Ratings
+Request Format: /items/:id/ratings
+Request Type: GET
+Returned Data Format: JSON
+Description:
+Returns the average rating and all ratings for a specific item.
+Example Response:
+{
+  "avg": 4.6,
+  "count": 17,
+  "ratings": [
+    {
+      "userId": "u_1027",
+      "stars": 5,
+      "text": "Great deal!",
+      "time": "2025-11-10T17:01:05Z"
+    }
+  ]
+}
+Error Handling:
+404 Not Found
+{ "error": "Item not found." }
+500 Internal Server Error
+{ "error": "Failed to load ratings." }
