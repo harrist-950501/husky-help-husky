@@ -74,10 +74,10 @@ Error: Missing 'username' or 'password'.
 
 *401 Unauthorized*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "Error": "Not authenticated." }
+Error: Not authenticated.
 ```
 
 ## *3. Item List (Search & Filter)*
@@ -128,10 +128,10 @@ Error: Invalid filter or pagination parameters.
 
 *500 Server Error*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "Error": "Failed to load items. Please try again later." }
+Error: Failed to load items. Please try again later.
 ```
 
 ## *4. Item Details*
@@ -166,15 +166,14 @@ Error: Invalid filter or pagination parameters.
 }
 ```
 
-
 **Error Handling:**
 
 *404 Not Found*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "Error": "Item not found." }
+Error: Item not found.
 ```
 
 ## *5. Confirm Purchase*
@@ -211,18 +210,16 @@ Error: Invalid filter or pagination parameters.
 }
 ```
 
-
 **Error Handling:**
 
 *401 Unauthorized*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "Error": "Not authenticated." }
+Error": Not authenticated.
 ```
 
-4
 *400 Bad Request*
 
 *Returned Data Format:* Plain Text
@@ -233,10 +230,10 @@ Error: Invalid 'itemId' or 'quantity'.
 
 *500 Internal Server Error*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "error": "Failed to confirm purchase." }
+Error: Failed to confirm purchase.
 ```
 
 
@@ -272,17 +269,15 @@ Error: Invalid 'itemId' or 'quantity'.
 }
 ```
 
-
 **Error Handling:**
 
 *401 Unauthorized*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "error": "Not authenticated." }
+Error: Not authenticated.
 ```
-
 
 *400 Bad Request*
 
@@ -294,10 +289,10 @@ Error: Missing or invalid 'confirmationToken'.
 
 *500 Internal Server Error*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "error": "Failed to complete purchase." }
+Error: "Failed to complete purchase.
 ```
 
 ## *7. Transaction History*
@@ -334,19 +329,18 @@ Error: Missing or invalid 'confirmationToken'.
 
 *401 Unauthorized*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "error": "Not authenticated." }
+Error: Not authenticated.
 ```
-
 
 *500 Internal Server Error*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "error": "Failed to load transactions." }
+Error: Failed to load transactions.
 ```
 
 ## *8. Optional Feature 1: User Registration*
@@ -391,14 +385,11 @@ Error: Provide valid 'username', 'email', and 'password'.
 
 *500 Internal Server Error*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-{ "error": "Failed to create user." }
+Error: Failed to create user.
 ```
-
-
----
 
 ## *9. Optional Feature 2: Ratings — Retrieve Ratings*
 **Request Format:** */items/:id/ratings*
@@ -432,19 +423,18 @@ Error: Provide valid 'username', 'email', and 'password'.
 
 *404 Not Found*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
 Error: Item not found.
 ```
 
-
 *500 Internal Server Error*
 
-*Returned Data Format:* JSON
+*Returned Data Format:* Plain Text
 
 ```
-  Error: "Failed to load ratings.
+Error: "Failed to load ratings.
 ```
 
 ## *10. User Profile*
