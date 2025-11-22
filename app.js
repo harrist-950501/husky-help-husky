@@ -21,14 +21,15 @@ const upload = multer();
 const serverErr = 500;
 const clientErr = 400;
 const notFound = 404;
+const base36 = 36;
+const portion = 10;
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 /* DB CONNECTION */
 /**
  * RENA: THIS IS COPIED FROM LEC SLIDE, WE SHOULD CHANGE TO OUR OWN VER!!
- * 
+ *
  * Establishes a database connection to the database and returns the database object.
  * Any errors that occur should be caught in the function that calls this one.
  * @returns {sqlite3.Database} - The database object for the connection.
@@ -53,9 +54,9 @@ function requireParams(params, body) {
 
 function generateCode() {
   return Math.random()
-  .toString(36)
-  .substring(2, 10)
-  .toUpperCase();
+    .toString(base36)
+    .substring(2, portion)
+    .toUpperCase();
 }
 
 /* ROUTES */
@@ -70,8 +71,8 @@ app.post("/login", upload.none(), async (req, res) => {
     let missing = requireParams(["username", "password"], req.body);
     if (missing) {
       res.status(clientErr)
-      .type("text")
-      .send(missing);
+        .type("text")
+        .send(missing);
     }
 
     let db = await getDBConnection();
@@ -83,15 +84,15 @@ app.post("/login", upload.none(), async (req, res) => {
 
     if (!user) {
       res.status(clientErr)
-      .type("text")
-      .send("Invalid username or password.");
+        .type("text")
+        .send("Invalid username or password.");
     }
 
     res.json({success: true});
   } catch (err) {
     res.status(serverErr)
-    .type("text")
-    .send("Server error logging in.");
+      .type("text")
+      .send("Server error logging in.");
   }
 });
 
@@ -107,8 +108,8 @@ app.get("/items", async (req, res) => {
     res.json(items);
   } catch (err) {
     res.status(serverErr)
-    .type("text")
-    .send("Error retrieving items.");
+      .type("text")
+      .send("Error retrieving items.");
   }
 });
 
@@ -123,15 +124,15 @@ app.get("/item/:id", async (req, res) => {
     let item = await db.get("SELECT * FROM items WHERE id = ?;", [req.params.id]);
     if (!item) {
       res.status(notFound)
-      .type("text")
-      .send("Item not found.");
+        .type("text")
+        .send("Item not found.");
     }
 
     res.json(item);
   } catch (err) {
     res.status(serverErr)
-    .type("text")
-    .send("Error retrieving item details.");
+      .type("text")
+      .send("Error retrieving item details.");
   }
 });
 
@@ -163,8 +164,8 @@ app.get("/search", async (req, res) => {
 
   } catch (err) {
     res.status(serverErr)
-    .type("text")
-    .send("Search failed.");
+      .type("text")
+      .send("Search failed.");
   }
 });
 
@@ -178,41 +179,32 @@ app.post("/buy", upload.none(), async (req, res) => {
     let missing = requireParams(["username", "item_id"], req.body);
     if (missing) {
       res.status(clientErr)
-      .type("text")
-      .send(missing);
+        .type("text")
+        .send(missing);
     }
-
     let db = await getDBConnection();
-
-    // Check if item exists and has stock
     let item = await db.get("SELECT * FROM items WHERE id = ?", [req.body.item_id]);
     if (!item) {
       res.status(notFound)
-      .type("text")
-      .send("Item does not exist.");
+        .type("text")
+        .send("Item does not exist.");
     }
     if (item.stock <= 0) {
       res.status(clientErr)
-      .type("text")
-      .send("Item out of stock.");
+        .type("text")
+        .send("Item out of stock.");
     }
-
-    // Update stock
     await db.run("UPDATE items SET stock = stock - 1 WHERE id = ?", [req.body.item_id]);
-
-    // Store transaction
     let code = generateCode();
     await db.run(`
       INSERT INTO transactions (username, item_id, confirmation)
       VALUES (?, ?, ?)
     `, [req.body.username, req.body.item_id, code]);
-
     res.json({success: true, confirmation: code});
-
   } catch (err) {
     res.status(serverErr)
-    .type("text")
-    .send("Transaction failed.");
+      .type("text")
+      .send("Transaction failed.");
   }
 });
 
@@ -237,8 +229,8 @@ app.get("/history/:username", async (req, res) => {
 
   } catch (err) {
     res.status(serverErr)
-    .type("text")
-    .send("Could not retrieve history.");
+      .type("text")
+      .send("Could not retrieve history.");
   }
 });
 
