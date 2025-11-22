@@ -18,6 +18,9 @@ const sqlite = require("sqlite");
 
 const app = express();
 const upload = multer();
+const serverErr = 500;
+const clientErr = 400;
+const notFound = 404;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -40,16 +43,19 @@ async function getDBConnection() {
 
 /* HELPERS */
 function requireParams(params, body) {
-  for (let p of params) {
-    if (!body[p]) {
-      return `Missing parameter: ${p}`;
+  for (let param of params) {
+    if (!body[param]) {
+      return 'Missing parameter:' + param;
     }
   }
   return null;
 }
 
 function generateCode() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
+  return Math.random()
+  .toString(36)
+  .substring(2, 10)
+  .toUpperCase();
 }
 
 /* ROUTES */
@@ -57,13 +63,15 @@ function generateCode() {
  * POST /login
  * Body: username, password (FormData, JSON, or urlencoded)
  * Returns: JSON { success: true }
- * Errors: 400 missing fields, 401 invalid login
+ * Errors: 400 missing fields, invalid login
  */
 app.post("/login", upload.none(), async (req, res) => {
   try {
     let missing = requireParams(["username", "password"], req.body);
     if (missing) {
-      res.status(400).type("text").send(missing);
+      res.status(clientErr)
+      .type("text")
+      .send(missing);
     }
 
     let db = await getDBConnection();
@@ -74,12 +82,16 @@ app.post("/login", upload.none(), async (req, res) => {
     let user = await db.get(query, [req.body.username, req.body.password]);
 
     if (!user) {
-      res.status(401).type("text").send("Invalid username or password.");
+      res.status(clientErr)
+      .type("text")
+      .send("Invalid username or password.");
     }
 
-    res.json({ success: true });
+    res.json({success: true});
   } catch (err) {
-    res.status(500).type("text").send("Server error logging in.");
+    res.status(serverErr)
+    .type("text")
+    .send("Server error logging in.");
   }
 });
 
@@ -94,7 +106,9 @@ app.get("/items", async (req, res) => {
 
     res.json(items);
   } catch (err) {
-    res.status(500).type("text").send("Error retrieving items.");
+    res.status(serverErr)
+    .type("text")
+    .send("Error retrieving items.");
   }
 });
 
@@ -108,32 +122,36 @@ app.get("/item/:id", async (req, res) => {
 
     let item = await db.get("SELECT * FROM items WHERE id = ?;", [req.params.id]);
     if (!item) {
-      res.status(404).type("text").send("Item not found.");
+      res.status(notFound)
+      .type("text")
+      .send("Item not found.");
     }
 
     res.json(item);
   } catch (err) {
-    res.status(500).type("text").send("Error retrieving item details.");
+    res.status(serverErr)
+    .type("text")
+    .send("Error retrieving item details.");
   }
 });
 
 /**
  * GET /search
- * Query params: q (string), filter (optional)
- * Example: /search?q=textbook&filter=electronics
+ * Query params: quer (string), filter (optional)
+ * Example: /search?quer=textbook&filter=electronics
  */
 app.get("/search", async (req, res) => {
   try {
-    let q = req.query.q ? `%${req.query.q}%` : "%";
+    let quer = "%";
+    if (req.query.quer && req.query.quer.trim() !== "") {
+      quer = "%" + req.query.quer + "%";
+    }
     let filter = req.query.filter;
 
     let db = await getDBConnection();
-    let query = `
-      SELECT * FROM items
-      WHERE name LIKE ? OR description LIKE ?
-    `;
+    let query = `SELECT * FROM items WHERE name LIKE ? OR description LIKE ?`;
 
-    let params = [q, q];
+    let params = [quer, quer];
 
     if (filter) {
       query += " AND category = ?";
@@ -144,7 +162,9 @@ app.get("/search", async (req, res) => {
     res.json(results);
 
   } catch (err) {
-    res.status(500).type("text").send("Search failed.");
+    res.status(serverErr)
+    .type("text")
+    .send("Search failed.");
   }
 });
 
@@ -157,7 +177,9 @@ app.post("/buy", upload.none(), async (req, res) => {
   try {
     let missing = requireParams(["username", "item_id"], req.body);
     if (missing) {
-      res.status(400).type("text").send(missing);
+      res.status(clientErr)
+      .type("text")
+      .send(missing);
     }
 
     let db = await getDBConnection();
@@ -165,10 +187,14 @@ app.post("/buy", upload.none(), async (req, res) => {
     // Check if item exists and has stock
     let item = await db.get("SELECT * FROM items WHERE id = ?", [req.body.item_id]);
     if (!item) {
-      res.status(404).type("text").send("Item does not exist.");
+      res.status(notFound)
+      .type("text")
+      .send("Item does not exist.");
     }
     if (item.stock <= 0) {
-      res.status(400).type("text").send("Item out of stock.");
+      res.status(clientErr)
+      .type("text")
+      .send("Item out of stock.");
     }
 
     // Update stock
@@ -181,10 +207,12 @@ app.post("/buy", upload.none(), async (req, res) => {
       VALUES (?, ?, ?)
     `, [req.body.username, req.body.item_id, code]);
 
-    res.json({ success: true, confirmation: code });
+    res.json({success: true, confirmation: code});
 
   } catch (err) {
-    res.status(500).type("text").send("Transaction failed.");
+    res.status(serverErr)
+    .type("text")
+    .send("Transaction failed.");
   }
 });
 
@@ -208,12 +236,12 @@ app.get("/history/:username", async (req, res) => {
     res.json(rows);
 
   } catch (err) {
-    res.status(500).type("text").send("Could not retrieve history.");
+    res.status(serverErr)
+    .type("text")
+    .send("Could not retrieve history.");
   }
 });
 
 /* SERVER and PORT */
 const PORT = 8000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT);
