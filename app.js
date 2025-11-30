@@ -26,8 +26,6 @@ app.use(multer().none());
 
 const CLIENT_SIDE_ERROR = 400;
 const SERVER_SIDE_ERROR = 500;
-const base36 = 36;
-const portion = 10;
 
 /* ROUTES */
 /**
@@ -133,7 +131,7 @@ app.get("/search", async (req, res) => {
     } else {
       res.status(CLIENT_SIDE_ERROR)
         .type("text")
-        .send("Missing query parameter: \'keyword\'");
+        .send("Missing query parameter: 'keyword'");
     }
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
@@ -194,11 +192,10 @@ app.get("/history/:user_id", async (req, res) => {
     let db = await getDBConnection();
     let query = "SELECT * FROM users WHERE id = ?;";
     let user = await db.get(query, [req.params.user_id]);
-    console.log(user);
     await db.close();
 
     if (user) {
-      let db = await getDBConnection();
+      db = await getDBConnection();
       let query = "SELECT *FROM transactions t" +
         " JOIN items i ON t.item_id = i.id" +
         " WHERE t.buyer_id = ? OR t.seller_id = ?" +
@@ -212,7 +209,6 @@ app.get("/history/:user_id", async (req, res) => {
         .send("No such user.");
     }
   } catch (err) {
-    console.log(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send("Could not retrieve history.");
@@ -240,7 +236,7 @@ function requireParams(params, body) {
   let message = "Missing parameter:";
   for (let param of params) {
     if (!body[param]) {
-      message = message + " \'" + param + "\'";
+      message = message + " '" + param + "'";
     }
   }
   if (message === "Missing parameter:") {
