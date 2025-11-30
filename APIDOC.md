@@ -6,15 +6,15 @@
 *All data is stored in a server-side relational database.*
 
 ## *1. Login*
-**Request Format:** */auth/login*
+**Request Format:** */login*
 
 **Request Type:** *POST*
 
-**Returned Data Format:** JSON
+**Returned Data Format:** Plain text
 
 **Description:** *Checks provided credentials against the server database. If valid, returns user identity and a session token (or sets an authentication cookie). Supports JSON, form-data, or URL-encoded request bodies.*
 
-**Example Request:** *http://localhost:8000/auth/login*
+**Example Request:** */login*
 
 *With JSON body:*
 
@@ -28,11 +28,7 @@
 **Example Response:**
 
 ```
-{
-  "userId": "u_1027",
-  "username": "dubs@uw.edu",
-  "token": "eyJhbGciOiJIUzI1NiIs..."
-}
+User login sucessfully
 ```
 
 **Error Handling:**
@@ -41,12 +37,18 @@
 
 *Missing username or password.*
 
-*Returned Data Format*:Plain Text
-
-*Example Error Response:*
+*Error response (Plain text):*
 
 ```
-Error: Missing 'username' or 'password'.
+Missing parameter: 'username' 'password'.
+```
+
+*500 Server-side Error*
+
+*Error response (Plain text):*
+
+```
+An error occurred on the server. Try again later.
 ```
 
 ## *2. Check Session Status*
