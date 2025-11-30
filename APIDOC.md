@@ -364,8 +364,11 @@ Error: No such user.
 Error: Could not retrieve history..
 ```
 
+# *Future Extensions (Not Implemented)*
 
-## *8. Optional Feature 1: User Registration*
+*This section describes a potential extension to the API for a future version of Husky Help Husky.*
+
+## *7. Optional Feature 1: User Registration*
 **Request Format:** */users*
 
 **Request Type:** *POST*
@@ -413,7 +416,7 @@ Error: Provide valid 'username', 'email', and 'password'.
 Error: Failed to create user.
 ```
 
-## *9. Optional Feature 2: Ratings — Retrieve Ratings*
+## *8. Optional Feature 2: Ratings — Retrieve Ratings*
 **Request Format:** */items/:id/ratings*
 
 **Request Type:** *GET*
@@ -459,7 +462,7 @@ Error: Item not found.
 Error: "Failed to load ratings.
 ```
 
-## *10. User Profile*
+## *9. User Profile*
 **Request Format:** */users/:id*
 
 **Request Type:** *GET*
