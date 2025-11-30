@@ -8,9 +8,7 @@
  * It handles login authentication, retrieving items, searching/filtering,
  * fetching item details, creating transactions, and viewing transaction history.
  */
-
 "use strict";
-
 
 const express = require("express");
 const app = express();
@@ -29,10 +27,7 @@ const SERVER_SIDE_ERROR = 500;
 
 /* ROUTES */
 /**
- * POST /login
- * Body: username, password (FormData, JSON, or urlencoded)
- * Returns: Plain text
- * Errors: 400 missing fields, invalid login
+ * Logs in a user with the given username and password.
  */
 app.post("/login", async (req, res) => {
   try {
@@ -42,18 +37,18 @@ app.post("/login", async (req, res) => {
         .type("text")
         .send(missing);
     } else {
-      let db = await getDBConnection();
-      let query = "SELECT * FROM users WHERE username = ? AND password = ?;";
-      let user = await db.get(query, [req.body.username, req.body.password]);
-      await db.close();
+      let username = req.body.username;
+      let password = req.body.username;
+      let user = await dbUserCheck(username, password);
 
       if (!user) {
         res.status(CLIENT_SIDE_ERROR)
           .type("text")
           .send("Invalid username or password.");
+      } else {
+        res.type("text")
+          .send("User login sucessfully");
       }
-      res.type("text")
-        .send("User login sucessfully");
     }
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
@@ -63,16 +58,16 @@ app.post("/login", async (req, res) => {
 });
 
 /**
- * GET /items
- * Returns all items in the database.
+ * Returns all items, or a single item when given an id query parameter.
  */
 app.get("/items", async (req, res) => {
   try {
-    let db = await getDBConnection();
-    let items = await db.all("SELECT * FROM items;");
-    await db.close();
-
-    res.json(items);
+    let id = req.query.id;
+    if (id) {
+      res.json(await dbItemGet(id));
+    } else {
+      res.json(await dbItemGetAll());
+    }
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
       .type("text")
@@ -81,57 +76,19 @@ app.get("/items", async (req, res) => {
 });
 
 /**
- * GET /item/:id
- * Returns details for a single item.
+ * Searches items by keyword and optional category filter.
  */
-app.get("/items/:id", async (req, res) => {
-  try {
-    let db = await getDBConnection();
-    let item = await db.get("SELECT * FROM items WHERE id = ?;", [req.params.id]);
-    await db.close();
-
-    if (!item) {
-      res.status(CLIENT_SIDE_ERROR)
-        .type("text")
-        .send("Item not found.");
-    }
-
-    res.json(item);
-  } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
-      .type("text")
-      .send("Error retrieving item details.");
-  }
-});
-
-/**
- * GET /search
- * Query params: search (string), filter (optional)
- * Example: /search?quer=textbook&filter=electronics
- */
-app.get("/search", async (req, res) => {
+app.get("/items/search", async (req, res) => {
   try {
     let keyword = req.query.search;
     let filter = req.query.filter;
-    if (keyword) {
-      let query = "SELECT * FROM items WHERE title LIKE ? OR description LIKE ?";
-      keyword = "%" + keyword + "%";
-      let params = [keyword, keyword];
-
-      if (filter) {
-        query += " AND category = ?";
-        params.push(filter);
-      }
-
-      let db = await getDBConnection();
-      let searchResult = await db.all(query, params);
-      await db.close();
-
-      res.json(searchResult);
-    } else {
+    if (!keyword) {
       res.status(CLIENT_SIDE_ERROR)
         .type("text")
         .send("Missing query parameter: 'keyword'");
+    } else {
+      let searchResult = await dbItemSearch(keyword, filter);
+      res.json(searchResult);
     }
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
@@ -141,9 +98,7 @@ app.get("/search", async (req, res) => {
 });
 
 /**
- * POST /buy
- * Body: buyer_id, item_id
- * Returns: Plain text
+ * Processes a purchase by decrementing stock and creating a transaction.
  */
 app.post("/buy", async (req, res) => {
   try {
@@ -153,9 +108,7 @@ app.post("/buy", async (req, res) => {
         .type("text")
         .send(missing);
     } else {
-      let db = await getDBConnection();
-      let item = await db.get("SELECT * FROM items WHERE id = ?", [req.body.item_id]);
-      await db.close();
+      let item = await dbItemGet(req.body.item_id);
       if (!item) {
         res.status(CLIENT_SIDE_ERROR)
           .type("text")
@@ -166,12 +119,8 @@ app.post("/buy", async (req, res) => {
             .type("text")
             .send("Item out of stock.");
         } else {
-          db = await getDBConnection();
-          await db.run("UPDATE items SET stock = stock - 1 WHERE id = ?", [req.body.item_id]);
-          await db.run("INSERT INTO transactions (buyer_id, seller_id, item_id)" +
-            "VALUES (?, ?, ?)", [req.body.buyer_id, item.seller_id, item.id]);
-          await db.close();
-
+          await dbItemStockSubtract(item.id);
+          await dbTransactionMade(req.body.buyer_id, item.seller_id, item.id);
           res.json("Item purchased successfully");
         }
       }
@@ -184,24 +133,14 @@ app.post("/buy", async (req, res) => {
 });
 
 /**
- * GET /history/:user_id
- * Returns transaction history for a user
+ * Returns all transactions where the given user is buyer or seller.
  */
-app.get("/history/:user_id", async (req, res) => {
+app.get("/history/:id", async (req, res) => {
   try {
-    let db = await getDBConnection();
-    let query = "SELECT * FROM users WHERE id = ?;";
-    let user = await db.get(query, [req.params.user_id]);
-    await db.close();
+    let user = await dbUserGet(req.params.id);
 
     if (user) {
-      db = await getDBConnection();
-      let query = "SELECT *FROM transactions t" +
-        " JOIN items i ON t.item_id = i.id" +
-        " WHERE t.buyer_id = ? OR t.seller_id = ?" +
-        " ORDER BY t.date DESC;";
-      let transactions = await db.all(query, [user.id, user.id]);
-      await db.close();
+      let transactions = await dbTransactionUserGet(user.id);
       res.json(transactions);
     } else {
       res.status(CLIENT_SIDE_ERROR)
@@ -209,11 +148,128 @@ app.get("/history/:user_id", async (req, res) => {
         .send("No such user.");
     }
   } catch (err) {
+    console.log(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send("Could not retrieve history.");
   }
 });
+
+/**
+ * Checks whether a user exists with the given username and password.
+ * @param {string} username - Username to look up in the users table.
+ * @param {string} password - Password to match for the given username.
+ * @return {Object} matching user row when the username and password are valid.
+ */
+async function dbUserCheck(username, password) {
+  let query = "SELECT * FROM users WHERE username = ? AND password = ?;";
+  let db = await getDBConnection();
+  let user = await db.get(query, [username, password]);
+  await db.close();
+  return user;
+}
+
+/**
+ * Retrieves all items from the items table.
+ * @return {Object[]} array of all item rows.
+ */
+async function dbItemGetAll() {
+  let db = await getDBConnection();
+  let items = await db.all("SELECT * FROM items;");
+  await db.close();
+  return items;
+}
+
+/**
+ * Retrieves a single item by its id.
+ * @param {number} id - The id of the item to retrieve.
+ * @return {Object} item row for the given id.
+ */
+async function dbItemGet(id) {
+  let query = "SELECT * FROM items WHERE id = ?;";
+  let db = await getDBConnection();
+  let item = await db.get(query, [id]);
+  await db.close();
+  return item;
+}
+
+/**
+ * Searches items by a keyword and optional category filter.
+ * The keyword is matched against the title and description fields.
+ * @param {string} keyword - Keyword to search for in title and description.
+ * @param {string} filter - Optional category name to filter results by.
+ * @return {Object[]} array of items that match the search criteria.
+ */
+async function dbItemSearch(keyword, filter) {
+  let query = "SELECT * FROM items WHERE title LIKE ? OR description LIKE ?";
+  keyword = "%" + keyword + "%";
+  let params = [keyword, keyword];
+
+  if (filter) {
+    query += " AND category = ?";
+    params.push(filter);
+  }
+
+  let db = await getDBConnection();
+  let searchResult = await db.all(query, params);
+  await db.close();
+
+  return searchResult;
+}
+
+/**
+ * Decrements the stock count of an item by 1 for the given id.
+ * @param {number} id - The id of the item whose stock should be reduced.
+ */
+async function dbItemStockSubtract(id) {
+  let query = "UPDATE items SET stock = stock - 1 WHERE id = ?";
+  let db = await getDBConnection();
+  await db.run(query, [id]);
+  await db.close();
+}
+
+/**
+ * Inserts a new transaction row for the given buyer, seller, and item.
+ * @param {number} buyerId - Id of the user buying the item.
+ * @param {number} sellerId - Id of the user selling the item.
+ * @param {number} itemId - Id of the item being purchased.
+ */
+async function dbTransactionMade(buyerId, sellerId, itemId) {
+  let query = "INSERT INTO transactions (buyer_id, seller_id, item_id) VALUES (?, ?, ?)";
+  let db = await getDBConnection();
+  await db.run(query, [buyerId, sellerId, itemId]);
+  await db.close();
+}
+
+/**
+ * Retrieves a user row by its id.
+ * @param {number} id - The id of the user to retrieve.
+ * @return {Object} user row for the given id.
+ */
+async function dbUserGet(id) {
+  let query = "SELECT * FROM users WHERE id = ?;";
+  let db = await getDBConnection();
+  let user = await db.get(query, [id]);
+  await db.close();
+  return user;
+}
+
+/**
+ * Retrieves all transactions where the given user id is either the buyer or the seller.
+ * Joined with item information and ordered by most recent first.
+ * @param {number} id - The id of the user whose transactions are requested.
+ * @return {Object[]} array of joined transaction and item rows for the user.
+ */
+async function dbTransactionUserGet(id) {
+  let db = await getDBConnection();
+  let query = "SELECT *FROM transactions t" +
+    " JOIN items i ON t.item_id = i.id" +
+    " WHERE t.buyer_id = ? OR t.seller_id = ?" +
+    " ORDER BY t.date DESC;";
+  let transactions = await db.all(query, [id, id]);
+  await db.close();
+  return transactions;
+}
 
 /* DB CONNECTION */
 /**
@@ -225,13 +281,20 @@ app.get("/history/:user_id", async (req, res) => {
  */
 async function getDBConnection() {
   const db = await sqlite.open({
-    filename: "husky_test.db",
+    filename: "husky.db",
     driver: sqlite3.Database
   });
   return db;
 }
 
 /* HELPERS */
+/**
+ * Checks that all required parameters exist on the given request body object.
+ * @param {string[]} params - List of required parameter names.
+ * @param {Object} body - Parsed request body to check for required parameters.
+ * @return {string|null} error message listing missing parameters,
+ * or null if all required parameters are present.
+ */
 function requireParams(params, body) {
   let message = "Missing parameter:";
   for (let param of params) {
