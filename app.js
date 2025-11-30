@@ -31,10 +31,10 @@ const SERVER_SIDE_ERROR = 500;
  */
 app.post("/login", async (req, res) => {
   try {
+    res.type("text");
     let missing = requireParams(["username", "password"], req.body);
     if (missing) {
       res.status(CLIENT_SIDE_ERROR)
-        .type("text")
         .send(missing);
     } else {
       let username = req.body.username;
@@ -43,16 +43,13 @@ app.post("/login", async (req, res) => {
 
       if (!user) {
         res.status(CLIENT_SIDE_ERROR)
-          .type("text")
           .send("Invalid username or password.");
       } else {
-        res.type("text")
-          .send("User login sucessfully");
+          res.send("User login sucessfully");
       }
     }
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
-      .type("text")
       .send("Server error logging in.");
   }
 });
@@ -102,32 +99,29 @@ app.get("/items/search", async (req, res) => {
  */
 app.post("/buy", async (req, res) => {
   try {
+    res.type("text");
     let missing = requireParams(["buyer_id", "item_id"], req.body);
     if (missing) {
       res.status(CLIENT_SIDE_ERROR)
-        .type("text")
         .send(missing);
     } else {
       let item = await dbItemGet(req.body.item_id);
       if (!item) {
         res.status(CLIENT_SIDE_ERROR)
-          .type("text")
           .send("Item does not exist.");
       } else {
         if (item.stock <= 0) {
           res.status(CLIENT_SIDE_ERROR)
-            .type("text")
             .send("Item out of stock.");
         } else {
           await dbItemStockSubtract(item.id);
           await dbTransactionMade(req.body.buyer_id, item.seller_id, item.id);
-          res.json("Item purchased successfully");
+          res.send("Item purchased successfully");
         }
       }
     }
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
-      .type("text")
       .send("Transaction failed.");
   }
 });
@@ -148,7 +142,6 @@ app.get("/history/:id", async (req, res) => {
         .send("No such user.");
     }
   } catch (err) {
-    console.log(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send("Could not retrieve history.");
