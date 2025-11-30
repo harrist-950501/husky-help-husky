@@ -12,7 +12,7 @@
 
 **Returned Data Format:** Plain text
 
-**Description:** *Checks provided credentials against the server database. If valid, returns user identity and a session token (or sets an authentication cookie). Supports JSON, form-data, or URL-encoded request bodies.*
+**Description:** *Checks provided credentials against the server-side users table. If the username and password match an existing user, the server responds with a simple success message. Supports JSON, application/x-www-form-urlencoded, or multipart/form-data bodies.*
 
 **Example Request:** */login*
 
@@ -25,7 +25,7 @@
 }
 ```
 
-**Example Response:**
+**Example Success Response (200):**
 
 ```
 User login sucessfully
@@ -33,9 +33,9 @@ User login sucessfully
 
 **Error Handling:**
 
-*400 Bad Request*
+*400 Bad Request – Missing Parameters*
 
-*Missing username or password.*
+*Occurs when username and/or password are missing or empty in the request body.*
 
 *Error response (Plain text):*
 
@@ -43,134 +43,107 @@ User login sucessfully
 Missing parameter: 'username' 'password'.
 ```
 
-*500 Server-side Error*
+*400 Bad Request – Invalid Credentials*
+
+*Occurs when no user matches the given username and password.*
 
 *Error response (Plain text):*
 
 ```
-An error occurred on the server. Try again later.
+Invalid username or password.
 ```
 
-## *2. Check Session Status*
-**Request Format:** */auth/session*
+*500 Server-side Error*
+
+*Generic server-side error during login.*
+
+*Error response (Plain text):*
+
+```
+Server error logging in.
+```
+
+
+## *2. Item List*
+**Request Format:** */items*
 
 **Request Type:** *GET*
 
 **Returned Data Format:** JSON
 
-**Description:** *Verifies whether the current client session is authenticated. Used for pages that require login.*
+**Description:** *Returns all items from the items table. No query parameters are supported on this endpoint. Each item is returned exactly as stored in the database.*
 
-**Example Request:** */auth/session*
+**Example Request:** */items*
 
-**Example Response:**
-
-```
-{
-  "authenticated": true,
-  "userId": "u_1027",
-  "username": "dubs@uw.edu"
-}
-```
-
-**Error Handling:**
-
-*401 Unauthorized*
-
-*Returned Data Format:* Plain Text
+**Example Success Response (200):**
 
 ```
-Error: Not authenticated.
-```
-
-## *3. Item List (Search & Filter)*
-**Request Format:** */items?q=&category=&minPrice=&maxPrice=&condition=&sort=&limit=&offset=*
-
-**Request Type:** *GET*
-
-**Returned Data Format:** JSON
-
-**Description:** *Returns a paginated list of marketplace items. Supports keyword search, multiple filters, and sorting by price or recency.*
-
-**Example Request:** */items?q=laptop&category=electronics&minPrice=200&sort=price_asc&limit=10*
-
-**Example Response:**
-
-```
-{
-  "items": [
-    {
-      "id": "it_301",
-      "name": "Used MacBook Air",
-      "price": 499.99,
-      "available": true,
-      "capacity": 3,
-      "imageUrl": "/img/air13.jpg",
-      "description": "2019 model, good condition",
-      "seller": "u_2001",
-      "category": "electronics",
-      "condition": "used",
-      "createdAt": "2025-10-15T20:12:11Z"
-    }
-  ],
-  "total": 42,
-  "limit": 10,
-  "offset": 0
-}
+[
+  {
+    "id": 1,
+    "seller_id": 1,
+    "title": "CSE 142 Textbook",
+    "category": "books",
+    "description": "Used but good condition.",
+    "price": 18.0,
+    "stock": 4,
+    "status": null,
+    "date": "2025-11-29 13:55:09"
+  },
+  {
+    "id": 2,
+    "seller_id": 1,
+    "title": "CSE 143 Textbook",
+    "category": "books",
+    "description": "Minor wear, lots of annotations.",
+    "price": 20.0,
+    "stock": 2,
+    "status": null,
+    "date": "2025-11-29 13:55:09"
+  }
+]
 ```
 
 **Error Handling:**
 
-*400 Bad Request*
-
-*Returned Data Format*: Plain Text
-
-```
-Error: Invalid filter or pagination parameters.
-```
-
-*500 Server Error*
+*500 Server Side Error*
 
 *Returned Data Format:* Plain Text
 
 ```
-Error: Failed to load items. Please try again later.
+Error retrieving items.
 ```
 
-## *4. Item Details*
+## *3. Item Details*
 **Request Format:** */items/:id*
 
 **Request Type:** *GET*
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns detailed information about a specific item, including name, price, capacity, seller, description, category, condition, and image.*
+**Description:** *Returns the full details for a single item with the given id. The response is a single JSON object containing the columns from the items table.*
 
-**Example Request:** */items/it_301*
+**Example Request:** */items/1*
 
-**Example Response:**
+**Example Success Response (200):**
 
 ```
 {
-  "id": "it_301",
-  "name": "Used MacBook Air",
-  "price": 499.99,
-  "available": true,
-  "capacity": 3,
-  "imageUrl": "/img/air13.jpg",
-  "description": "2019 model, good condition",
-  "seller": {
-    "userId": "u_2001",
-    "username": "sarah@uw.edu"
-  },
-  "category": "electronics",
-  "condition": "used",
-  "createdAt": "2025-10-15T20:12:11Z"
+  "id": 1,
+  "seller_id": 1,
+  "title": "CSE 142 Textbook",
+  "category": "books",
+  "description": "Used but good condition.",
+  "price": 18.0,
+  "stock": 4,
+  "status": null,
+  "date": "2025-11-29 13:55:09"
 }
 ```
 
 **Error Handling:**
 
-*404 Not Found*
+*400 Bad Request – Item Not Found*
 
 *Returned Data Format:* Plain Text
 
@@ -178,163 +151,66 @@ Error: Failed to load items. Please try again later.
 Error: Item not found.
 ```
 
-## *5. Confirm Purchase*
-**Request Format:** */transactions/confirm*
-
-**Request Type:** *POST*
-
-**Returned Data Format:** JSON
-
-**Description:** *Verifies that an item is still available at its current capacity/price. If valid, returns a temporary confirmation token that must be used in the final purchase step.*
-
-**Example Request:** */transactions/confirm*
-
-*with JSON Body:*
-```
-{
-  "itemId": "it_301",
-  "quantity": 1
-}
-```
-
-**Example Response:**
-
-```
-{
-  "confirmationToken": "cfm_7b7f2b9f",
-  "item": {
-    "id": "it_301",
-    "name": "Used MacBook Air",
-    "price": 499.99
-  },
-  "quantity": 1,
-  "expiresAt": "2025-11-16T08:00:00Z"
-}
-```
-
-**Error Handling:**
-
-*401 Unauthorized*
+*500 Internal Server Error.*
 
 *Returned Data Format:* Plain Text
 
 ```
-Error": Not authenticated.
+Error retrieving item details.
 ```
 
-*400 Bad Request*
-
-*Returned Data Format:* Plain Text
-
-```
-Error: Invalid 'itemId' or 'quantity'.
-```
-
-*500 Internal Server Error*
-
-*Returned Data Format:* Plain Text
-
-```
-Error: Failed to confirm purchase.
-```
-
-
-## *6. Submit Purchase*
-**Request Format:** */transactions/submit*
-
-**Request Type:** *POST*
-
-**Returned Data Format:** JSON
-
-**Description:** *Creates a final transaction record using a valid confirmationToken. Decrements item capacity and returns a unique alphanumeric confirmation code.*
-
-**Example Request:** */transactions/submit*
-
-*with JSON Body:*
-
-```
-{
-  "confirmationToken": "cfm_7b7f2b9f"
-}
-```
-
-**Example Response:**
-
-```
-{
-  "transactionId": "tx_8842",
-  "confirmationCode": "AB12CD34",
-  "itemId": "it_301",
-  "quantity": 1,
-  "total": 499.99,
-  "time": "2025-11-16T07:12:44Z"
-}
-```
-
-**Error Handling:**
-
-*401 Unauthorized*
-
-*Returned Data Format:* Plain Text
-
-```
-Error: Not authenticated.
-```
-
-*400 Bad Request*
-
-*Returned Data Format:* Plain Text
-
-```
-Error: Missing or invalid 'confirmationToken'.
-```
-
-*500 Internal Server Error*
-
-*Returned Data Format:* Plain Text
-
-```
-Error: "Failed to complete purchase.
-```
-
-## *7. Transaction History*
-**Request Format:** */transactions?q=&sort=&limit=&offset=*
+## *4. Search Items*
+**Request Format:** */search?search=&filter=*
 
 **Request Type:** *GET*
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns a logged-in user’s past transactions. Supports keyword search and sorting (e.g., by time or price).*
-
-**Example Request:** */transactions?sort=time_desc&limit=10*
-
-**Example Response:**
+**Description:** *Performs a keyword search over items, with an optional category filter.
+search (required): substring to match against title or description.
+filter (optional): item category to filter results.
+If search is provided, the API uses a SQL query roughly like:*
 
 ```
-{
-  "transactions": [
-    {
-      "id": "tx_8842",
-      "confirmationCode": "AB12CD34",
-      "itemName": "Used MacBook Air",
-      "time": "2025-11-16T07:12:44Z",
-      "total": 499.99
-    }
-  ],
-  "total": 6,
-  "limit": 10,
-  "offset": 0
-}
+SELECT * FROM items
+WHERE title LIKE '%' || :search || '%' OR description LIKE '%' || :search || '%'
+[AND category = :filter]
+```
+
+*Results are returned as a JSON array of items rows.*
+
+**Example Request (keyword only):** *GET /search?search=textbook*
+
+**Example Request (keyword + category filter):** *GET /search?search=calculator&filter=electronics*
+
+**Example Success Response (200):**
+
+```
+[
+  {
+    "id": 3,
+    "seller_id": 2,
+    "title": "TI-84 Calculator",
+    "category": "electronics",
+    "description": "Perfect for STAT and math classes.",
+    "price": 35.0,
+    "stock": 1,
+    "status": null,
+    "date": "2025-11-29 13:55:09"
+  }
+]
 ```
 
 **Error Handling:**
 
-*401 Unauthorized*
+*400 Bad Request – Missing Search Term*
 
 *Returned Data Format:* Plain Text
 
+*If the search query parameter is missing or empty:*
+
 ```
-Error: Not authenticated.
+Missing query parameter: 'keyword'
 ```
 
 *500 Internal Server Error*
@@ -342,8 +218,152 @@ Error: Not authenticated.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Failed to load transactions.
+Search failed.
 ```
+
+## *5. Submit Purchase*
+**Request Format:** */buy*
+
+**Request Type:** *POST*
+
+**Returned Data Format:** JSON
+
+**Description:** *Creates a new purchase transaction for a single item.
+The server:
+1. Verifies that buyer_id and item_id are provided.
+2. Looks up the item by item_id.
+3. Checks that the item exists and has stock > 0.
+4. Decrements the item’s stock by 1.
+5. Inserts a new row into the transactions table with:
+    buyer_id (from request)
+    seller_id (from the item’s seller_id)
+    item_id
+    date (automatically set by the database)*
+
+**Example Request:** */buy*
+
+```
+{
+  "buyer_id": 2,
+  "item_id": 3
+}
+```
+
+**Example Success Response (200):**
+
+```
+Item purchased successfully
+```
+
+**Error Handling:**
+
+*400 Bad Request – Missing Parameters*
+
+*Returned Data Format:* Plain Text
+
+```
+Error: Missing parameter: 'buyer_id' 'item_id'.
+```
+
+*400 Bad Request – Item Does Not Exist*
+
+*Returned Data Format:* Plain Text
+
+```
+Error: Item does not exist.
+```
+
+*400 Bad Request – Item Out of Stock*
+
+*Returned Data Format:* Plain Text
+
+```
+Error: Item out of stock.
+```
+
+*500 Internal Server Error*
+
+*Returned Data Format:* Plain Text
+
+```
+Error: Transaction failed.
+```
+
+## *6. Purchase History*
+**Request Format:** */history/:user_id*
+
+**Request Type:** *GET*
+
+**Returned Data Format:** JSON
+
+**Description:** *Returns a user’s transaction history, including basic item information for each transaction.
+The route works as follows:
+1. Checks whether a user with id = :user_id exists in the users table.
+2. If the user exists, performs a join between transactions and items to get transactions where the user is either buyer or seller:
+
+```
+SELECT * FROM transactions t
+JOIN items i ON t.item_id = i.id
+WHERE t.buyer_id = :user_id OR t.seller_id = :user_id
+ORDER BY t.date DESC;
+```
+
+3. Returns the joined rows as JSON (array).*
+
+
+**Example Request:** */history/2*
+
+**Example Success Response (200):**
+
+```
+[
+  {
+    "id": 1,
+    "buyer_id": 2,
+    "seller_id": 1,
+    "item_id": 1,
+    "date": "2025-11-29 14:18:58",
+    "title": "CSE 142 Textbook",
+    "category": "books",
+    "price": 18.0,
+    "stock": 3,
+    "status": null
+  },
+  {
+    "id": 3,
+    "buyer_id": 2,
+    "seller_id": 3,
+    "item_id": 3,
+    "date": "2025-11-29 14:18:58",
+    "title": "TI-84 Calculator",
+    "category": "electronics",
+    "price": 35.0,
+    "stock": 0,
+    "status": null
+  }
+]
+```
+
+*Note: Exact field order may differ, but the idea is a merged row of transaction + item info.*
+
+**Error Handling:**
+
+*400 Bad Request – No Such User*
+
+*Returned Data Format:* Plain Text
+
+```
+Error: No such user.
+```
+
+*500 Internal Server Error*
+
+*Returned Data Format:* Plain Text
+
+```
+Error: Could not retrieve history..
+```
+
 
 ## *8. Optional Feature 1: User Registration*
 **Request Format:** */users*
