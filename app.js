@@ -45,7 +45,7 @@ app.post("/login", async (req, res) => {
         res.status(CLIENT_SIDE_ERROR)
           .send("Invalid username or password.");
       } else {
-          res.send("User login sucessfully");
+        res.send("User login sucessfully");
       }
     }
   } catch (err) {
