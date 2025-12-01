@@ -334,10 +334,9 @@
     return text || "Purchase complete!";
   }
 
-    /**
+  /**
    * Updates the status message text and fades it in, then automatically
-   * fades it out after a short delay. Uses a shared timer so that
-   * multiple quick calls do not overlap.
+   * fades it out after a short delay by toggling a "visible" CSS class.
    *
    * @param {string} message - Message text to display.
    * @param {boolean} isError - Whether to style the message as an error.
@@ -355,16 +354,15 @@
     }
 
     status.textContent = message;
-    status.style.opacity = 1;
-
     if (isError) {
       status.classList.add("error");
     } else {
       status.classList.remove("error");
     }
+    status.classList.add("visible");
 
     statusFadeTimer = setTimeout(function() {
-      status.style.opacity = 0;
+      status.classList.remove("visible");
       statusFadeTimer = null;
     }, 3000);
   }

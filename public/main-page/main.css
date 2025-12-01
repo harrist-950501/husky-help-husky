@@ -116,6 +116,10 @@ aside li:hover {
   transition: opacity 0.4s ease-in-out;
 }
 
+.status-message.visible {
+  opacity: 1;
+}
+
 .status-message.error {
   color: #b00020;
 }
