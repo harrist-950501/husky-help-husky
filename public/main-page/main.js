@@ -14,6 +14,7 @@
   // For now, assume demo logged-in user with id = 1 (see husky.db users table).
   const CURRENT_USER_ID = 1;
   const MSECOND = 100;
+  const threeSec = 3000;
 
   // Cached items from the server so we can filter client-side.
   let allItems = [];
@@ -315,8 +316,8 @@
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        buyer_id: CURRENT_USER_ID,
-        item_id: item.id
+        BUYER_ID: CURRENT_USER_ID,
+        ITEM_ID: item.id
       })
     });
 
@@ -344,8 +345,7 @@
   function showStatus(message, isError) {
     const status = id("status-message");
     if (!status) {
-      console.log(message);
-      return;
+      return message;
     }
 
     if (statusFadeTimer !== null) {
@@ -364,7 +364,7 @@
     statusFadeTimer = setTimeout(function() {
       status.classList.remove("visible");
       statusFadeTimer = null;
-    }, 3000);
+    }, threeSec);
   }
 
   /**
