@@ -22,12 +22,6 @@
    */
   function init() {
     id("back").addEventListener("click", back);
-
-    // const sort = id("transaction-sorting");
-    // if (sort) {
-    //   sort.addEventListener("change", applySortAndRender);
-    // }
-
     id("transaction-sorting").addEventListener("change", applySortAndRender);
 
     loadHistory();
@@ -81,23 +75,23 @@
   /**
    * Comparator for sorting transactions by time, newest first.
    * Assumes tx.date is a string that can be passed into Date().
-   * @param {Object} a - First transaction.
-   * @param {Object} b - Second transaction.
+   * @param {Object} first - First transaction.
+   * @param {Object} second - Second transaction.
    * @returns {number} negative if a < b, positive if a > b, 0 if equal.
    */
-  function compareByTime(a, b) {
-    if (!a.date && !b.date) {
+  function compareByTime(first, second) {
+    if (!first.date && !second.date) {
       return 0;
     }
-    if (!a.date) {
+    if (!first.date) {
       return 1;
     }
-    if (!b.date) {
+    if (!second.date) {
       return -1;
     }
 
-    const timeA = new Date(a.date).getTime();
-    const timeB = new Date(b.date).getTime();
+    const timeA = new Date(first.date).getTime();
+    const timeB = new Date(second.date).getTime();
 
     return timeB - timeA;
   }

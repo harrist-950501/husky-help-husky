@@ -340,6 +340,7 @@
    *
    * @param {string} message - Message text to display.
    * @param {boolean} isError - Whether to style the message as an error.
+   * @returns {String} message.
    */
   function showStatus(message, isError) {
     const status = id("status-message");
