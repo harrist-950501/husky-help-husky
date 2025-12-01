@@ -107,3 +107,15 @@ aside li:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(163, 155, 216, 0.25);
 }
+
+.status-message {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #555;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.status-message.error {
+  color: #b00020;
+}

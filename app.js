@@ -105,27 +105,21 @@ app.post("/buy", async (req, res) => {
     res.type("text");
     let missing = requireParams(["buyer_id", "item_id"], req.body);
     if (missing) {
-      res.status(CLIENT_SIDE_ERROR)
-        .send(missing);
+      res.status(CLIENT_SIDE_ERROR).send(missing);
     } else {
       let item = await dbItemGet(req.body.item_id);
       if (!item) {
-        res.status(CLIENT_SIDE_ERROR)
-          .send("Item does not exist.");
+        res.status(CLIENT_SIDE_ERROR).send("Item does not exist.");
+      } else if (item.stock <= 0) {
+        res.status(CLIENT_SIDE_ERROR).send("Item out of stock.");
       } else {
-        if (item.stock <= 0) {
-          res.status(CLIENT_SIDE_ERROR)
-            .send("Item out of stock.");
-        } else {
-          await dbItemStockSubtract(item.id);
-          await dbTransactionMade(req.body.buyer_id, item.seller_id, item.id);
-          res.send("Item purchased successfully");
-        }
+        await dbItemStockSubtract(item.id);
+        await dbTransactionMade(req.body.buyer_id, item.seller_id, item.id);
+        res.send("Item purchased successfully");
       }
     }
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
-      .send("Transaction failed.");
+    res.status(SERVER_SIDE_ERROR).send("Transaction failed.");
   }
 });
 
