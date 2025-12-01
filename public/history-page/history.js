@@ -52,13 +52,28 @@
   }
 
   /**
-   * Render a list of transactions into the board element.
-   * Clears any existing content and delegates per-item rendering.
+   * Render a list of transaction objects into #transaction-board.
+   *
+   * Joined row example (from your DB schema and JOIN):
+   * {
+   *   id: ...,
+   *   buyer_id: ...,
+   *   seller_id: ...,
+   *   item_id: ...,
+   *   date: "...",
+   *   title: "...",
+   *   price: ...,
+   *   category: "...",
+   *   description: "..."
+   * }
+   *
    * @param {Array<Object>} transactions - transaction rows.
    */
   function renderTransactions(transactions) {
     const board = id("transaction-board");
-    if (!board) return;
+    if (!board) {
+      return;
+    }
 
     // Clear any placeholder content.
     while (board.firstChild) {
@@ -66,50 +81,43 @@
     }
 
     if (!transactions.length) {
-      const pTag = document.createElement("p");
-      pTag.textContent = "No transactions yet.";
+      const p = document.createElement("p");
+      p.textContent = "No transactions yet.";
       board.appendChild(p);
       return;
     }
-    transactions.forEach(tx => renderTransaction(board, tx));
-  }
 
-  /**
-   * Render a single transaction object and append it to the board.
-   * Keeps this function focused so it stays under ~30 lines.
-   * @param {HTMLElement} board - container element for transactions.
-   * @param {Object} tx - single transaction row.
-   */
-  function renderTransaction(board, tx) {
-    const article = document.createElement("article");
-    article.className = "transaction";
+    transactions.forEach(tx => {
+      const article = document.createElement("article");
+      article.className = "transaction";
 
-    const title = document.createElement("h3");
-    title.textContent = tx.title || "Item #" + tx.item_id;
-    article.appendChild(title);
+      const title = document.createElement("h3");
+      title.textContent = tx.title || "Item #" + tx.item_id;
+      article.appendChild(title);
 
-    const meta = document.createElement("p");
-    meta.className = "muted";
-    const role = tx.buyer_id === CURRENT_USER_ID ? "Buyer" : "Seller";
-    const dateText = tx.date ? (" on " + tx.date) : "";
-    meta.textContent = role + dateText;
-    article.appendChild(meta);
+      const meta = document.createElement("p");
+      meta.className = "muted";
+      const role = tx.buyer_id === CURRENT_USER_ID ? "Buyer" : "Seller";
+      const dateText = tx.date ? (" on " + tx.date) : "";
+      meta.textContent = role + dateText;
+      article.appendChild(meta);
 
-    if (typeof tx.price === "number") {
-      const price = document.createElement("p");
-      price.className = "price";
-      price.textContent = "Total: $" + tx.price.toFixed(2);
-      article.appendChild(price);
-    }
+      if (typeof tx.price === "number") {
+        const price = document.createElement("p");
+        price.className = "price";
+        price.textContent = "Total: $" + tx.price.toFixed(2);
+        article.appendChild(price);
+      }
 
-    if (tx.description) {
-      const desc = document.createElement("p");
-      desc.className = "description";
-      desc.textContent = tx.description;
-      article.appendChild(desc);
-    }
+      if (tx.description) {
+        const desc = document.createElement("p");
+        desc.className = "description";
+        desc.textContent = tx.description;
+        article.appendChild(desc);
+      }
 
-    board.appendChild(article);
+      board.appendChild(article);
+    });
   }
 
   /**

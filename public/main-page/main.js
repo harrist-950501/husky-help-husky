@@ -58,6 +58,7 @@
       }
 
       const data = await resp.json();
+      // Expect data to be an array of rows from items table.
       allItems = Array.isArray(data) ? data : [];
       renderItems(allItems);
     } catch (err) {
@@ -178,6 +179,7 @@
 
     const media = document.createElement("div");
     media.className = "card-media";
+    // No image column in DB yet, so leave empty or add a placeholder later.
 
     const body = document.createElement("div");
     body.className = "card-body";
@@ -264,6 +266,7 @@
       const text = await resp.text();
 
       if (!resp.ok) {
+        // This is a *real* backend error (missing params, out of stock, etc.)
         throw new Error(text || "Purchase failed.");
       }
 
@@ -282,7 +285,7 @@
         alert("Could not complete purchase: " + err.message);
       }
 
-      return;
+      return; // don’t fall through to loadItems
     }
 
     // Reload items *after* purchase; if this throws, just log it, no scary alert.
