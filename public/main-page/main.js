@@ -275,9 +275,6 @@
     } catch (err) {
       console.error(err);
 
-      /*  If the fetch/response already succeeded but *something else* blew up
-      * (like some DOM/string pattern issue), don't lie about the purchase.
-      */
       if (purchaseDone) {
         alert("Purchase succeeded, but we had trouble updating the page. " +
               "Please refresh to see the latest stock.");
