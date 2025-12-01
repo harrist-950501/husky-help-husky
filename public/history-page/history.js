@@ -81,9 +81,9 @@
     }
 
     if (!transactions.length) {
-      const p = document.createElement("p");
-      p.textContent = "No transactions yet.";
-      board.appendChild(p);
+      const pTag = document.createElement("p");
+      pTag.textContent = "No transactions yet.";
+      board.appendChild(pTag);
       return;
     }
 

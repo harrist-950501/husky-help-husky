@@ -58,7 +58,6 @@
       }
 
       const data = await resp.json();
-      // Expect data to be an array of rows from items table.
       allItems = Array.isArray(data) ? data : [];
       renderItems(allItems);
     } catch (err) {
@@ -179,8 +178,8 @@
 
     const media = document.createElement("div");
     media.className = "card-media";
-    // No image column in DB yet, so leave empty or add a placeholder later.
 
+    // No image column in DB yet, so leave empty or add a placeholder later.
     const body = document.createElement("div");
     body.className = "card-body";
 
@@ -258,8 +257,8 @@
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          buyer_id: CURRENT_USER_ID,
-          item_id: item.id
+          BUYER_ID: CURRENT_USER_ID,
+          ITEM_ID: item.id
         })
       });
 
@@ -276,8 +275,9 @@
     } catch (err) {
       console.error(err);
 
-      // If the fetch/response already succeeded but *something else* blew up
-      // (like some DOM/string pattern issue), don't lie about the purchase.
+      /*  If the fetch/response already succeeded but *something else* blew up
+      * (like some DOM/string pattern issue), don't lie about the purchase.
+      */
       if (purchaseDone) {
         alert("Purchase succeeded, but we had trouble updating the page. " +
               "Please refresh to see the latest stock.");
@@ -285,7 +285,7 @@
         alert("Could not complete purchase: " + err.message);
       }
 
-      return; // don’t fall through to loadItems
+      return;
     }
 
     // Reload items *after* purchase; if this throws, just log it, no scary alert.
