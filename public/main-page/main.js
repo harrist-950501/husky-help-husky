@@ -327,7 +327,6 @@
       throw new Error(text || "Purchase failed.");
     }
 
-    // reload items but don't let errors crash UX
     loadItems().catch(err => {
       console.error("Error reloading items:", err);
     });

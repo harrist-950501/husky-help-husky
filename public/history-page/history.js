@@ -13,6 +13,7 @@
 (function() {
   // Same demo user id as main.js for now.
   const CURRENT_USER_ID = 1;
+  let allTransactions = [];
 
   window.addEventListener("load", init);
 
@@ -21,6 +22,14 @@
    */
   function init() {
     id("back").addEventListener("click", back);
+
+    // const sort = id("transaction-sorting");
+    // if (sort) {
+    //   sort.addEventListener("change", applySortAndRender);
+    // }
+
+    id("transaction-sorting").addEventListener("change", applySortAndRender);
+
     loadHistory();
   }
 
@@ -41,14 +50,69 @@
       }
 
       const data = await resp.json();
-      const list = Array.isArray(data) ? data : [];
-      renderTransactions(list);
+      allTransactions = Array.isArray(data) ? data : [];
+      applySortAndRender();
     } catch (err) {
       console.error(err);
       if (board) {
         board.textContent = "Could not load transactions.";
       }
     }
+  }
+
+  /**
+   * Applies the current sort selection to allTransactions and re-renders
+   * the list using renderTransactions.
+   */
+  function applySortAndRender() {
+    const select = id("transaction-sorting");
+    const criterion = select ? select.value : "time";
+    const list = allTransactions.slice();
+
+    if (criterion === "price") {
+      list.sort(compareByPrice);
+    } else {
+      list.sort(compareByTime);
+    }
+
+    renderTransactions(list);
+  }
+
+  /**
+   * Comparator for sorting transactions by time, newest first.
+   * Assumes tx.date is a string that can be passed into Date().
+   * @param {Object} a - First transaction.
+   * @param {Object} b - Second transaction.
+   * @returns {number} negative if a < b, positive if a > b, 0 if equal.
+   */
+  function compareByTime(a, b) {
+    if (!a.date && !b.date) {
+      return 0;
+    }
+    if (!a.date) {
+      return 1;
+    }
+    if (!b.date) {
+      return -1;
+    }
+
+    const timeA = new Date(a.date).getTime();
+    const timeB = new Date(b.date).getTime();
+
+    return timeB - timeA;
+  }
+
+  /**
+   * Comparator for sorting transactions by price, highest first.
+   * @param {Object} a - First transaction.
+   * @param {Object} b - Second transaction.
+   * @returns {number} negative if a < b, positive if a > b, 0 if equal.
+   */
+  function compareByPrice(a, b) {
+    const priceA = typeof a.price === "number" ? a.price : 0;
+    const priceB = typeof b.price === "number" ? b.price : 0;
+
+    return priceB - priceA;
   }
 
   /**
