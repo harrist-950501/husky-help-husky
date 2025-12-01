@@ -22,6 +22,8 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 app.use(multer().none());
 
+app.use(express.static("public"));
+
 const CLIENT_SIDE_ERROR = 400;
 const SERVER_SIDE_ERROR = 500;
 

@@ -57,7 +57,8 @@ main {
   border-radius: 30px;
   display: flex;
   justify-content: space-around;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 0 20px rgba(163, 155, 216, 0.2);
 }
 
