@@ -22,8 +22,11 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 app.use(multer().none());
 
+app.use(express.static("public"));
+
 const CLIENT_SIDE_ERROR = 400;
 const SERVER_SIDE_ERROR = 500;
+const PORTNUM = 8000;
 
 /* ROUTES */
 /**
@@ -45,7 +48,7 @@ app.post("/login", async (req, res) => {
         res.status(CLIENT_SIDE_ERROR)
           .send("Invalid username or password.");
       } else {
-        res.send("User login sucessfully");
+        res.send("User login successfully");
       }
     }
   } catch (err) {
@@ -303,5 +306,5 @@ function requireParams(params, body) {
 }
 
 app.use(express.static("public"));
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || PORTNUM;
 app.listen(PORT);

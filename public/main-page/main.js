@@ -1,49 +1,71 @@
 /**
- * main.js (frontend-only)
- * Renders a small static list of items, with basic search and a layout toggle.
- * No networking, no storage.
- * Expected DOM:
- * - #search-bar
- * - #layout-toggle (optional)
- * - #item-grid
+ * main.js
+ * Renders marketplace items from the backend, supports search, layout toggle,
+ * logout/navigation, and basic "buy" functionality.
  *
- * It allows following interactivity:
- *    A logout button to login page
- *    In navigation bar, move to the target page
+ * Backend endpoints used:
+ *  - GET  /items
+ *  - POST /buy
  */
 
 "use strict";
 
 (function() {
-  window.addEventListener("DOMContentLoaded", init);
-
-  // Tiny demo dataset. Replace with fetch later.
-  const ITEMS = [
-    {id: "bk-101", name: "CSE 143 Textbook", price: 25, image: "", tags: ["textbook", "cs"]},
-    {id: "lp-210", name: "Linear Algebra Notes", price: 5, image: "", tags: ["notes", "math"]},
-    {id: "kb-330", name: "Mechanical Keyboard", price: 45, image: "", tags: ["electronics"]},
-    {id: "cs-500", name: "Laptop Stand", price: 12, image: "", tags: ["accessories"]}
-  ];
-
+  // For now, assume demo logged-in user with id = 1 (see husky.db users table).
+  const CURRENT_USER_ID = 1;
   const MSECOND = 100;
 
+  // Cached items from the server so we can filter client-side.
+  let allItems = [];
+
+  window.addEventListener("DOMContentLoaded", init);
+
   /**
-   * Initialize toggle functionality.
-   * Rendering item list on main page
+   * Initialize page: load items, hook up search, layout toggle, and nav.
    */
   function init() {
-    renderItems(ITEMS);
+    loadItems();
+
     const search = id("search-bar");
     if (search) {
       search.addEventListener("input", debounce(onSearch, MSECOND * 2));
     }
+
     const layoutBtn = id("layout-toggle");
     if (layoutBtn) {
       layoutBtn.addEventListener("click", toggleLayout);
     }
+
     id("logout-btn").addEventListener("click", logout);
     id("open-history-page").addEventListener("click", openHistroyPage);
     id("open-profile-page").addEventListener("click", openProfilePage);
+  }
+
+  /**
+   * Fetch items from backend and render them.
+   */
+  async function loadItems() {
+    const grid = id("item-grid");
+    if (grid) {
+      grid.textContent = "Loading items...";
+    }
+
+    try {
+      const resp = await fetch("/items");
+      if (!resp.ok) {
+        const msg = await resp.text();
+        throw new Error(msg || "Failed to load items.");
+      }
+
+      const data = await resp.json();
+      allItems = Array.isArray(data) ? data : [];
+      renderItems(allItems);
+    } catch (err) {
+      console.error(err);
+      if (grid) {
+        grid.textContent = "Could not load items.";
+      }
+    }
   }
 
   /**
@@ -54,7 +76,7 @@
   }
 
   /**
-   * Open transaction histroy page
+   * Open transaction history page
    */
   function openHistroyPage() {
     window.location.href = "../history-page/history.html";
@@ -69,24 +91,28 @@
 
   /**
    * Handle search input events.
-   * Filters the `ITEMS` array by searching against the item name and tags.
+   * Filters cached items by searching against title and category.
    *
-   * @param {InputEvent} evt - The input event from the search element. The
-   *   function reads `evt.target.value` to form the query.
+   * @param {InputEvent} evt - The input event from the search element.
    */
   function onSearch(evt) {
     const que = (evt.target.value || "").trim().toLowerCase();
-    const list = ITEMS.filter(it => {
-      const hay = [it.name, (it.tags || []).join(" ")].join(" ").toLowerCase();
-      return hay.indexOf(que) >= 0;
+    const source = allItems || [];
+    if (!que) {
+      renderItems(source);
+      return;
+    }
+
+    const list = source.filter(it => {
+      const title = (it.title || "").toLowerCase();
+      const category = (it.category || "").toLowerCase();
+      return title.indexOf(que) >= 0 || category.indexOf(que) >= 0;
     });
     renderItems(list);
   }
 
   /**
    * Toggle the item grid layout between grid and list views.
-   * Adds/removes the `list` class on the `#item-grid` element. The CSS in
-   * the project should define styles for `.list` to change the layout.
    */
   function toggleLayout() {
     const grid = id("item-grid");
@@ -99,23 +125,15 @@
    * Render a collection of item objects into the DOM element with id
    * `item-grid`.
    *
-   * @param {Array<Object>} items - Array of item objects to render. Each item
-   *   is expected to have `id`, `name`, `price`, `image`, and `tags` fields.
-   * @returns {String} An warning of grid not found and nothing to render.
-   *
-   * If `items` is empty, the function inserts a muted "No items found." message.
+   * @param {Array<Object>} items - Array of item rows from the items table.
    */
   function renderItems(items) {
     const grid = id("item-grid");
     if (!grid) {
-      /*
-       * If the expected container is missing, nothing to render.
-       * Keep the behavior silent for the UI but log to aid debugging.
-       */
-      return "renderItems: #item-grid not found";
+      return;
     }
 
-    // Clear existing children without using innerHTML for safety.
+    // Clear existing children.
     while (grid.firstChild) {
       grid.removeChild(grid.firstChild);
     }
@@ -136,38 +154,82 @@
 
   /**
    * Create a DOM element representing an item card.
-   * Uses DOM APIs (createElement, appendChild, textContent) instead of
-   * setting `innerHTML` so content is safer and easier to manipulate.
+   *
+   * Expects backend item row shape:
+   * {
+   *   id: number,
+   *   seller_id: number,
+   *   title: string,
+   *   category: string,
+   *   description: string,
+   *   price: number,
+   *   stock: number,
+   *   status: string | null,
+   *   date: string
+   * }
    *
    * @param {Object} it - Item object.
-   * @returns {HTMLElement} The constructed <article> element ready to append.
+   * @returns {HTMLElement} The constructed <article> element.
    */
   function createCardElement(it) {
     const card = document.createElement("article");
     card.classList.add("item");
+    card.dataset.itemId = it.id;
 
     const media = document.createElement("div");
     media.className = "card-media";
-    if (it.image) {
-      const img = document.createElement("img");
-      img.alt = "";
-      img.src = it.image;
-      media.appendChild(img);
-    }
 
+    // No image column in DB yet, so leave empty or add a placeholder later.
     const body = document.createElement("div");
     body.className = "card-body";
 
     const h3 = document.createElement("h3");
-    h3.textContent = it.name || "Item";
+    h3.textContent = it.title || "Item";
     body.appendChild(h3);
 
-    if (it.price !== null && it.price !== undefined) {
-      const pTag = document.createElement("p");
-      pTag.className = "price";
-      pTag.textContent = "$" + it.price;
-      body.appendChild(pTag);
+    const meta = document.createElement("p");
+    meta.className = "muted";
+    const category = it.category ? " • " + it.category : "";
+    meta.textContent = "Seller #" + it.seller_id + category;
+    body.appendChild(meta);
+
+    if (it.description) {
+      const desc = document.createElement("p");
+      desc.className = "description";
+      desc.textContent = it.description;
+      body.appendChild(desc);
     }
+
+    if (typeof it.price === "number") {
+      const price = document.createElement("p");
+      price.className = "price";
+      price.textContent = "$" + it.price.toFixed(2);
+      body.appendChild(price);
+    }
+
+    if (typeof it.stock === "number") {
+      const stock = document.createElement("p");
+      stock.className = "stock";
+      stock.textContent = "Stock: " + it.stock;
+      body.appendChild(stock);
+    }
+
+    const buyBtn = document.createElement("button");
+    buyBtn.type = "button";
+    buyBtn.className = "buy-btn";
+    buyBtn.textContent = "Buy";
+
+    // Disable button if out of stock.
+    if (typeof it.stock === "number" && it.stock <= 0) {
+      buyBtn.disabled = true;
+      buyBtn.textContent = "Out of stock";
+    } else {
+      buyBtn.addEventListener("click", function() {
+        handleBuy(it);
+      });
+    }
+
+    body.appendChild(buyBtn);
 
     card.appendChild(media);
     card.appendChild(body);
@@ -175,13 +237,67 @@
   }
 
   /**
+   * Handles buy button click: confirm and call backend /buy.
+   * @param {Object} item - item object.
+   */
+  async function handleBuy(item) {
+    const ok = window.confirm(
+      "Buy \"" + (item.title || "this item") + "\" for $" + item.price + "?"
+    );
+    if (!ok) {
+      return;
+    }
+
+    let purchaseDone = false;
+
+    try {
+      const resp = await fetch("/buy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          BUYER_ID: CURRENT_USER_ID,
+          ITEM_ID: item.id
+        })
+      });
+
+      const text = await resp.text();
+
+      if (!resp.ok) {
+        // This is a *real* backend error (missing params, out of stock, etc.)
+        throw new Error(text || "Purchase failed.");
+      }
+
+      purchaseDone = true;
+      alert(text || "Purchase complete!"); // "Item purchased successfully"
+
+    } catch (err) {
+      console.error(err);
+
+      if (purchaseDone) {
+        alert("Purchase succeeded, but we had trouble updating the page. " +
+              "Please refresh to see the latest stock.");
+      } else {
+        alert("Could not complete purchase: " + err.message);
+      }
+
+      return;
+    }
+
+    // Reload items *after* purchase; if this throws, just log it, no scary alert.
+    loadItems().catch(err => {
+      console.error("Error reloading items:", err);
+    });
+  }
+
+  /**
    * Return a debounced version of `fn` that waits `ms` milliseconds after the
-   * last call before invoking. Useful for throttling rapid input events like
-   * `input` on a text field.
+   * last call before invoking it.
    *
-   * @param {Function} fn - Function to debounce.
-   * @param {number} ms - Milliseconds to wait; defaults to SECOND constant.
-   * @returns {Function} Debounced wrapper function.
+   * @param {Function} fn - function to debounce.
+   * @param {number} ms - delay in milliseconds.
+   * @returns {Function} debounced function.
    */
   function debounce(fn, ms) {
     let timer = null;
