@@ -14,9 +14,11 @@
   // For now, assume demo logged-in user with id = 1 (see husky.db users table).
   const CURRENT_USER_ID = 1;
   const MSECOND = 100;
+  const threeSec = 3000;
 
   // Cached items from the server so we can filter client-side.
   let allItems = [];
+  let statusFadeTimer = null;
 
   window.addEventListener("DOMContentLoaded", init);
 
@@ -153,36 +155,64 @@
   }
 
   /**
-   * Create a DOM element representing an item card.
+   * Creates a complete <article> item card, including media and body sections.
+   * This is the main entry point used by renderItems().
    *
-   * Expects backend item row shape:
-   * {
-   *   id: number,
-   *   seller_id: number,
-   *   title: string,
-   *   category: string,
-   *   description: string,
-   *   price: number,
-   *   stock: number,
-   *   status: string | null,
-   *   date: string
-   * }
-   *
-   * @param {Object} it - Item object.
-   * @returns {HTMLElement} The constructed <article> element.
+   * @param {Object} it - Item row from the backend (id, title, seller_id, etc.).
+   * @returns {HTMLElement} The constructed <article> card element.
    */
   function createCardElement(it) {
     const card = document.createElement("article");
     card.classList.add("item");
     card.dataset.itemId = it.id;
 
+    const media = createCardMedia();
+    const body = createCardBody(it);
+
+    card.appendChild(media);
+    card.appendChild(body);
+    return card;
+  }
+
+  /**
+   * Creates the media container for an item card.
+   * Currently empty since the database does not include images yet, but
+   * this function exists to keep structure modular for future extension.
+   *
+   * @returns {HTMLElement} <div> representing the media section.
+   */
+  function createCardMedia() {
     const media = document.createElement("div");
     media.className = "card-media";
+    return media;
+  }
 
-    // No image column in DB yet, so leave empty or add a placeholder later.
+  /**
+   * Builds the full body section for an item card, including title,
+   * description, price, stock, and the Buy button.
+   *
+   * @param {Object} it - Full item row.
+   * @returns {HTMLElement} The <div> card-body section ready to insert.
+   */
+  function createCardBody(it) {
     const body = document.createElement("div");
     body.className = "card-body";
 
+    addCardTitleSection(body, it);
+    addCardDescription(body, it);
+    addCardPrice(body, it);
+    addCardStockAndButton(body, it);
+
+    return body;
+  }
+
+  /**
+   * Inserts the item title and seller/category metadata into the card body.
+   *
+   * @param {HTMLElement} body - Card body container.
+   * @param {Object} it - Item row with title, seller_id, and category fields.
+   */
+  function addCardTitleSection(body, it) {
     const h3 = document.createElement("h3");
     h3.textContent = it.title || "Item";
     body.appendChild(h3);
@@ -192,21 +222,48 @@
     const category = it.category ? " • " + it.category : "";
     meta.textContent = "Seller #" + it.seller_id + category;
     body.appendChild(meta);
+  }
 
-    if (it.description) {
-      const desc = document.createElement("p");
-      desc.className = "description";
-      desc.textContent = it.description;
-      body.appendChild(desc);
+  /**
+   * Adds a description paragraph to the card body if the item has one.
+   *
+   * @param {HTMLElement} body - Card body container.
+   * @param {Object} it - Item row possibly containing a description.
+   */
+  function addCardDescription(body, it) {
+    if (!it.description) {
+      return;
     }
+    const desc = document.createElement("p");
+    desc.className = "description";
+    desc.textContent = it.description;
+    body.appendChild(desc);
+  }
 
-    if (typeof it.price === "number") {
-      const price = document.createElement("p");
-      price.className = "price";
-      price.textContent = "$" + it.price.toFixed(2);
-      body.appendChild(price);
+  /**
+   * Adds a formatted price line to the card body if a price is provided.
+   *
+   * @param {HTMLElement} body - Card body container.
+   * @param {Object} it - Item row with a numeric price field.
+   */
+  function addCardPrice(body, it) {
+    if (typeof it.price !== "number") {
+      return;
     }
+    const price = document.createElement("p");
+    price.className = "price";
+    price.textContent = "$" + it.price.toFixed(2);
+    body.appendChild(price);
+  }
 
+  /**
+   * Adds a stock count and Buy button to the card body. The Buy button
+   * disables itself automatically for items with zero stock.
+   *
+   * @param {HTMLElement} body - Card body container.
+   * @param {Object} it - Item row with stock and id fields.
+   */
+  function addCardStockAndButton(body, it) {
     if (typeof it.stock === "number") {
       const stock = document.createElement("p");
       stock.className = "stock";
@@ -217,78 +274,97 @@
     const buyBtn = document.createElement("button");
     buyBtn.type = "button";
     buyBtn.className = "buy-btn";
-    buyBtn.textContent = "Buy";
 
-    // Disable button if out of stock.
     if (typeof it.stock === "number" && it.stock <= 0) {
       buyBtn.disabled = true;
       buyBtn.textContent = "Out of stock";
     } else {
+      buyBtn.textContent = "Buy";
       buyBtn.addEventListener("click", function() {
         handleBuy(it);
       });
     }
 
     body.appendChild(buyBtn);
-
-    card.appendChild(media);
-    card.appendChild(body);
-    return card;
   }
 
   /**
-   * Handles buy button click: confirm and call backend /buy.
-   * @param {Object} item - item object.
+   * Public entry point for handling a user’s Buy request.
+   * Delegates purchase logic to performPurchase() and reports result
+   * to the user using showStatus().
+   *
+   * @param {Object} item - Item row containing id and price information.
    */
-  async function handleBuy(item) {
-    const ok = window.confirm(
-      "Buy \"" + (item.title || "this item") + "\" for $" + item.price + "?"
-    );
-    if (!ok) {
-      return;
+  function handleBuy(item) {
+    performPurchase(item)
+      .then(msg => showStatus(msg, false))
+      .catch(err => showStatus("Could not complete purchase: " + err.message, true));
+  }
+
+  /**
+   * Sends a POST /buy request to the backend and returns a resolved
+   * message string on success, or rejects with an Error on failure.
+   * Also triggers a refresh via loadItems() after a successful purchase.
+   *
+   * @param {Object} item - Item being purchased.
+   * @returns {Promise<string>} Resolves with success message text.
+   */
+  async function performPurchase(item) {
+    const resp = await fetch("/buy", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        BUYER_ID: CURRENT_USER_ID,
+        ITEM_ID: item.id
+      })
+    });
+
+    const text = await resp.text();
+
+    if (!resp.ok) {
+      throw new Error(text || "Purchase failed.");
     }
 
-    let purchaseDone = false;
-
-    try {
-      const resp = await fetch("/buy", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          BUYER_ID: CURRENT_USER_ID,
-          ITEM_ID: item.id
-        })
-      });
-
-      const text = await resp.text();
-
-      if (!resp.ok) {
-        // This is a *real* backend error (missing params, out of stock, etc.)
-        throw new Error(text || "Purchase failed.");
-      }
-
-      purchaseDone = true;
-      alert(text || "Purchase complete!"); // "Item purchased successfully"
-
-    } catch (err) {
-      console.error(err);
-
-      if (purchaseDone) {
-        alert("Purchase succeeded, but we had trouble updating the page. " +
-              "Please refresh to see the latest stock.");
-      } else {
-        alert("Could not complete purchase: " + err.message);
-      }
-
-      return;
-    }
-
-    // Reload items *after* purchase; if this throws, just log it, no scary alert.
     loadItems().catch(err => {
       console.error("Error reloading items:", err);
     });
+
+    return text || "Purchase complete!";
+  }
+
+  /**
+   * Updates the status message text and fades it in, then automatically
+   * fades it out after a short delay by toggling a "visible" CSS class.
+   *
+   * @param {string} message - Message text to display.
+   * @param {boolean} isError - Whether to style the message as an error.
+   * @returns {String} message.
+   */
+  function showStatus(message, isError) {
+    const status = id("status-message");
+    if (!status) {
+      return message;
+    }
+
+    if (statusFadeTimer !== null) {
+      clearTimeout(statusFadeTimer);
+      statusFadeTimer = null;
+    }
+
+    status.textContent = message;
+    if (isError) {
+      status.classList.add("error");
+    } else {
+      status.classList.remove("error");
+    }
+    status.classList.add("visible");
+
+    statusFadeTimer = setTimeout(function() {
+      status.classList.remove("visible");
+      statusFadeTimer = null;
+    }, threeSec);
   }
 
   /**

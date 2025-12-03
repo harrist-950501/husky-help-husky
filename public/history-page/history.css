@@ -20,7 +20,9 @@ header {
   margin-top: 20px;
 }
 
-#search-bar {
+#transaction-page {
+  text-align: center;
+  font-size: large;
   width: 40%;
   padding: 10px 15px;
   border: 2px solid #c8bfe7;
@@ -29,11 +31,6 @@ header {
   transition: 0.3s;
   margin-left: auto;
   margin-right: auto;
-}
-
-#search-bar:focus {
-  border-color: #a39bd8;
-  box-shadow: 0 0 8px rgba(163, 155, 216, 0.3);
 }
 
 #back {
