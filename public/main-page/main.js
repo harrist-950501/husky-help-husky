@@ -74,7 +74,7 @@
    * Logout. Back to login page
    */
   function logout() {
-    window.location.href = "../login-page/login.html";
+    window.location.href = "../index.html";
   }
 
   /**

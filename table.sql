@@ -1,0 +1,38 @@
+CREATE TABLE "sqlite_sequence" (
+	"name"	,
+	"seq"
+);
+
+CREATE TABLE "users" (
+	"id"	INTEGER,
+	"username"	TEXT NOT NULL UNIQUE,
+	"email"	TEXT NOT NULL UNIQUE,
+	"password"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+CREATE TABLE "items" (
+	"id"	INTEGER,
+	"seller_id"	INTEGER NOT NULL,
+	"title"	TEXT NOT NULL,
+	"category"	TEXT NOT NULL,
+	"description"	TEXT,
+	"price"	REAL NOT NULL,
+	"stock"	INTEGER NOT NULL,
+	"status"	TEXT,
+	"date"	DATETIME DEFAULT (datetime('now', 'localtime')),
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("seller_id") REFERENCES "users"("id")
+);
+
+CREATE TABLE "transactions" (
+	"id"	INTEGER,
+	"buyer_id"	INTEGER NOT NULL,
+	"seller_id"	INTEGER NOT NULL,
+	"item_id"	INTEGER NOT NULL,
+	"date"	DATETIME DEFAULT (datetime('now', 'localtime')),
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("buyer_id") REFERENCES "users"("id"),
+	FOREIGN KEY("item_id") REFERENCES "items"("id"),
+	FOREIGN KEY("seller_id") REFERENCES "users"("id")
+);

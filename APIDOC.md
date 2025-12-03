@@ -148,7 +148,7 @@ Error retrieving items.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Item not found.
+Item not found.
 ```
 
 *500 Internal Server Error.*
@@ -226,7 +226,7 @@ Search failed.
 
 **Request Type:** *POST*
 
-**Returned Data Format:** JSON
+**Returned Data Format:** Plain text
 
 **Description:** *Creates a new purchase transaction for a single item.
 The server:
@@ -252,7 +252,7 @@ The server:
 **Example Success Response (200):**
 
 ```
-Item purchased successfully
+JHDNV3VM
 ```
 
 **Error Handling:**
@@ -262,7 +262,7 @@ Item purchased successfully
 *Returned Data Format:* Plain Text
 
 ```
-Error: Missing parameter: 'buyer_id' 'item_id'.
+Missing parameter: 'buyer_id' 'item_id'.
 ```
 
 *400 Bad Request – Item Does Not Exist*
@@ -270,7 +270,7 @@ Error: Missing parameter: 'buyer_id' 'item_id'.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Item does not exist.
+Item does not exist.
 ```
 
 *400 Bad Request – Item Out of Stock*
@@ -278,7 +278,7 @@ Error: Item does not exist.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Item out of stock.
+Item out of stock.
 ```
 
 *500 Internal Server Error*
@@ -286,7 +286,7 @@ Error: Item out of stock.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Transaction failed.
+Transaction failed.
 ```
 
 ## *6. Purchase History*
@@ -353,7 +353,7 @@ ORDER BY t.date DESC;
 *Returned Data Format:* Plain Text
 
 ```
-Error: No such user.
+No such user.
 ```
 
 *500 Internal Server Error*
@@ -361,7 +361,7 @@ Error: No such user.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Could not retrieve history..
+Could not retrieve history..
 ```
 
 # *Future Extensions (Not Implemented)*
@@ -405,7 +405,7 @@ Error: Could not retrieve history..
 *Returned Data Format:* Plain Text
 
 ```
-Error: Provide valid 'username', 'email', and 'password'.
+Provide valid 'username', 'email', and 'password'.
 ```
 
 *500 Internal Server Error*
@@ -413,7 +413,7 @@ Error: Provide valid 'username', 'email', and 'password'.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Failed to create user.
+Failed to create user.
 ```
 
 ## *8. Optional Feature 2: Ratings — Retrieve Ratings*
@@ -451,7 +451,7 @@ Error: Failed to create user.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Item not found.
+Item not found.
 ```
 
 *500 Internal Server Error*
@@ -459,7 +459,7 @@ Error: Item not found.
 *Returned Data Format:* Plain Text
 
 ```
-Error: "Failed to load ratings.
+"Failed to load ratings.
 ```
 
 ## *9. User Profile*
@@ -499,7 +499,7 @@ Error: "Failed to load ratings.
 *Returned Data Format:* Plain Text
 
 ```
-Error: User not found.
+User not found.
 ```
 
 *500 Internal Server Error*
@@ -507,5 +507,5 @@ Error: User not found.
 *Returned Data Format:* Plain Text
 
 ```
-Error: Failed to load user profile.
+Failed to load user profile.
 ```

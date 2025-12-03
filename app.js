@@ -114,8 +114,12 @@ app.post("/buy", async (req, res) => {
         res.status(CLIENT_SIDE_ERROR).send("Item out of stock.");
       } else {
         await dbItemStockSubtract(item.id);
-        await dbTransactionMade(req.body.buyer_id, item.seller_id, item.id);
-        res.send("Item purchased successfully");
+        let code = generateCode();
+        while (await dbCheckCodeDuplicate(code)) {
+          code = generateCode();
+        }
+        await dbTransactionMade(req.body.buyer_id, item.seller_id, item.id, code);
+        res.send(code);
       }
     }
   } catch (err) {
@@ -224,10 +228,11 @@ async function dbItemStockSubtract(id) {
  * @param {number} sellerId - Id of the user selling the item.
  * @param {number} itemId - Id of the item being purchased.
  */
-async function dbTransactionMade(buyerId, sellerId, itemId) {
-  let query = "INSERT INTO transactions (buyer_id, seller_id, item_id) VALUES (?, ?, ?)";
+async function dbTransactionMade(buyerId, sellerId, itemId, code) {
+  let query = "INSERT INTO transactions (buyer_id, seller_id, item_id, confirmation_code) " +
+    "VALUES (?, ?, ?, ?)";
   let db = await getDBConnection();
-  await db.run(query, [buyerId, sellerId, itemId]);
+  await db.run(query, [buyerId, sellerId, itemId, code]);
   await db.close();
 }
 
@@ -261,6 +266,18 @@ async function dbTransactionUserGet(id) {
   return transactions;
 }
 
+async function dbCheckCodeDuplicate(code) {
+  let db = await getDBConnection();
+  let query = "SELECT *FROM transactions WHERE confirmation_code = ?";
+  let transaction = await db.get(query, [code]);
+  await db.close();
+  if (transaction) {
+    return true;
+  }
+  return false;
+}
+
+
 /* DB CONNECTION */
 /**
  * RENA: THIS IS COPIED FROM LEC SLIDE, WE SHOULD CHANGE TO OUR OWN VER!!
@@ -276,7 +293,6 @@ async function getDBConnection() {
   });
   return db;
 }
-
 /* HELPERS */
 /**
  * Checks that all required parameters exist on the given request body object.
@@ -298,6 +314,14 @@ function requireParams(params, body) {
   message += ".";
   return message;
 }
+
+function generateCode() {
+  return Math.random()
+    .toString(36)
+    .substring(2, 10)
+    .toUpperCase();
+}
+
 
 app.use(express.static("public"));
 const PORT = process.env.PORT || PORTNUM;
