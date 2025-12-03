@@ -26,7 +26,7 @@
    * Initialize page: load items, hook up search, layout toggle, and nav.
    */
   function init() {
-    loadItems();
+    // loadItems();
 
     const search = id("search-bar");
     if (search) {
@@ -47,26 +47,31 @@
    * Fetch items from backend and render them.
    */
   async function loadItems() {
-    const grid = id("item-grid");
-    if (grid) {
-      grid.textContent = "Loading items...";
-    }
+    // let grid = id("item-grid");
+    // if (grid) {
+    //   grid.textContent = "Loading items...";
+    // }
 
     try {
-      const resp = await fetch("/items");
-      if (!resp.ok) {
-        const msg = await resp.text();
-        throw new Error(msg || "Failed to load items.");
-      }
+      let res = await fetch("/items");
 
-      const data = await resp.json();
-      allItems = Array.isArray(data) ? data : [];
-      renderItems(allItems);
+      res = await statusCheck(res);
+      // if (!resp.ok) {
+      //   const msg = await resp.text();
+      //   throw new Error(msg || "Failed to load items.");
+      // }
+
+      let items = await resp.json();
+      items.forEach(item => {
+        createCardElement(item);
+      })
+      // allItems = Array.isArray(data) ? data : [];
+      // renderItems(allItems);
     } catch (err) {
       console.error(err);
-      if (grid) {
-        grid.textContent = "Could not load items.";
-      }
+      // if (grid) {
+      //   grid.textContent = "Could not load items.";
+      // }
     }
   }
 
@@ -158,16 +163,16 @@
    * Creates a complete <article> item card, including media and body sections.
    * This is the main entry point used by renderItems().
    *
-   * @param {Object} it - Item row from the backend (id, title, seller_id, etc.).
+   * @param {Object} item - Item row from the backend (id, title, seller_id, etc.).
    * @returns {HTMLElement} The constructed <article> card element.
    */
-  function createCardElement(it) {
-    const card = document.createElement("article");
+  function createCardElement(item) {
+    let card = document.createElement("article");
     card.classList.add("item");
-    card.dataset.itemId = it.id;
+    card.dataset.itemId = item.id;
 
-    const media = createCardMedia();
-    const body = createCardBody(it);
+    let media = createCardMedia();
+    let body = createCardBody(item);
 
     card.appendChild(media);
     card.appendChild(body);
@@ -182,8 +187,8 @@
    * @returns {HTMLElement} <div> representing the media section.
    */
   function createCardMedia() {
-    const media = document.createElement("div");
-    media.className = "card-media";
+    let media = document.createElement("div");
+    media.classList.add("card-media");
     return media;
   }
 
@@ -384,6 +389,20 @@
         fn.apply(null, args);
       }, ms || MSECOND * 2);
     };
+  }
+
+  /**
+   * Helper function to return the response's result text if successful, otherwise
+   * returns the rejected Promise result with an error status and corresponding text
+   * @param {object} res - response to check for success/error
+   * @return {object} - valid response if response was successful, otherwise rejected
+   *                    Promise result
+   */
+  async function statusCheck(res) {
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+    return res;
   }
 
   /**
