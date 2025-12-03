@@ -277,7 +277,6 @@ async function dbCheckCodeDuplicate(code) {
   return false;
 }
 
-
 /* DB CONNECTION */
 /**
  * RENA: THIS IS COPIED FROM LEC SLIDE, WE SHOULD CHANGE TO OUR OWN VER!!
@@ -293,6 +292,7 @@ async function getDBConnection() {
   });
   return db;
 }
+
 /* HELPERS */
 /**
  * Checks that all required parameters exist on the given request body object.
@@ -321,7 +321,6 @@ function generateCode() {
     .substring(2, 10)
     .toUpperCase();
 }
-
 
 app.use(express.static("public"));
 const PORT = process.env.PORT || PORTNUM;
