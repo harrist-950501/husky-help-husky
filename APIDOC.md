@@ -160,24 +160,17 @@ Error retrieving item details.
 ```
 
 ## *4. Search Items*
-**Request Format:** */search?search=&filter=*
+**Request Format:** */search?search=*
 
 **Request Type:** *GET*
 
 **Returned Data Format:** JSON
 
-**Description:** *Performs a keyword search over items, with an optional category filter.
-search (required): substring to match against title or description.
-filter (optional): item category to filter results.
-If search is provided, the API uses a SQL query roughly like:*
+**Description:** *Searches items by keyword. Optional category filtering is supported.*
 
-```
-SELECT * FROM items
-WHERE title LIKE '%' || :search || '%' OR description LIKE '%' || :search || '%'
-[AND category = :filter]
-```
-
-*Results are returned as a JSON array of items rows.*
+**Query Parameters**
+search (required): text to match
+filter (optional): category name
 
 **Example Request (keyword only):** *GET /search?search=textbook*
 
@@ -228,17 +221,7 @@ Search failed.
 
 **Returned Data Format:** Plain text
 
-**Description:** *Creates a new purchase transaction for a single item.
-The server:
-1. Verifies that buyer_id and item_id are provided.
-2. Looks up the item by item_id.
-3. Checks that the item exists and has stock > 0.
-4. Decrements the item’s stock by 1.
-5. Inserts a new row into the transactions table with:
-    buyer_id (from request)
-    seller_id (from the item’s seller_id)
-    item_id
-    date (automatically set by the database)*
+**Description:** *Look up for the item customer wants to buy, creates a purchase record for an item and updates its availability after buying.*
 
 **Example Request:** */buy*
 
@@ -296,20 +279,7 @@ Transaction failed.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns a user’s transaction history, including basic item information for each transaction.
-The route works as follows:
-1. Checks whether a user with id = :user_id exists in the users table.
-2. If the user exists, performs a join between transactions and items to get transactions where the user is either buyer or seller:
-
-```
-SELECT * FROM transactions t
-JOIN items i ON t.item_id = i.id
-WHERE t.buyer_id = :user_id OR t.seller_id = :user_id
-ORDER BY t.date DESC;
-```
-
-3. Returns the joined rows as JSON (array).*
-
+**Description:** *Returns a list of user’s transaction history, including time, price and item information for each transaction.*
 
 **Example Request:** */history/2*
 
