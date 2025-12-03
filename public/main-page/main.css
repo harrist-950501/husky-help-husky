@@ -4,7 +4,7 @@
 */
 /* ===== Left Navigation ===== */
 aside {
-  flex-basis: 240px;
+  flex-basis: 200px;
   background: #F4F1FA;
   display: flex;
   flex-direction: column;
@@ -13,10 +13,24 @@ aside {
   border-right: 2px solid #E0DAF3;
 }
 
+aside.collapsed {
+  flex-basis: 35px;
+  padding: 16px 10px;
+}
+
+html[data-theme="dark"] aside {
+  background: #2d2740;
+  border-right-color: #4b4268;
+}
+
 aside header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+aside.collapsed header{
+  justify-content: center;
 }
 
 aside h1 {
@@ -24,6 +38,10 @@ aside h1 {
   font-size: 1.5em;
   color: #7E6FCF;
   margin: 0;
+}
+
+html[data-theme="dark"] aside h1 {
+  color: #e4ddff;
 }
 
 aside ul {
@@ -40,22 +58,35 @@ aside li {
   transition-duration: 0s, 0.3s;
 }
 
+html[data-theme="dark"] aside li {
+  color: #c7c2f0;
+}
+
 aside li:hover {
   background-color: #E8E3F5;
   transform: scale(1.1);
 }
 
+html[data-theme="dark"] aside li:hover {
+  background-color: #3a3454;
+}
+
 /* ===== Right Content ===== */
-#content {
+#content-view {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  overflow-y: auto;
   padding: 30px;
 }
 
+html[data-theme="dark"] #content-view {
+  background: transparent;
+}
+
 /* ===== Top Bar ===== */
-#content header {
+#content-view header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -72,15 +103,30 @@ aside li:hover {
   transition: 0.3s;
 }
 
+html[data-theme="dark"] #search-bar {
+  background: #312e3f;
+  border-color: #4b4268;
+  color: #e5e7ff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] #search-bar::placeholder {
+  color: #9f9ac5;
+}
+
 #search-bar:focus {
   border-color: #A39BD8;
   box-shadow: 0 0 8px rgba(163, 155, 216, 0.3);
 }
 
 #profile-pic {
-  width: 50px;
+  width: 80px;
   border-radius: 50%;
   border: 2px solid #A39BD8;
+}
+
+html[data-theme="dark"] #profile-pic {
+  border-color: #7c6de0;
 }
 
 /* ===== Item Board ===== */
@@ -106,13 +152,23 @@ aside li:hover {
   font-weight: 500;
   box-shadow: 0 0 0 1px rgba(111, 66, 193, 0.08);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  height: 240px;
   width: 95%;
-  cursor: pointer;
+}
+
+html[data-theme="dark"] .item-card {
+  background: #312f3a;
+  border-color: #4b4268;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
 }
 
 .item-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="dark"] .item-card:hover {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.85);
 }
 
 .img-container {
@@ -125,6 +181,7 @@ aside li:hover {
   width: 180px;
   object-fit: cover;
   border-radius: 0.9rem;
+  cursor: pointer;
 }
 
 .metainfo {
@@ -137,11 +194,50 @@ aside li:hover {
 
 .title {
   margin: 0;
+  position: relative;
   color: #1f2143;
+  transition: color 0.15s ease;
+  cursor: pointer;
+}
+
+html[data-theme="dark"] .title {
+  color: #f8f7ff;
+}
+
+.title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.18rem;
+  width: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  transition: width 0.18s ease-out;
+}
+
+html[data-theme="dark"] .title::after {
+  background: linear-gradient(90deg, #a855f7, #fb7185);
+}
+
+.title:hover {
+  color: #6d28d9;
+}
+
+html[data-theme="dark"] .title:hover {
+  color: #c4b5fd;
+}
+
+.title:hover::after {
+  width: 100%;
 }
 
 .rating {
   color: #6b21a8;
+}
+
+html[data-theme="dark"] .rating {
+  color: #d8b4fe;
 }
 
 .rating span {
@@ -149,15 +245,29 @@ aside li:hover {
   margin-left: 0.25rem;
 }
 
+html[data-theme="dark"] .rating span {
+  color: #e5e7eb;
+}
+
 .price {
   font-weight: 700;
   color: #4c1d95;
 }
 
-.cart-btn {
+html[data-theme="dark"] .price {
+  color: #f5e1ff;
+}
+
+.item-card button {
   margin-top: 0.6rem;
   align-self: flex-start;
   padding: 0.35rem 0.9rem;
+}
+
+html[data-theme="dark"] .item-card button {
+  background: linear-gradient(120deg, #8b5cf6, #ec4899);
+  color: #f9fafb;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
 }
 
 /* .status-message {

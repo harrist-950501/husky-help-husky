@@ -41,12 +41,12 @@ html[data-theme="dark"] body {
 
 html[data-theme="dark"] #theme-toggle {
   background-color: #342B4A;
-  color: #1c0978;
 }
 
 html[data-theme="dark"] main {
-  background: #3e3d40;
-  border: 5px solid #57565b;
+  background: #26242f;
+  border-color: #4b4268;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
 }
 
 main {
@@ -57,7 +57,8 @@ main {
   border-radius: 30px;
   display: flex;
   justify-content: space-around;
-  overflow-y: auto;
+  align-items: stretch;
+  overflow-y: hidden;
   overflow-x: hidden;
   box-shadow: 0 0 20px rgba(163, 155, 216, 0.2);
 }
@@ -72,6 +73,10 @@ button {
   padding: 8px 16px;
   cursor: pointer;
   transition: 0.3s;
+}
+
+html[data-theme="dark"] button {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
 }
 
 button:hover {

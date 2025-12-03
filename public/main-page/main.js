@@ -26,52 +26,56 @@
    * Initialize page: load items, hook up search, layout toggle, and nav.
    */
   function init() {
-    // loadItems();
+    loadItems();
 
-    const search = id("search-bar");
-    if (search) {
-      search.addEventListener("input", debounce(onSearch, MSECOND * 2));
-    }
+    // const search = id("search-bar");
+    // if (search) {
+    //   search.addEventListener("input", debounce(onSearch, MSECOND * 2));
+    // }
 
     const layoutBtn = id("layout-toggle");
     if (layoutBtn) {
       layoutBtn.addEventListener("click", toggleLayout);
     }
 
+    id("nav-toggle-btn").addEventListener("click", navToggle);
     id("logout-btn").addEventListener("click", logout);
     id("open-history-page").addEventListener("click", openHistroyPage);
     id("open-profile-page").addEventListener("click", openProfilePage);
+  }
+
+  function navToggle() {
+    qs("aside").classList.toggle("collapsed");
+    qs("aside h1").classList.toggle("hidden");
+    qs("aside section").classList.toggle("hidden");
+    qs("aside footer").classList.toggle("hidden");
   }
 
   /**
    * Fetch items from backend and render them.
    */
   async function loadItems() {
-    // let grid = id("item-grid");
-    // if (grid) {
-    //   grid.textContent = "Loading items...";
-    // }
+    let board = id("item-board");
+    // board.textContent = "Loading items...";
 
     try {
       let res = await fetch("/items");
-
       res = await statusCheck(res);
       // if (!resp.ok) {
       //   const msg = await resp.text();
       //   throw new Error(msg || "Failed to load items.");
       // }
 
-      let items = await resp.json();
+      let items = await res.json();
       items.forEach(item => {
-        createCardElement(item);
+        let card = createCardElement(item);
+        board.appendChild(card);
       })
       // allItems = Array.isArray(data) ? data : [];
       // renderItems(allItems);
     } catch (err) {
       console.error(err);
-      // if (grid) {
-      //   grid.textContent = "Could not load items.";
-      // }
+      board.textContent = "Could not load items.";
     }
   }
 
@@ -167,48 +171,88 @@
    * @returns {HTMLElement} The constructed <article> card element.
    */
   function createCardElement(item) {
-    let card = document.createElement("article");
-    card.classList.add("item");
-    card.dataset.itemId = item.id;
+    let card = gen("article");
+    card.classList.add("item-card");
+    // card.id = item.id;
 
-    let media = createCardMedia();
-    let body = createCardBody(item);
+    // card.appendChild(metainfo);
 
-    card.appendChild(media);
-    card.appendChild(body);
+
+    // let body = createCardBody(item);
+
+    card.appendChild(createCardImg(item.title));
+    card.appendChild(createCardMeta(item.title, item.price));
     return card;
   }
 
-  /**
-   * Creates the media container for an item card.
-   * Currently empty since the database does not include images yet, but
-   * this function exists to keep structure modular for future extension.
-   *
-   * @returns {HTMLElement} <div> representing the media section.
+    /**
+   * Converts a user name into an avatar image path by lowercasing it,
+   * replacing spaces with hyphens, and appending the ".png" extension.
+   * @param {string} name - User name to convert into an image file path.
+   * @return {string} - Relative path to the corresponding avatar image.
    */
-  function createCardMedia() {
-    let media = document.createElement("div");
-    media.classList.add("card-media");
-    return media;
+  function parseName(name) {
+    name = name.toLowerCase();
+    let result = "../img/";
+    result += name.split(" ").join("-");
+    result += ".jpg";
+    return result;
   }
 
   /**
-   * Builds the full body section for an item card, including title,
-   * description, price, stock, and the Buy button.
-   *
-   * @param {Object} it - Full item row.
+   * Creates the card container for an item card.
+   * @param {Object} title - title of item.
+   * @returns {HTMLElement} a <section> representing the imgae section.
+   */
+  function createCardImg(title) {
+    let imgContainer = gen("section");
+    imgContainer.classList.add("img-container");
+
+    let img = gen("img");
+    img.src = parseName(title);
+    img.alt = title;
+
+    imgContainer.appendChild(img);
+    return imgContainer;
+  }
+
+  /**
+   * Builds the meta info section for an item card, including title,
+   * rating, price, and the add-to-cart button.
+   * @param {Object} ItemTitle - title of item.
+   * @param {Object} itemPrice - price of item.
    * @returns {HTMLElement} The <div> card-body section ready to insert.
    */
-  function createCardBody(it) {
-    const body = document.createElement("div");
-    body.className = "card-body";
+  function createCardMeta(ItemTitle, itemPrice) {
+    let metainfo = gen("section");
+    metainfo.classList.add("metainfo");
 
-    addCardTitleSection(body, it);
-    addCardDescription(body, it);
-    addCardPrice(body, it);
-    addCardStockAndButton(body, it);
+    let title = gen("h2");
+    title.textContent = ItemTitle;
+    title.classList.add("title");
 
-    return body;
+    let rating = gen("p");
+    rating.textContent = "★★★★☆ ";
+    rating.classList.add("rating");
+
+    let ratingNum = gen("span");
+    ratingNum.textContent = "4 / 5";
+
+    rating.appendChild(ratingNum);
+
+    let price = gen("p");
+    price.textContent = "$" + itemPrice;
+    price.classList.add("price");
+
+    let cartBtn = gen("button");
+    cartBtn.textContent = "Add to cart";
+
+    metainfo.appendChild(title);
+    metainfo.appendChild(rating);
+    metainfo.appendChild(price);
+    metainfo.appendChild(cartBtn);
+
+    return metainfo;
   }
 
   /**
@@ -406,11 +450,29 @@
   }
 
   /**
+   * Returns first element matching selector.
+   * @param {string} selector - CSS query selector.
+   * @returns {object} - DOM object associated selector.
+   */
+  function qs(selector) {
+    return document.querySelector(selector);
+  }
+
+  /**
    * Returns the element that has the ID attribute with the specified value.
    * @param {string} id - element ID.
    * @returns {object} - DOM object associated with id.
    */
   function id(id) {
     return document.getElementById(id);
+  }
+
+  /**
+   * Returns a element with the given tagname.
+   * @param {string} tagname - HTML element tagname
+   * @returns {HTMLElement} a HTML element that hasn't bind with DOM yet.
+   */
+  function gen(tagname) {
+    return document.createElement(tagname);
   }
 })();

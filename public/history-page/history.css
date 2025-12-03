@@ -9,6 +9,7 @@ main {
   gap: 25px;
   font-family: "Inter", sans-serif;
   color: #4b3f80;
+  overflow-y: auto;
 }
 
 /* ===== Header ===== */
