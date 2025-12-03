@@ -148,6 +148,135 @@ app.get("/history/:id", async (req, res) => {
 });
 
 /**
+ * Returns ratings for items.
+ */
+app.post("/ratings", async (req, res) => {
+  try {
+    let missing = requireParams(["user_id", "item_id", "stars"], req.body);
+    if (missing) {
+      res.status(CLIENT_SIDE_ERROR).type("text").send(missing);
+      return;
+    }
+
+    let stars = Number(req.body.stars);
+    if (!isValidStars(stars)) {
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send("Stars must be an integer between 1 and 5.");
+      return;
+    }
+
+    let db = await getDBConnection();
+    let {item, user} = await getExistingItemAndUser(
+      db,
+      req.body.item_id,
+      req.body.user_id
+    );
+    await insertRatingRow(db, item.id, user.id, stars, req.body.comment);
+    await db.close();
+
+    res.json({message: "Rating submitted successfully."});
+  } catch (err) {
+    if (err.code === CLIENT_SIDE_ERROR) {
+      res.status(CLIENT_SIDE_ERROR).type("text").send(err.msg);
+    } else {
+      console.error(err);
+      res.status(SERVER_SIDE_ERROR)
+        .type("text")
+        .send("Error submitting rating.");
+    }
+  }
+});
+
+/**
+ * Returns: average rating, count, and rating list for an item.
+ */
+app.get("/items/:id/ratings", async (req, res) => {
+  try {
+    let itemId = req.params.id;
+    let db = await getDBConnection();
+
+    let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
+    if (!item) {
+      await db.close();
+      res.status(CLIENT_SIDE_ERROR).type("text").send("Item does not exist.");
+      return;
+    }
+
+    let summary = await getRatingsForItem(db, itemId);
+    await db.close();
+
+    res.json({
+      item_id: itemId,
+      average: summary.average,
+      count: summary.count,
+      ratings: summary.ratings
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(SERVER_SIDE_ERROR)
+      .type("text")
+      .send("Error retrieving ratings.");
+  }
+});
+
+/**
+ * Validates that "stars" is an int between 1 and 5.
+ * Returns true if valid, false otherwise.
+ */
+function isValidStars(stars) {
+  return Number.isInteger(stars) && stars >= 1 && stars <= 5;
+}
+
+/**
+ * Ensures both item and user exist, throws a CLIENT_SIDE_ERROR if not.
+ * Returns { item, user }.
+ */
+async function getExistingItemAndUser(db, itemId, userId) {
+  let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
+  if (!item) {
+    throw {code: CLIENT_SIDE_ERROR, msg: "Item does not exist."};
+  }
+
+  let user = await db.get("SELECT id FROM users WHERE id = ?;", [userId]);
+  if (!user) {
+    throw {code: CLIENT_SIDE_ERROR, msg: "User does not exist."};
+  }
+
+  return {item, user};
+}
+
+/**
+ * Inserts a new rating row into the DB (no validation here).
+ */
+async function insertRatingRow(db, itemId, userId, stars, comment) {
+  let finalComment = comment || null;
+  await db.run(
+    "INSERT INTO ratings (item_id, user_id, stars, comment) VALUES (?, ?, ?, ?);",
+    [itemId, userId, stars, finalComment]
+  );
+}
+
+/**
+ * Gets rating summary + list for an item.
+ */
+async function getRatingsForItem(db, itemId) {
+  let summary = await db.get(
+    "SELECT AVG(stars) AS average, COUNT(*) AS count FROM ratings WHERE item_id = ?;",
+    [itemId]
+  );
+  let ratings = await db.all(
+    "SELECT stars, comment, date, user_id FROM ratings WHERE item_id = ? ORDER BY date DESC;",
+    [itemId]
+  );
+  return {
+    average: summary.average || null,
+    count: summary.count || 0,
+    ratings: ratings
+  };
+}
+
+/**
  * Checks whether a user exists with the given username and password.
  * @param {string} username - Username to look up in the users table.
  * @param {string} password - Password to match for the given username.

@@ -36,3 +36,14 @@ CREATE TABLE "transactions" (
 	FOREIGN KEY("item_id") REFERENCES "items"("id"),
 	FOREIGN KEY("seller_id") REFERENCES "users"("id")
 );
+
+CREATE TABLE ratings (
+  "id"       INTEGER PRIMARY KEY AUTOINCREMENT,
+  "item_id"  INTEGER NOT NULL,
+  "user_id"  INTEGER NOT NULL,
+  "stars"    INTEGER NOT NULL CHECK ("stars" BETWEEN 1 AND 5),
+  "comment"  TEXT,
+  date     DATETIME DEFAULT (datetime('now', 'localtime')),
+  FOREIGN KEY("item_id") REFERENCES "items"("id"),
+  FOREIGN KEY("user_id") REFERENCES "users"("id")
+)
