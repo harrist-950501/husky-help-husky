@@ -334,6 +334,128 @@ No such user.
 Could not retrieve history..
 ```
 
+## *7. Ratings - Submit Rating*
+**Request Format:** */ratings*
+
+**Request Type:** *POST*
+
+**Returned Data Format:** JSON
+
+**Description:** *Allows a buyer to submit a star rating and optional comment for an item they purchased. Validates that the user and item exist, and that the star rating is whole number between 1 and 5.*
+
+**Example Request:** */ratings*
+
+**Example Success Response (200):**
+
+```
+{
+  "message": "Rating submitted successfully."
+}
+```
+
+**Error Handling:**
+
+*400 Bad Request – Missing Parameters*
+
+*Returned Data Format:* Plain Text
+
+```
+Missing parameter: 'user_id' 'item_id' 'stars'.
+```
+
+*400 Bad Request – Invalid Star Rating*
+
+*Returned Data Format:* Plain Text
+
+```
+Stars must be an integer between 1 and 5.
+```
+
+*400 Bad Request – Item Does Not Exist*
+
+*Returned Data Format:* Plain Text
+
+```
+Item does not exist.
+```
+
+*400 Bad Request – User Does Not Exist*
+
+*Returned Data Format:* Plain Text
+
+```
+User does not exist.
+```
+
+*400 Bad Request – Other Client Error*
+
+*Returned Data Format:* Plain Text
+
+```
+Error submitting rating.
+```
+
+*500 Internal Server Error*
+
+*Returned Data Format:* Plain Text
+
+```
+Error submitting rating.
+```
+
+## *8. Ratings - Retrieve Ratings*
+**Request Format:** */items/:id/ratings*
+
+**Request Type:** *GET*
+
+**Returned Data Format:** JSON
+
+**Description:** *Returns the average rating, count, and list of all ratings for a specific item.*
+
+**Example Request:** */items/1/ratings*
+
+**Example Success Response (200):**
+
+```
+{
+  "itemId": 1,
+  "average": 4.5,
+  "count": 2,
+  "ratings": [
+    {
+      "stars": 5,
+      "comment": "Great textbook, very helpful!",
+      "date": "2025-12-03 10:30:00",
+      "user_id": 2
+    },
+    {
+      "stars": 4,
+      "comment": null,
+      "date": "2025-12-02 14:15:00",
+      "user_id": 3
+    }
+  ]
+}
+```
+
+**Error Handling:**
+
+*400 Bad Request – Item Does Not Exist*
+
+*Returned Data Format:* Plain Text
+
+```
+Item does not exist.
+```
+
+*500 Internal Server Error*
+
+*Returned Data Format:* Plain Text
+
+```
+Error retrieving ratings.
+```
+
 # *Future Extensions (Not Implemented)*
 
 *This section describes a potential extension to the API for a future version of Husky Help Husky.*
@@ -384,52 +506,6 @@ Provide valid 'username', 'email', and 'password'.
 
 ```
 Failed to create user.
-```
-
-## *8. Optional Feature 2: Ratings — Retrieve Ratings*
-**Request Format:** */items/:id/ratings*
-
-**Request Type:** *GET*
-
-**Returned Data Format:** JSON
-
-**Description:** *Returns the average rating and all ratings for a specific item.*
-
-**Example Request:** */items/:it_301/ratings*
-
-**Example Response:**
-
-```
-{
-  "avg": 4.6,
-  "count": 17,
-  "ratings": [
-    {
-      "userId": "u_1027",
-      "stars": 5,
-      "text": "Great deal!",
-      "time": "2025-11-10T17:01:05Z"
-    }
-  ]
-}
-```
-
-**Error Handling:**
-
-*404 Not Found*
-
-*Returned Data Format:* Plain Text
-
-```
-Item not found.
-```
-
-*500 Internal Server Error*
-
-*Returned Data Format:* Plain Text
-
-```
-"Failed to load ratings.
 ```
 
 ## *9. User Profile*
