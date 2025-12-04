@@ -305,17 +305,10 @@
    * sends to backend, then updates the display text.
    */
   /**
-   * Show an inline rating form instead of using prompt/alert.
-   * @param {Element} container - Container article element.
-   * @param {Object} tx - Transaction object.
-   * @param {Element} displayElem - Element to update with rating text.
-   * @returns {void}
+   * Build form elements for star rating and comment input.
+   * @returns {Object} Object with form, starSelect, commentInput, submitBtn, cancelBtn, status.
    */
-  function showInlineRatingForm(container, tx, displayElem) {
-    // avoid creating multiple forms
-    const existing = container.querySelector('.inline-rating-form');
-    if (existing) return;
-
+  function buildRatingFormElements() {
     const form = document.createElement('form');
     form.className = 'inline-rating-form';
 
@@ -356,6 +349,19 @@
     form.appendChild(cancelBtn);
     form.appendChild(status);
 
+    return {form, starSelect, commentInput, submitBtn, cancelBtn, status};
+  }
+
+  /**
+   * Wire form submit and cancel events for rating submission.
+   * @param {Object} elements - Form elements object from buildRatingFormElements.
+   * @param {Object} tx - Transaction object.
+   * @param {Element} displayElem - Display element to update after submission.
+   * @returns {void}
+   */
+  function wireRatingFormEvents(elements, tx, displayElem) {
+    const {form, starSelect, commentInput, cancelBtn, status} = elements;
+
     cancelBtn.addEventListener('click', () => form.remove());
 
     form.addEventListener('submit', evt => {
@@ -367,8 +373,6 @@
       }
 
       const comment = commentInput.value || '';
-
-      // store rating on the transaction object using bracket notation
       tx['user_rating'] = stars;
       tx['user_comment'] = comment;
 
@@ -391,14 +395,34 @@
           status.textContent = err.message || 'Could not submit rating.';
         });
     });
+  }
+
+  /**
+   * Show an inline rating form instead of using prompt/alert.
+   * @param {Element} container - Container article element.
+   * @param {Object} tx - Transaction object.
+   * @param {Element} displayElem - Element to update with rating text.
+   * @returns {void}
+   */
+  function showInlineRatingForm(container, tx, displayElem) {
+    // avoid creating multiple forms
+    const existing = container.querySelector('.inline-rating-form');
+    if (existing) {
+      return;
+    }
+
+    const elements = buildRatingFormElements();
+    wireRatingFormEvents(elements, tx, displayElem);
 
     // append form into the article after the rating row
     const row = container.querySelector('.rating-row') || container;
-    row.appendChild(form);
+    row.appendChild(elements.form);
   }
 
   /**
    * Sends a POST /ratings request to the backend.
+   * @param {Object} body - Request body with user_id, item_id, stars, comment.
+   * @returns {Promise} Promise resolving to JSON response from server.
    */
   async function submitRating(body) {
     const resp = await fetch("/ratings", {

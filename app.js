@@ -151,54 +151,51 @@ app.get("/history/:id", async (req, res) => {
 });
 
 /**
+ * Helper to process rating submission: validates and inserts into DB.
+ * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
+ * @returns {Promise<Object>} Resolves with success message.
+ */
+async function processRatingSubmission(reqBody) {
+  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
+  if (missing) {
+    throw new Error(missing);
+  }
+
+  let stars = Number(reqBody.stars);
+  if (!isValidStars(stars)) {
+    throw new Error("Stars must be an integer between 1 and 5.");
+  }
+
+  let db = await getDBConnection();
+  let itemAndUser = await getExistingItemAndUser(
+    db,
+    reqBody.item_id,
+    reqBody.user_id
+  );
+  await insertRatingRow(
+    db,
+    itemAndUser.item.id,
+    itemAndUser.user.id,
+    stars,
+    reqBody.comment
+  );
+  await db.close();
+
+  return {message: "Rating submitted successfully."};
+}
+
+/**
  * Returns ratings for items.
  */
 app.post("/ratings", async (req, res) => {
   try {
-    let missing = requireParams(["user_id", "item_id", "stars"], req.body);
-    if (missing) {
-      res.status(CLIENT_SIDE_ERROR)
-        .type("text")
-        .send(missing);
-      return;
-    }
-
-    let stars = Number(req.body.stars);
-    if (!isValidStars(stars)) {
-      res.status(CLIENT_SIDE_ERROR)
-        .type("text")
-        .send("Stars must be an integer between 1 and 5.");
-      return;
-    }
-
-    let db = await getDBConnection();
-    let itemAndUser = await getExistingItemAndUser(
-      db,
-      req.body.item_id,
-      req.body.user_id
-    );
-    await insertRatingRow(
-      db,
-      itemAndUser.item.id,
-      itemAndUser.user.id,
-      stars,
-      req.body.comment
-    );
-    await db.close();
-
-    res.json({message: "Rating submitted successfully."});
+    res.type("text");
+    let result = await processRatingSubmission(req.body);
+    res.json(result);
   } catch (err) {
-    // Check if it's a validation error message
-    if (err.message === "Item does not exist." ||
-        err.message === "User does not exist.") {
-      res.status(CLIENT_SIDE_ERROR)
-        .type("text")
-        .send(err.message);
-    } else {
-      res.status(SERVER_SIDE_ERROR)
-        .type("text")
-        .send("Error submitting rating.");
-    }
+    res.status(CLIENT_SIDE_ERROR)
+      .type("text")
+      .send(err.message || "Error submitting rating.");
   }
 });
 
@@ -213,7 +210,9 @@ app.get("/items/:id/ratings", async (req, res) => {
     let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
     if (!item) {
       await db.close();
-      res.status(CLIENT_SIDE_ERROR).type("text").send("Item does not exist.");
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send("Item does not exist.");
       return;
     }
 
@@ -391,6 +390,7 @@ async function dbItemStockSubtract(id) {
  * @param {number} buyerId - Id of the user buying the item.
  * @param {number} sellerId - Id of the user selling the item.
  * @param {number} itemId - Id of the item being purchased.
+ * @param {string} code - Confirmation code for the transaction.
  */
 async function dbTransactionMade(buyerId, sellerId, itemId, code) {
   let query = "INSERT INTO transactions (buyer_id, seller_id, item_id, confirmation_code) " +
@@ -430,6 +430,11 @@ async function dbTransactionUserGet(id) {
   return transactions;
 }
 
+/**
+ * Checks if a confirmation code already exists in the transactions table.
+ * @param {string} code - Confirmation code to check.
+ * @returns {boolean} True if code exists, false otherwise.
+ */
 async function dbCheckCodeDuplicate(code) {
   let db = await getDBConnection();
   let query = "SELECT *FROM transactions WHERE confirmation_code = ?";
@@ -481,7 +486,6 @@ function requireParams(params, body) {
 
 /**
  * Generates a random confirmation code.
- * @param {void}
  * @returns {string} A random code string.
  */
 function generateCode() {
