@@ -28,12 +28,14 @@
 
     id("search-bar").addEventListener("input", checkSearch);
     id("search-btn").addEventListener("click", itemSearch);
+    id("search-btn").disabled = "true";
     id("unsearch-btn").addEventListener("click", loadItems);
     id("category-filter").addEventListener("change", checkFilter);
 
     // id("layout-toggle").addEventListener("click", toggleLayout);
 
     id("nav-toggle-btn").addEventListener("click", navToggle);
+    // navToggle();
     id("logout-btn").addEventListener("click", logout);
     id("open-history-page").addEventListener("click", openHistroyPage);
     id("open-profile-page").addEventListener("click", openProfilePage);
@@ -206,13 +208,8 @@
     card.classList.add("item-card");
     card.id = item.id;
 
-    // card.appendChild(metainfo);
-
-
-    // let body = createCardBody(item);
-
     card.appendChild(createCardImg(item.title));
-    card.appendChild(createCardMeta(item.title, item.price));
+    card.appendChild(createCardMeta(item));
     return card;
   }
 
@@ -250,19 +247,27 @@
   /**
    * Builds the meta info section for an item card, including title,
    * rating, price, and the add-to-cart button.
-   * @param {Object} ItemTitle - title of item.
-   * @param {Object} itemPrice - price of item.
+   * @param {Object} item - item row with needed data.
    * @returns {HTMLElement} The <div> card-body section ready to insert.
    */
-  function createCardMeta(ItemTitle, itemPrice) {
+  function createCardMeta(item) {
     let metainfo = gen("section");
     metainfo.classList.add("metainfo");
 
     let title = gen("h2");
-    title.textContent = ItemTitle;
+    title.textContent = item.title;
     title.classList.add("title");
 
     let rating = gen("p");
+    rating.textContent = "★★★★☆ ";
+    rating.classList.add("rating");
+
+    let ratingNum = gen("span");
+    ratingNum.textContent = "4 / 5";
+
+    rating.appendChild(ratingNum);
+
+    let description = gen("p");
     rating.textContent = "★★★★☆ ";
     rating.classList.add("rating");
 
