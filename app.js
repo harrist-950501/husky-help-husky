@@ -92,7 +92,6 @@ app.get("/items/search", async (req, res) => {
       res.json(searchResult);
     }
   } catch (err) {
-    console.log(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send("Search failed.");
@@ -161,7 +160,7 @@ app.post("/ratings", async (req, res) => {
       res.status(CLIENT_SIDE_ERROR)
         .type("text")
         .send(missing);
-        return;
+      return;
     }
 
     let stars = Number(req.body.stars);
@@ -169,24 +168,33 @@ app.post("/ratings", async (req, res) => {
       res.status(CLIENT_SIDE_ERROR)
         .type("text")
         .send("Stars must be an integer between 1 and 5.");
-        return;
+      return;
     }
 
     let db = await getDBConnection();
-    let {item, user} = await getExistingItemAndUser(
+    let itemAndUser = await getExistingItemAndUser(
       db,
       req.body.item_id,
       req.body.user_id
     );
-    await insertRatingRow(db, item.id, user.id, stars, req.body.comment);
+    await insertRatingRow(
+      db,
+      itemAndUser.item.id,
+      itemAndUser.user.id,
+      stars,
+      req.body.comment
+    );
     await db.close();
 
     res.json({message: "Rating submitted successfully."});
   } catch (err) {
-    if (err.code === CLIENT_SIDE_ERROR) {
-      res.status(CLIENT_SIDE_ERROR).type("text").send(err.msg);
+    // Check if it's a validation error message
+    if (err.message === "Item does not exist." ||
+        err.message === "User does not exist.") {
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send(err.message);
     } else {
-      console.error(err);
       res.status(SERVER_SIDE_ERROR)
         .type("text")
         .send("Error submitting rating.");
@@ -219,7 +227,6 @@ app.get("/items/:id/ratings", async (req, res) => {
       ratings: summary.ratings
     });
   } catch (err) {
-    console.error(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send("Error retrieving ratings.");
@@ -229,24 +236,29 @@ app.get("/items/:id/ratings", async (req, res) => {
 /**
  * Validates that "stars" is an int between 1 and 5.
  * Returns true if valid, false otherwise.
+ * @param {number} stars - Star rating to validate.
+ * @returns {boolean} True if valid, false otherwise.
  */
 function isValidStars(stars) {
   return Number.isInteger(stars) && stars >= 1 && stars <= FIVE;
 }
 
 /**
- * Ensures both item and user exist, throws a CLIENT_SIDE_ERROR if not.
- * Returns { item, user }.
+ * Ensures both item and user exist, throws an error if not.
+ * @param {Object} db - Database connection.
+ * @param {number} itemId - Item ID to check.
+ * @param {number} userId - User ID to check.
+ * @returns {Object} Object with item and user properties.
  */
 async function getExistingItemAndUser(db, itemId, userId) {
   let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
   if (!item) {
-    throw {code: CLIENT_SIDE_ERROR, msg: "Item does not exist."};
+    throw new Error("Item does not exist.");
   }
 
   let user = await db.get("SELECT id FROM users WHERE id = ?;", [userId]);
   if (!user) {
-    throw {code: CLIENT_SIDE_ERROR, msg: "User does not exist."};
+    throw new Error("User does not exist.");
   }
 
   return {item, user};
@@ -254,6 +266,12 @@ async function getExistingItemAndUser(db, itemId, userId) {
 
 /**
  * Inserts a new rating row into the DB (no validation here).
+ * @param {Object} db - Database connection.
+ * @param {number} itemId - Item ID for rating.
+ * @param {number} userId - User ID for rating.
+ * @param {number} stars - Star rating value.
+ * @param {string} comment - Optional comment text.
+ * @returns {void}
  */
 async function insertRatingRow(db, itemId, userId, stars, comment) {
   let finalComment = comment || null;
@@ -265,6 +283,9 @@ async function insertRatingRow(db, itemId, userId, stars, comment) {
 
 /**
  * Gets rating summary + list for an item.
+ * @param {Object} db - Database connection.
+ * @param {number} itemId - Item ID to get ratings for.
+ * @returns {Object} Object with average, count, and ratings array.
  */
 async function getRatingsForItem(db, itemId) {
   let summary = await db.get(
@@ -458,6 +479,11 @@ function requireParams(params, body) {
   return message;
 }
 
+/**
+ * Generates a random confirmation code.
+ * @param {void}
+ * @returns {string} A random code string.
+ */
 function generateCode() {
   return Math.random()
     .toString(TS)

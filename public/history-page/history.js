@@ -206,7 +206,7 @@
    */
   function addTransactionTitle(article, tx) {
     const title = document.createElement("h3");
-    title.textContent = tx.title || "Item #" + (tx.item_id ?? "");
+    title.textContent = tx.title || "Item #" + (tx.item_id || "");
     article.appendChild(title);
   }
 
