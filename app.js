@@ -25,6 +25,9 @@ app.use(multer().none());
 const CLIENT_SIDE_ERROR = 400;
 const SERVER_SIDE_ERROR = 500;
 const PORTNUM = 8000;
+const FIVE = 5;
+const TS = 36;
+const TEN = 10;
 
 /* ROUTES */
 /**
@@ -155,8 +158,10 @@ app.post("/ratings", async (req, res) => {
   try {
     let missing = requireParams(["user_id", "item_id", "stars"], req.body);
     if (missing) {
-      res.status(CLIENT_SIDE_ERROR).type("text").send(missing);
-      return;
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send(missing);
+        return;
     }
 
     let stars = Number(req.body.stars);
@@ -164,7 +169,7 @@ app.post("/ratings", async (req, res) => {
       res.status(CLIENT_SIDE_ERROR)
         .type("text")
         .send("Stars must be an integer between 1 and 5.");
-      return;
+        return;
     }
 
     let db = await getDBConnection();
@@ -208,7 +213,7 @@ app.get("/items/:id/ratings", async (req, res) => {
     await db.close();
 
     res.json({
-      item_id: itemId,
+      itemId: itemId,
       average: summary.average,
       count: summary.count,
       ratings: summary.ratings
@@ -226,7 +231,7 @@ app.get("/items/:id/ratings", async (req, res) => {
  * Returns true if valid, false otherwise.
  */
 function isValidStars(stars) {
-  return Number.isInteger(stars) && stars >= 1 && stars <= 5;
+  return Number.isInteger(stars) && stars >= 1 && stars <= FIVE;
 }
 
 /**
@@ -455,8 +460,8 @@ function requireParams(params, body) {
 
 function generateCode() {
   return Math.random()
-    .toString(36)
-    .substring(2, 10)
+    .toString(TS)
+    .substring(2, TEN)
     .toUpperCase();
 }
 

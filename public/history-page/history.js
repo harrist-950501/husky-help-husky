@@ -17,6 +17,7 @@
   // Same demo user id as main.js for now.
   const CURRENT_USER_ID = 1;
   const JSON_TYPE = "application/json";
+  const MAX_STARS = 5;
   let allTransactions = [];
 
   window.addEventListener("load", init);
@@ -68,6 +69,10 @@
   /**
    * Applies the current sort selection to allTransactions and re-renders.
    */
+  /**
+   * Applies the current sort selection to allTransactions and re-renders.
+   * @returns {void}
+   */
   function applySortAndRender() {
     const select = id("transaction-sorting");
     const criterion = select ? select.value : "time";
@@ -84,6 +89,9 @@
 
   /**
    * Comparator for sorting transactions by time, newest first.
+   * @param {Object} first - First transaction.
+   * @param {Object} second - Second transaction.
+   * @returns {number} Positive when first is older than second.
    */
   function compareByTime(first, second) {
     if (!first.date && !second.date) {
@@ -103,15 +111,23 @@
 
   /**
    * Comparator for sorting transactions by price, highest first.
+   * @param {Object} left - First transaction to compare.
+   * @param {Object} right - Second transaction to compare.
+   * @returns {number} Positive when left < right (for descending sort).
    */
-  function compareByPrice(a, b) {
-    const priceA = typeof a.price === "number" ? a.price : 0;
-    const priceB = typeof b.price === "number" ? b.price : 0;
-    return priceB - priceA;
+  function compareByPrice(left, right) {
+    const priceLeft = typeof left.price === "number" ? left.price : 0;
+    const priceRight = typeof right.price === "number" ? right.price : 0;
+    return priceRight - priceLeft;
   }
 
   /**
    * Renders transaction data into the #transaction-board area.
+   */
+  /**
+   * Render a list of transactions into the board element.
+   * @param {Array<Object>} transactions - Array of transaction objects.
+   * @returns {void}
    */
   function renderTransactions(transactions) {
     const board = id("transaction-board");
@@ -129,18 +145,34 @@
     renderTransactionList(board, transactions);
   }
 
+  /**
+   * Clear all children from an element.
+   * @param {Element} board - Element to clear.
+   * @returns {void}
+   */
   function clearBoard(board) {
     while (board.firstChild) {
       board.removeChild(board.firstChild);
     }
   }
 
+  /**
+   * Show a friendly empty message.
+   * @param {Element} board - Element to append message to.
+   * @returns {void}
+   */
   function renderEmptyMessage(board) {
     const pTag = document.createElement("p");
     pTag.textContent = "No transactions yet.";
     board.appendChild(pTag);
   }
 
+  /**
+   * Render each transaction into the board.
+   * @param {Element} board - Container element.
+   * @param {Array<Object>} transactions - Transactions to render.
+   * @returns {void}
+   */
   function renderTransactionList(board, transactions) {
     transactions.forEach(tx => {
       const article = createTransactionElement(tx);
@@ -149,8 +181,9 @@
   }
 
   /**
-   * Creates a <article> element representing a single transaction
-   * and attaches rating UI for buyers.
+   * Creates a transaction article element and wires its subparts.
+   * @param {Object} tx - Transaction object from the backend.
+   * @returns {Element} The created article element.
    */
   function createTransactionElement(tx) {
     const article = document.createElement("article");
@@ -165,12 +198,24 @@
     return article;
   }
 
+  /**
+   * Add title element to a transaction article.
+   * @param {Element} article - Article element to append to.
+   * @param {Object} tx - Transaction object.
+   * @returns {void}
+   */
   function addTransactionTitle(article, tx) {
     const title = document.createElement("h3");
-    title.textContent = tx.title || "Item #" + tx.item_id;
+    title.textContent = tx.title || "Item #" + (tx.item_id ?? "");
     article.appendChild(title);
   }
 
+  /**
+   * Add metadata (role/date) to a transaction article.
+   * @param {Element} article - Article element.
+   * @param {Object} tx - Transaction object.
+   * @returns {void}
+   */
   function addTransactionMeta(article, tx) {
     const meta = document.createElement("p");
     meta.className = "muted";
@@ -182,6 +227,12 @@
     article.appendChild(meta);
   }
 
+  /**
+   * Add price display to a transaction article when present.
+   * @param {Element} article - Article element.
+   * @param {Object} tx - Transaction object.
+   * @returns {void}
+   */
   function addTransactionPrice(article, tx) {
     if (typeof tx.price !== "number") {
       return;
@@ -192,6 +243,12 @@
     article.appendChild(price);
   }
 
+  /**
+   * Add description paragraph when available.
+   * @param {Element} article - Article element.
+   * @param {Object} tx - Transaction object.
+   * @returns {void}
+   */
   function addTransactionDescription(article, tx) {
     if (!tx.description) {
       return;
@@ -205,6 +262,12 @@
   /**
    * Adds rating UI (button + display) to a transaction article
    * if the current user is the buyer.
+   */
+  /**
+   * Attach rating UI for buyers. Creates a button and rating display.
+   * @param {Element} article - Article element to attach to.
+   * @param {Object} tx - Transaction object.
+   * @returns {void}
    */
   function attachRatingUI(article, tx) {
     if (tx.buyer_id !== CURRENT_USER_ID) {
@@ -223,13 +286,13 @@
     const display = document.createElement("p");
     display.className = "rating-display";
 
-    // if we already have a rating stored show it immediately
-    if (typeof tx.user_rating === "number") {
-      display.textContent = "Your rating: ⭐ " + tx.user_rating;
+    // if we already have a rating stored show it immediately (use bracket notation for snake_case)
+    if (typeof tx["user_rating"] === "number") {
+      display.textContent = "Your rating: ⭐ " + tx["user_rating"];
     }
 
     btn.addEventListener("click", () => {
-      handleRateClick(tx, display);
+      showInlineRatingForm(article, tx, display);
     });
 
     row.appendChild(btn);
@@ -241,40 +304,97 @@
    * Handles clicking on "Rate this item": prompts for stars/comment,
    * sends to backend, then updates the display text.
    */
-  function handleRateClick(tx, displayElem) {
-    const starsInput = prompt("Stars (1 to 5):");
-    if (!starsInput) {
-      return;
+  /**
+   * Show an inline rating form instead of using prompt/alert.
+   * @param {Element} container - Container article element.
+   * @param {Object} tx - Transaction object.
+   * @param {Element} displayElem - Element to update with rating text.
+   * @returns {void}
+   */
+  function showInlineRatingForm(container, tx, displayElem) {
+    // avoid creating multiple forms
+    const existing = container.querySelector('.inline-rating-form');
+    if (existing) return;
+
+    const form = document.createElement('form');
+    form.className = 'inline-rating-form';
+
+    const starLabel = document.createElement('label');
+    starLabel.textContent = 'Stars: ';
+    const starSelect = document.createElement('select');
+    starSelect.name = 'stars';
+    for (let i = 1; i <= MAX_STARS; i++) {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = String(i);
+      starSelect.appendChild(opt);
     }
 
-    const stars = Number(starsInput);
-    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
-      alert("Please enter a whole number from 1 to 5.");
-      return;
-    }
+    const commentLabel = document.createElement('label');
+    commentLabel.textContent = ' Comment: ';
+    const commentInput = document.createElement('textarea');
+    commentInput.name = 'comment';
+    commentInput.rows = 2;
+    commentInput.cols = 30;
 
-    const comment = prompt("Optional comment:") || "";
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.textContent = 'Submit';
 
-    // store rating on the transaction object so re-sorting keeps it
-    tx.user_rating = stars;
-    tx.user_comment = comment;
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Cancel';
 
-    const body = {
-      user_id: CURRENT_USER_ID,
-      item_id: tx.item_id,
-      stars: stars,
-      comment: comment
-    };
+    const status = document.createElement('span');
+    status.className = 'rating-status';
 
-    submitRating(body)
-      .then(() => {
-        if (displayElem) {
-          displayElem.textContent = "Your rating: " + tx.user_rating + "⭐️";
-        }
-      })
-      .catch(err => {
-        alert(err.message || "Could not submit rating.");
-      });
+    form.appendChild(starLabel);
+    form.appendChild(starSelect);
+    form.appendChild(commentLabel);
+    form.appendChild(commentInput);
+    form.appendChild(submitBtn);
+    form.appendChild(cancelBtn);
+    form.appendChild(status);
+
+    cancelBtn.addEventListener('click', () => form.remove());
+
+    form.addEventListener('submit', evt => {
+      evt.preventDefault();
+      const stars = Number(starSelect.value);
+      if (!Number.isInteger(stars) || stars < 1 || stars > MAX_STARS) {
+        status.textContent = `Enter a whole number 1-${MAX_STARS}`;
+        return;
+      }
+
+      const comment = commentInput.value || '';
+
+      // store rating on the transaction object using bracket notation
+      tx['user_rating'] = stars;
+      tx['user_comment'] = comment;
+
+      const body = {
+        'user_id': CURRENT_USER_ID,
+        'item_id': tx.item_id,
+        'stars': stars,
+        'comment': comment
+      };
+
+      submitRating(body)
+        .then(() => {
+          if (displayElem) {
+            displayElem.textContent = 'Your rating: ' + tx['user_rating'] + '⭐️';
+          }
+          form.remove();
+        })
+        .catch(err => {
+          console.error(err);
+          status.textContent = err.message || 'Could not submit rating.';
+        });
+    });
+
+    // append form into the article after the rating row
+    const row = container.querySelector('.rating-row') || container;
+    row.appendChild(form);
   }
 
   /**
@@ -296,12 +416,18 @@
   }
 
   /**
-   * Back to main page.
+   * Navigate back to the main page.
+   * @returns {void}
    */
   function back() {
     window.location.href = "../main-page/main.html";
   }
 
+  /**
+   * Shortcut for `document.getElementById`.
+   * @param {string} idName - ID of element to find.
+   * @returns {?Element} The element or null if not found.
+   */
   function id(idName) {
     return document.getElementById(idName);
   }
