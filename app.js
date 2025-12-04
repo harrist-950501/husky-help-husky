@@ -80,15 +80,16 @@ app.get("/items/search", async (req, res) => {
   try {
     let keyword = req.query.search;
     let filter = req.query.filter;
-    if (!keyword) {
+    if (!keyword && !filter) {
       res.status(CLIENT_SIDE_ERROR)
         .type("text")
-        .send("Missing query parameter: 'keyword'");
+        .send("Missing query parameter: 'keyword' 'filter'");
     } else {
       let searchResult = await dbItemSearch(keyword, filter);
       res.json(searchResult);
     }
   } catch (err) {
+    console.log(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send("Search failed.");
@@ -322,12 +323,22 @@ async function dbItemGet(id) {
  * @return {Object[]} array of items that match the search criteria.
  */
 async function dbItemSearch(keyword, filter) {
-  let query = "SELECT * FROM items WHERE title LIKE ? OR description LIKE ?";
-  keyword = "%" + keyword + "%";
-  let params = [keyword, keyword];
+  let query = "SELECT * FROM items ";
+  let params = [];
 
-  if (filter) {
-    query += " AND category = ?";
+  if (keyword && filter) {
+    query += "WHERE title LIKE ? OR description LIKE ? AND category = ?";
+    keyword = "%" + keyword + "%";
+    params.push(keyword);
+    params.push(keyword);
+    params.push(filter);
+  } else if (keyword) {
+    query += "WHERE title LIKE ? OR description LIKE ?";
+    keyword = "%" + keyword + "%";
+    params.push(keyword);
+    params.push(keyword);
+  } else {
+    query += "WHERE category = ?";
     params.push(filter);
   }
 
