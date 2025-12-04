@@ -305,13 +305,10 @@
    * sends to backend, then updates the display text.
    */
   /**
-   * Build form elements for star rating and comment input.
-   * @returns {Object} Object with form, starSelect, commentInput, submitBtn, cancelBtn, status.
+   * Create star rating select dropdown.
+   * @returns {Element} Select element with star options.
    */
-  function buildRatingFormElements() {
-    const form = document.createElement('form');
-    form.className = 'inline-rating-form';
-
+  function createStarSelect() {
     const starLabel = document.createElement('label');
     starLabel.textContent = 'Stars: ';
     const starSelect = document.createElement('select');
@@ -322,13 +319,37 @@
       opt.textContent = String(i);
       starSelect.appendChild(opt);
     }
+    starLabel.appendChild(starSelect);
+    return starLabel;
+  }
 
+  /**
+   * Create comment input textarea with label.
+   * @returns {Element} Label containing textarea element.
+   */
+  function createCommentInput() {
     const commentLabel = document.createElement('label');
     commentLabel.textContent = ' Comment: ';
     const commentInput = document.createElement('textarea');
     commentInput.name = 'comment';
     commentInput.rows = 2;
     commentInput.cols = 30;
+    commentLabel.appendChild(commentInput);
+    return commentLabel;
+  }
+
+  /**
+   * Build form with inputs and buttons.
+   * @returns {Object} Object with form, starSelect, commentInput, submitBtn, cancelBtn, status.
+   */
+  function buildRatingFormElements() {
+    const form = document.createElement('form');
+    form.className = 'inline-rating-form';
+
+    const starLabel = createStarSelect();
+    const starSelect = starLabel.querySelector('select');
+    const commentLabel = createCommentInput();
+    const commentInput = commentLabel.querySelector('textarea');
 
     const submitBtn = document.createElement('button');
     submitBtn.type = 'submit';
@@ -342,14 +363,53 @@
     status.className = 'rating-status';
 
     form.appendChild(starLabel);
-    form.appendChild(starSelect);
     form.appendChild(commentLabel);
-    form.appendChild(commentInput);
     form.appendChild(submitBtn);
     form.appendChild(cancelBtn);
     form.appendChild(status);
 
     return {form, starSelect, commentInput, submitBtn, cancelBtn, status};
+  }
+
+  /**
+   * Handle form submission for rating.
+   * @param {HTMLFormElement} form - Form element.
+   * @param {HTMLSelectElement} starSelect - Star select element.
+   * @param {HTMLTextAreaElement} commentInput - Comment textarea element.
+   * @param {HTMLSpanElement} status - Status display element.
+   * @param {Object} tx - Transaction object.
+   * @param {Element} displayElem - Element to update after submission.
+   * @returns {void}
+   */
+  function handleRatingSubmit(form, starSelect, commentInput, status, tx, displayElem) {
+    const stars = Number(starSelect.value);
+    if (!Number.isInteger(stars) || stars < 1 || stars > MAX_STARS) {
+      status.textContent = `Enter a whole number 1-${MAX_STARS}`;
+      return;
+    }
+
+    const comment = commentInput.value || '';
+    tx['user_rating'] = stars;
+    tx['user_comment'] = comment;
+
+    const body = {
+      'user_id': CURRENT_USER_ID,
+      'item_id': tx.item_id,
+      'stars': stars,
+      'comment': comment
+    };
+
+    submitRating(body)
+      .then(() => {
+        if (displayElem) {
+          displayElem.textContent = 'Your rating: ' + tx['user_rating'] + '⭐️';
+        }
+        form.remove();
+      })
+      .catch(err => {
+        console.error(err);
+        status.textContent = err.message || 'Could not submit rating.';
+      });
   }
 
   /**
@@ -366,34 +426,7 @@
 
     form.addEventListener('submit', evt => {
       evt.preventDefault();
-      const stars = Number(starSelect.value);
-      if (!Number.isInteger(stars) || stars < 1 || stars > MAX_STARS) {
-        status.textContent = `Enter a whole number 1-${MAX_STARS}`;
-        return;
-      }
-
-      const comment = commentInput.value || '';
-      tx['user_rating'] = stars;
-      tx['user_comment'] = comment;
-
-      const body = {
-        'user_id': CURRENT_USER_ID,
-        'item_id': tx.item_id,
-        'stars': stars,
-        'comment': comment
-      };
-
-      submitRating(body)
-        .then(() => {
-          if (displayElem) {
-            displayElem.textContent = 'Your rating: ' + tx['user_rating'] + '⭐️';
-          }
-          form.remove();
-        })
-        .catch(err => {
-          console.error(err);
-          status.textContent = err.message || 'Could not submit rating.';
-        });
+      handleRatingSubmit(form, starSelect, commentInput, status, tx, displayElem);
     });
   }
 
