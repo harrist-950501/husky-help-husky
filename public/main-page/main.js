@@ -1,11 +1,12 @@
 /**
  * main.js
- * Renders marketplace items from the backend, supports search, layout toggle,
- * logout/navigation, and basic "buy" functionality.
+ * Renders marketplace items from the backend, supports search by keyword
+ * and category, layout toggling, navigation to other pages, and inline
+ * detail view for individual items.
  *
  * Backend endpoints used:
- *  - GET  /items
- *  - POST /buy
+ *  - GET /items
+ *  - GET /items/search?search=<term>&filter=<category>
  */
 
 "use strict";
@@ -16,7 +17,8 @@
   window.addEventListener("load", init);
 
   /**
-   * Initialize page: load items, hook up search, layout toggle, and nav.
+   * Initializes the main page: loads items and sets up search, layout toggle,
+   * sidebar navigation, and logout button event listeners.
    */
   function init() {
     loadItems();
@@ -38,7 +40,7 @@
 
   /**
    * Enables or disables the search button depending on whether
-   * a category in filter is selected.
+   * a category in the filter is selected.
    */
   function checkFilter() {
     if (this.value !== "") {
@@ -60,6 +62,9 @@
     }
   }
 
+  /**
+   * Toggles the navigation sidebar between expanded and collapsed views.
+   */
   function navToggle() {
     qs("aside").classList.toggle("collapsed");
     qs("aside h1").classList.toggle("hidden");
@@ -68,7 +73,7 @@
   }
 
   /**
-   * Fetch items from backend and render them.
+   * Loads all items from the backend and renders them onto the item board.
    */
   async function loadItems() {
     let board = id("item-board");
@@ -85,41 +90,41 @@
       });
     } catch (err) {
       console.error(err);
-      board.textContent = "Could not load items.";
     }
   }
 
   /**
-   * Logout. Back to login page
+   * Logs out the current user and navigates back to the login page.
    */
   function logout() {
     window.location.href = "../index.html";
   }
 
   /**
-   * Open shopping cart page
+   * Opens the shopping cart page.
    */
   function openCartPage() {
     window.location.href = "../cart-page/cart.html";
   }
 
   /**
-   * Open transaction history page
+   * Opens the transaction history page.
    */
   function openHistroyPage() {
     window.location.href = "../history-page/history.html";
   }
 
   /**
-   * Open profile page
+   * Opens the profile page.
    */
   function openProfilePage() {
     window.location.href = "../profile-page/profile.html";
   }
 
   /**
-   * Performs a search for Yips containing the current search term,
-   * and only shows those whose ids are returned by the API (others are hidden).
+   * Searches for items using the current keyword and category filter
+   * and updates the item board so that only matching items are shown.
+   * @return {Promise<void>} - Resolves after the search results are applied.
    */
   async function itemSearch() {
     let url = "items/search?";
@@ -147,41 +152,10 @@
   }
 
   /**
-   * Toggle the item grid layout between grid and list views.
+   * Switches the item board between list and grid layouts.
    */
   function toggleLayout() {
     id("item-board").classList.toggle("grid-layout");
-  }
-
-  /**
-   * Render a collection of item objects into the DOM element with id
-   * `item-grid`.
-   *
-   * @param {Array<Object>} items - Array of item rows from the items table.
-   */
-  function renderItems(items) {
-    const grid = id("item-grid");
-    if (!grid) {
-      return;
-    }
-
-    // Clear existing children.
-    while (grid.firstChild) {
-      grid.removeChild(grid.firstChild);
-    }
-
-    if (!items || !items.length) {
-      const pTag = document.createElement("p");
-      pTag.className = "muted";
-      pTag.textContent = "No items found.";
-      grid.appendChild(pTag);
-      return;
-    }
-
-    items.forEach(it => {
-      const card = createCardElement(it);
-      grid.appendChild(card);
-    });
   }
 
   /**
@@ -371,6 +345,10 @@
     return backBtn;
   }
 
+  /**
+   * Toggles between the list view and an inline detail view for a single item card.
+   * When entering detail view, only the selected item's full information is shown.
+   */
   function toggleItemDetail() {
     qs("#content header").classList.toggle("hidden");
     id("item-board").classList.remove("grid-layout");
@@ -403,7 +381,6 @@
   /**
    * Updates the status message text and fades it in, then automatically
    * fades it out after a short delay by toggling a "visible" CSS class.
-   *
    * @param {string} message - Message text to display.
    * @param {boolean} isError - Whether to style the message as an error.
    * @returns {String} message.
@@ -456,11 +433,6 @@
       return await response.text();
     } catch (error) {
       console.log(error);
-      // id("yipper-data").classList.add("hidden");
-      // id("search-btn").disabled = true;
-      // id("home-btn").disabled = true;
-      // id("yip-btn").disabled = true;
-      // id("error").classList.remove("hidden");
     }
   }
 
