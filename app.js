@@ -109,6 +109,12 @@ app.post("/signup", async (req, res) => {
         .send("Username already taken.");
     }
 
+    // check if email end with uw.edu
+    if (!email.endsWith("@uw.edu")) {
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Please use your uw mail to sign up.")
+    }
+
     // Create the user
     let user = await dbUserCreate(username, password, email);
 
