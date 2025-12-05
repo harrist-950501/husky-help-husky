@@ -15,7 +15,8 @@
 
 (function() {
   // Same demo user id as main.js for now.
-  const CURRENT_USER_ID = 1;
+  // Logged-in user id, stored at login time.
+  const CURRENT_USER_ID = Number(localStorage.getItem("userId"));
   const JSON_TYPE = "application/json";
   const MAX_STARS = 5;
   let allTransactions = [];
@@ -26,6 +27,12 @@
    * Initialize page: wire back button, sorting, and load transaction history.
    */
   function init() {
+    if (!CURRENT_USER_ID) {
+
+      // not logged in or localStorage cleared, go back to login
+      window.location.href = "../index.html";
+      return;
+    }
     let backBtn = id("back");
     if (backBtn) {
       backBtn.addEventListener("click", back);
@@ -393,7 +400,6 @@
     tx['user_comment'] = comment;
 
     const body = {
-      'user_id': CURRENT_USER_ID,
       'item_id': tx.item_id,
       'stars': stars,
       'comment': comment
