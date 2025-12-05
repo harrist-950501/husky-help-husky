@@ -103,8 +103,6 @@
     if (box) {
       box.textContent = msg;
       box.classList.remove("hidden");
-    } else {
-      alert(msg);
     }
   }
 
