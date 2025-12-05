@@ -1,11 +1,8 @@
 /**
- * main.js
- * Renders marketplace items from the backend, supports search, layout toggle,
- * logout/navigation, and basic "buy" functionality.
- *
- * Backend endpoints used:
- *  - GET  /items
- *  - POST /buy
+ * Name: Rena Yin & Harry Cheng
+ * Date: Nov 2025
+ * Section: CSE 154 AA
+ * TA: Oscar Song
  */
 
 "use strict";

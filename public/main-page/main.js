@@ -1,4 +1,9 @@
 /**
+ * Name: Rena Yin & Harry Cheng
+ * Date: Nov 2025
+ * Section: CSE 154 AA
+ * TA: Oscar Song
+ *
  * main.js
  * Renders marketplace items from the backend, supports search by keyword
  * and category, layout toggling, navigation to other pages, and inline

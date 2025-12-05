@@ -1,4 +1,9 @@
 /**
+ * Name: Rena Yin & Harry Cheng
+ * Date: Nov 2025
+ * Section: CSE 154 AA
+ * TA: Oscar Song
+ *
  * theme.js - Light/Dark Theme Toggle
  *
  * This module implements a simple theme toggle functionality that switches

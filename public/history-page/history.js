@@ -1,4 +1,9 @@
 /**
+ * Name: Rena Yin & Harry Cheng
+ * Date: Nov 2025
+ * Section: CSE 154 AA
+ * TA: Oscar Song
+ *
  * history.js
  * Handles the transaction history page:
  *  - Back button to main page

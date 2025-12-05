@@ -1,4 +1,9 @@
 /**
+ * Name: Rena Yin & Harry Cheng
+ * Date: Nov 2025
+ * Section: CSE 154 AA
+ * TA: Oscar Song
+ *
  * index.js – Handles real login with backend authentication.
  *
  * Flow:

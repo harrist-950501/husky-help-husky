@@ -75,21 +75,10 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     res.status(500).send("Server error.");
   }
 });
-
-function requireLogin(req, res, next) {
-  let sessionId = req.cookies.session;
-
-  if (!sessionId || !sessions[sessionId]) {
-    return res.status(401).send("Not logged in.");
-  }
-
-  req.userId = sessions[sessionId];
-  next();
-}
 
 /**
  * Returns all items, or a single item when given an id query parameter.
@@ -198,40 +187,6 @@ app.get("/history/:id", requireLogin, async (req, res) => {
 });
 
 /**
- * Helper to process rating submission: validates and inserts into DB.
- * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
- * @returns {Promise<Object>} Resolves with success message.
- */
-async function processRatingSubmission(reqBody) {
-  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
-  if (missing) {
-    throw new Error(missing);
-  }
-
-  let stars = Number(reqBody.stars);
-  if (!isValidStars(stars)) {
-    throw new Error("Stars must be an integer between 1 and 5.");
-  }
-
-  let db = await getDBConnection();
-  let itemAndUser = await getExistingItemAndUser(
-    db,
-    reqBody.item_id,
-    reqBody.user_id
-  );
-  await insertRatingRow(
-    db,
-    itemAndUser.item.id,
-    itemAndUser.user.id,
-    stars,
-    reqBody.comment
-  );
-  await db.close();
-
-  return {message: "Rating submitted successfully."};
-}
-
-/**
  * Submits a rating for an item.
  * The user_id is taken from the logged-in session, not from the client.
  */
@@ -248,7 +203,7 @@ app.post("/ratings", requireLogin, async (req, res) => {
     let result = await processRatingSubmission(payload);
     res.json(result);
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     res.status(CLIENT_SIDE_ERROR)
       .type("text")
       .send(err.message || "Error submitting rating.");
@@ -298,6 +253,51 @@ app.post("/logout", (req, res) => {
   res.clearCookie("session");
   res.json({ success: true });
 });
+
+function requireLogin(req, res, next) {
+  let sessionId = req.cookies.session;
+
+  if (!sessionId || !sessions[sessionId]) {
+    return res.status(401).send("Not logged in.");
+  }
+
+  req.userId = sessions[sessionId];
+  next();
+}
+
+/**
+ * Helper to process rating submission: validates and inserts into DB.
+ * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
+ * @returns {Promise<Object>} Resolves with success message.
+ */
+async function processRatingSubmission(reqBody) {
+  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
+  if (missing) {
+    throw new Error(missing);
+  }
+
+  let stars = Number(reqBody.stars);
+  if (!isValidStars(stars)) {
+    throw new Error("Stars must be an integer between 1 and 5.");
+  }
+
+  let db = await getDBConnection();
+  let itemAndUser = await getExistingItemAndUser(
+    db,
+    reqBody.item_id,
+    reqBody.user_id
+  );
+  await insertRatingRow(
+    db,
+    itemAndUser.item.id,
+    itemAndUser.user.id,
+    stars,
+    reqBody.comment
+  );
+  await db.close();
+
+  return {message: "Rating submitted successfully."};
+}
 
 /**
  * Validates that "stars" is an int between 1 and 5.
