@@ -22,6 +22,10 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 app.use(multer().none());
 
+// I think we can use this, this is in Rasmus slide deck for storage technique
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
+
 const CLIENT_SIDE_ERROR = 400;
 const SERVER_SIDE_ERROR = 500;
 const PORTNUM = 8000;
@@ -29,34 +33,59 @@ const FIVE = 5;
 const TS = 36;
 const TEN = 10;
 
+// Simple session mapping: sessionId to userId
+let sessions = {};
+
 /* ROUTES */
 /**
  * Logs in a user with the given username and password.
  */
 app.post("/login", async (req, res) => {
   try {
-    res.type("text");
+    res.type("json");
     let missing = requireParams(["username", "password"], req.body);
     if (missing) {
-      res.status(CLIENT_SIDE_ERROR)
-        .send(missing);
-    } else {
-      let username = req.body.username;
-      let password = req.body.username;
-      let user = await dbUserCheck(username, password);
-
-      if (!user) {
-        res.status(CLIENT_SIDE_ERROR)
-          .send("Invalid username or password.");
-      } else {
-        res.send("User login successfully");
-      }
+      return res.status(400).send(missing);
     }
+
+    let username = req.body.username.trim();
+    let password = req.body.password.trim();
+
+    let user = await dbUserCheck(username, password);
+    if (!user) {
+      return res.status(401).send("Invalid username or password.");
+    }
+
+    // Create random session ID, save session
+    let sessionId = Math.random().toString(TS).slice(2) + Date.now();
+    sessions[sessionId] = user.id;
+
+    // Set cookie
+    res.cookie("session", sessionId, {
+      httpOnly: true,
+      maxAge: TS * TEN * TEN * TEN * TEN * TEN, //3600000, i hate magic number linter
+      sameSite: "strict",
+      path: "/"
+    });
+
+    res.json({ success: true });
+
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
-      .send("Server error logging in.");
+    console.error(err);
+    res.status(500).send("Server error.");
   }
 });
+
+function requireLogin(req, res, next) {
+  let sessionId = req.cookies.session;
+
+  if (!sessionId || !sessions[sessionId]) {
+    return res.status(401).send("Not logged in.");
+  }
+
+  req.userId = sessions[sessionId];
+  next();
+}
 
 /**
  * Returns all items, or a single item when given an id query parameter.
