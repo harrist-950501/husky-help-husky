@@ -68,7 +68,11 @@ app.post("/login", async (req, res) => {
       path: "/"
     });
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      id: user.id,
+      username: user.username
+    });
 
   } catch (err) {
     console.error(err);
@@ -129,47 +133,48 @@ app.get("/items/search", async (req, res) => {
 
 /**
  * Processes a purchase by decrementing stock and creating a transaction.
+ * Buyer is the currently logged-in user (from session cookie).
  */
 app.post("/buy", requireLogin, async (req, res) => {
-
-  // add protection to routes
-  if (Number(req.params.uid) !== req.userId) {
-    return res.status(403).send("Forbidden");
-  }
-
   try {
     res.type("text");
-    let missing = requireParams(["buyer_id", "item_id"], req.body);
+
+    // Client only needs to send the item_id, bc already logging in
+    let missing = requireParams(["item_id"], req.body);
     if (missing) {
-      res.status(CLIENT_SIDE_ERROR).send(missing);
-    } else {
-      let item = await dbItemGet(req.body.item_id);
-      if (!item) {
-        res.status(CLIENT_SIDE_ERROR).send("Item does not exist.");
-      } else if (item.stock <= 0) {
-        res.status(CLIENT_SIDE_ERROR).send("Item out of stock.");
-      } else {
-        await dbItemStockSubtract(item.id);
-        let code = generateCode();
-        while (await dbCheckCodeDuplicate(code)) {
-          code = generateCode();
-        }
-        await dbTransactionMade(req.body.buyer_id, item.seller_id, item.id, code);
-        res.send(code);
-      }
+      return res.status(CLIENT_SIDE_ERROR).send(missing);
     }
+
+    let item = await dbItemGet(req.body.item_id);
+    if (!item) {
+      return res.status(CLIENT_SIDE_ERROR).send("Item does not exist.");
+    } else if (item.stock <= 0) {
+      return res.status(CLIENT_SIDE_ERROR).send("Item out of stock.");
+    }
+
+    await dbItemStockSubtract(item.id);
+
+    let code = generateCode();
+    while (await dbCheckCodeDuplicate(code)) {
+      code = generateCode();
+    }
+
+    await dbTransactionMade(req.userId, item.seller_id, item.id, code);
+    res.send(code);
   } catch (err) {
+    console.error(err);
     res.status(SERVER_SIDE_ERROR).send("Transaction failed.");
   }
 });
 
 /**
  * Returns all transactions where the given user is buyer or seller.
+ * Only allows a user to view *their own* history.
  */
 app.get("/history/:id", requireLogin, async (req, res) => {
 
-  // add protection to routes, check login status for history before continuing
-  if (Number(req.params.uid) !== req.userId) {
+  // :id must match the logged-in user id
+  if (Number(req.params.id) !== req.userId) {
     return res.status(403).send("Forbidden");
   }
 
@@ -185,6 +190,7 @@ app.get("/history/:id", requireLogin, async (req, res) => {
         .send("No such user.");
     }
   } catch (err) {
+    console.error(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send("Could not retrieve history.");
@@ -226,20 +232,23 @@ async function processRatingSubmission(reqBody) {
 }
 
 /**
- * Returns ratings for items.
+ * Submits a rating for an item.
+ * The user_id is taken from the logged-in session, not from the client.
  */
 app.post("/ratings", requireLogin, async (req, res) => {
-
-  // add protection to routes, check login status for tating before continuing
-  if (Number(req.params.uid) !== req.userId) {
-    return res.status(403).send("Forbidden");
-  }
-
   try {
     res.type("text");
-    let result = await processRatingSubmission(req.body);
+
+    // Inject logged-in user id into the payload
+    let payload = {
+      ...req.body,
+      user_id: req.userId
+    };
+
+    let result = await processRatingSubmission(payload);
     res.json(result);
   } catch (err) {
+    console.error(err);
     res.status(CLIENT_SIDE_ERROR)
       .type("text")
       .send(err.message || "Error submitting rating.");
@@ -277,6 +286,17 @@ app.get("/items/:id/ratings", async (req, res) => {
       .type("text")
       .send("Error retrieving ratings.");
   }
+});
+
+app.post("/logout", (req, res) => {
+  let sessionId = req.cookies.session;
+
+  if (sessionId) {
+    delete sessions[sessionId];
+  }
+
+  res.clearCookie("session");
+  res.json({ success: true });
 });
 
 /**
@@ -546,4 +566,4 @@ app.use(express.static("public"));
 const PORT = process.env.PORT || PORTNUM;
 app.listen(PORT);
 
-app.use(express.static("public"));
+//app.use(express.static("public"));

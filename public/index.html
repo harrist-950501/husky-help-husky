@@ -26,7 +26,56 @@
           Connect, give, and find what you need — all within the Husky family.
         </p>
       </section>
+
       <section id="login-area">
+        <h2>User Login &amp; Sign Up</h2>
+
+        <!-- One form handles both login and signup -->
+        <!-- I comment out the old one in order to suit the new logic -->
+        <!-- Pls double check bc im lowk not good at html and layouts -->
+        <!-- pls also update the css -->
+        <form id="auth-form" novalidate>
+          <div class="field">
+            <label for="username">
+              Username
+            </label>
+            <input id="username" name="username" type="text" required>
+          </div>
+
+          <div class="field">
+            <label for="password">
+              Password
+            </label>
+            <input id="password" name="password" type="password" required>
+          </div>
+
+          <!-- Email is required for signup, ignored for login -->
+          <div class="field">
+            <label for="email">
+              Email (for sign up)
+            </label>
+            <input id="email" name="email" type="email" placeholder="you@uw.edu">
+          </div>
+
+          <!-- Error message area used by index.js -->
+          <p id="error" class="error hidden" aria-live="polite"></p>
+
+          <div class="button-row">
+            <button id="login-btn" type="submit" data-mode="login">
+              Log In
+            </button>
+            <button id="signup-btn" type="submit" data-mode="signup">
+              Sign Up
+            </button>
+          </div>
+
+          <p class="hint">
+            New here? Fill in username, password, and email, then click <strong>Sign Up</strong>.
+            Already have an account? Just use <strong>Log In</strong>.
+          </p>
+        </form>
+      </section>
+      <!-- <section id="login-area">
         <h2>User Login</h2>
         <form>
           <label for="username">
@@ -40,7 +89,7 @@
         <section class="error hidden">
           <p>Login unsuccessful</p>
         </section>
-      </section>
+      </section> -->
     </main>
   </body>
 </html>
