@@ -314,7 +314,7 @@ function errorCheck(existing, res, email) {
  */
 function createSessionId(user, res) {
   let sessionId = Math.random().toString(TS)
-  .slice(2) + Date.now();
+    .slice(2) + Date.now();
   sessions[sessionId] = user.id;
 
   res.cookie("session", sessionId, {
