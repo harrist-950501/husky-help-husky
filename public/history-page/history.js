@@ -28,7 +28,6 @@
 
   /**
    * Initialize page: wire back button, sorting, and load transaction history.
-   * @returns when user does not login or storage cleaned, return back to login
    */
   function init() {
     if (!CURRENT_USER_ID) {
