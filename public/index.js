@@ -1,14 +1,12 @@
 /**
- * index.js – Handles real login with backend authentication.
+ * index.js – Handles login and signup with backend authentication.
  *
  * Flow:
- * 1. User submits login form
- * 2. Script sends POST /login to backend with username/password
- * 3. If backend validates credentials:
- *      - Backend sets login cookie
- *      - Redirect to main-page/main.html
- * 4. If invalid:
- *      - Show error message on login page
+ *  - User fills username/password (and email for signup)
+ *  - Clicks "Log In" → POST /login
+ *  - Clicks "Sign Up" → POST /signup
+ *  - Backend sets session cookie and returns {id, username}
+ *  - We store id/username in localStorage and go to main page
  */
 
 "use strict";
@@ -17,23 +15,79 @@
   window.addEventListener("DOMContentLoaded", init);
 
   /**
-   * Initialize the login form handler.
-   * This attaches the real login handler (handleLogin) to the form submit event.
+   * Initializes the auth page by wiring the form submit handler.
    */
   function init() {
-    const form = document.querySelector("form");
+    const form = document.querySelector("#auth-form") || document.querySelector("form");
     if (!form) {
-      console.error("Login form not found on index.html");
+      console.error("Auth form not found on index.html");
       return;
     }
-    form.addEventListener("submit", handleLogin);
+
+    // One handler for both login and signup.
+    form.addEventListener("submit", handleAuthSubmit);
   }
 
   /**
-   * Reads the value of a text input and trims whitespace.
-   *
-   * @param {string} sel - CSS selector for the input
-   * @returns {string}
+   * Master submit handler: decides login vs signup based on which button was pressed.
+   * @param {SubmitEvent} evt - Form submit event.
+   */
+  async function handleAuthSubmit(evt) {
+    evt.preventDefault();
+    hideError();
+
+    // identify which button was clicked
+    const button = evt.submitter;
+    const mode = button && button.dataset.mode ? button.dataset.mode : "login";
+
+    const username = valueOf("#username");
+    const password = valueOf("#password");
+    const email = valueOf("#email"); // may be empty for login
+
+    if (!username || !password) {
+      return showError("Please enter both username and password.");
+    }
+
+    if (mode === "signup" && !email) {
+      return showError("Please enter an email for signup.");
+    }
+
+    const endpoint = mode === "signup" ? "/signup" : "/login";
+    const body = {username, password};
+
+    if (mode === "signup") {
+      body.email = email;
+    }
+
+    try {
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+      });
+
+      if (!resp.ok) {
+        const msg = await resp.text();
+        throw new Error(msg || "Authentication failed.");
+      }
+
+      const data = await resp.json();
+
+      // Save logged-in user ID & name for later pages (history, etc.)
+      localStorage.setItem("userId", data.id);
+      localStorage.setItem("username", data.username);
+
+      window.location.href = "main-page/main.html";
+    } catch (err) {
+      console.error(err);
+      showError(err.message || "Network error. Please try again.");
+    }
+  }
+
+  /**
+   * Get trimmed value of an input element.
+   * @param {string} sel - CSS selector.
+   * @returns {string} Trimmed value or "" if not found.
    */
   function valueOf(sel) {
     const el = document.querySelector(sel);
@@ -41,23 +95,24 @@
   }
 
   /**
-   * Shows an error message inside the .error box.
-   *
-   * @param {string} msg - Message to display
+   * Displays an error message in #error or .error element.
+   * @param {string} msg - Message to display.
    */
   function showError(msg) {
-    const box = document.querySelector(".error");
+    const box = document.querySelector("#error") || document.querySelector(".error");
     if (box) {
       box.textContent = msg;
       box.classList.remove("hidden");
+    } else {
+      alert(msg);
     }
   }
 
   /**
-   * Clears and hides the error message box.
+   * Hides the error box if present.
    */
   function hideError() {
-    const box = document.querySelector(".error");
+    const box = document.querySelector("#error") || document.querySelector(".error");
     if (box) {
       box.textContent = "";
       box.classList.add("hidden");
@@ -65,55 +120,19 @@
   }
 
   /**
-   * REAL LOGIN HANDLER — Called when user submits the login form.
-   * Sends a POST /login request to backend.
-   *
-   * @param {SubmitEvent} evt
-   */
-  async function handleLogin(evt) {
-    evt.preventDefault();
-    hideError();
-
-    const username = valueOf("#username");
-    const password = valueOf("#password");
-
-    if (!username || !password) {
-      return showError("Please enter both username and password.");
-    }
-
-    try {
-      const resp = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (resp.ok) {
-        const data = await resp.json();
-
-        // remember logged-in user for other pages
-        localStorage.setItem("userId", data.id);
-        localStorage.setItem("username", data.username);
-        window.location.href = "main-page/main.html";
-      } else {
-        showError(await resp.text());
-      }
-    } catch (err) {
-      console.error(err);
-      showError("Network error. Please try again.");
-    }
-  }
-
-  /**
-   * LOGOUT HANDLER — Can be called from any page.
-   * Sends POST /logout and clears cookie server-side.
+   * Logout handler (used from other pages, not index.html).
+   * Clears cookie server-side and redirects to login page.
    */
   async function logout() {
     try {
-      await fetch("/logout", { method: "POST" });
+      await fetch("/logout", {method: "POST"});
+      localStorage.removeItem("userId");
+      localStorage.removeItem("username");
       window.location.href = "../index.html";
     } catch (err) {
       console.error(err);
     }
   }
+
+  window.logout = logout;
 })();
