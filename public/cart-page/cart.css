@@ -11,7 +11,6 @@ main {
 }
 
 /* ===== header ===== */
-
 main > header {
   display: flex;
   align-items: center;
@@ -72,7 +71,6 @@ html[data-theme="dark"] .cart-subtitle {
 }
 
 /* ===== cart-board ===== */
-
 #cart-board {
   display: flex;
   flex-direction: column;
@@ -191,7 +189,6 @@ html[data-theme="dark"] .cart-price {
 }
 
 /* ===== cart-summary ===== */
-
 #cart-summary {
   border: 1.5px solid #E0DAF3;
   border-radius: 20px;
@@ -238,8 +235,7 @@ html[data-theme="dark"] #cart-summary {
   margin-top: 0.3rem;
 }
 
-/* ===== 之後如果要啟用 empty-cart，可以用這一組 ===== */
-
+/* ===== empty-cart ===== */
 /* #empty-cart {
   flex: 1;
   display: flex;
