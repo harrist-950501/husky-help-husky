@@ -35,10 +35,10 @@
     // id("layout-toggle").addEventListener("click", toggleLayout);
 
     id("nav-toggle-btn").addEventListener("click", navToggle);
-    // navToggle();
-    id("logout-btn").addEventListener("click", logout);
+    id("open-cart-page").addEventListener("click", openCartPage);
     id("open-history-page").addEventListener("click", openHistroyPage);
     id("open-profile-page").addEventListener("click", openProfilePage);
+    id("logout-btn").addEventListener("click", logout);
   }
 
   /**
@@ -92,7 +92,7 @@
       items.forEach(item => {
         let card = createCardElement(item);
         board.appendChild(card);
-      })
+      });
       // allItems = Array.isArray(data) ? data : [];
       // renderItems(allItems);
     } catch (err) {
@@ -106,6 +106,13 @@
    */
   function logout() {
     window.location.href = "../index.html";
+  }
+
+  /**
+   * Open shopping cart page
+   */
+  function openCartPage() {
+    window.location.href = "../cart-page/cart.html";
   }
 
   /**
@@ -199,7 +206,6 @@
   /**
    * Creates a complete <article> item card, including media and body sections.
    * This is the main entry point used by renderItems().
-   *
    * @param {Object} item - Item row from the backend (id, title, seller_id, etc.).
    * @returns {HTMLElement} The constructed <article> card element.
    */
@@ -209,7 +215,7 @@
     card.id = item.id;
 
     card.appendChild(createCardImg(item.title));
-    card.appendChild(createCardMeta(item));
+    card.appendChild(createCardInfo(item));
     return card;
   }
 
@@ -240,138 +246,179 @@
     img.src = parseName(title);
     img.alt = title;
 
+    img.addEventListener("click", toggleItemDetail);
+
     imgContainer.appendChild(img);
     return imgContainer;
   }
 
   /**
-   * Builds the meta info section for an item card, including title,
-   * rating, price, and the add-to-cart button.
-   * @param {Object} item - item row with needed data.
-   * @returns {HTMLElement} The <div> card-body section ready to insert.
+   * Creates the info section (right side) of an item card,
+   * including title, rating, description, price, meta info
+   * and action buttons.
+   * In list view, elements marked with the "detail" class are
+   * initially hidden and can be revealed for the detail view.
+   * @param {Object} item - Item data object from the backend.
+   * @returns {HTMLElement} section.info element.
    */
-  function createCardMeta(item) {
-    let metainfo = gen("section");
-    metainfo.classList.add("metainfo");
+  function createCardInfo(item) {
+    const info = gen("section");
+    info.classList.add("info");
 
-    let title = gen("h2");
+    info.appendChild(createInfoTitle(item));
+    info.appendChild(createInfoCategory(item));
+    info.appendChild(createInfoRating());
+    info.appendChild(createInfoDescription(item));
+    info.appendChild(createInfoPrice(item));
+    info.appendChild(createInfoMeta(item));
+    info.appendChild(createInfoCartBtn());
+    info.appendChild(createInfoBackBtn());
+
+    let details = info.querySelectorAll(".detail");
+    details.forEach(detail => {
+      detail.classList.add("hidden");
+    });
+
+    return info;
+  }
+
+  /**
+   * Creates the title element for an item card.
+   * @param {Object} item - Item data object.
+   * @returns {HTMLElement} h2.title element.
+   */
+  function createInfoTitle(item) {
+    const title = gen("h2");
     title.textContent = item.title;
     title.classList.add("title");
 
-    let rating = gen("p");
-    rating.textContent = "★★★★☆ ";
-    rating.classList.add("rating");
-
-    let ratingNum = gen("span");
-    ratingNum.textContent = "4 / 5";
-
-    rating.appendChild(ratingNum);
-
-    let description = gen("p");
-    rating.textContent = "★★★★☆ ";
-    rating.classList.add("rating");
-
-    let ratingNum = gen("span");
-    ratingNum.textContent = "4 / 5";
-
-    rating.appendChild(ratingNum);
-
-    let price = gen("p");
-    price.textContent = "$" + itemPrice;
-    price.classList.add("price");
-
-    let cartBtn = gen("button");
-    cartBtn.textContent = "Add to cart";
-
-    metainfo.appendChild(title);
-    metainfo.appendChild(rating);
-    metainfo.appendChild(price);
-    metainfo.appendChild(cartBtn);
-
-    return metainfo;
+    title.addEventListener("click", toggleItemDetail);
+    return title;
   }
 
-  // /**
-  //  * Inserts the item title and seller/category metadata into the card body.
-  //  *
-  //  * @param {HTMLElement} body - Card body container.
-  //  * @param {Object} it - Item row with title, seller_id, and category fields.
-  //  */
-  // function addCardTitleSection(body, it) {
-  //   const h3 = document.createElement("h3");
-  //   h3.textContent = it.title || "Item";
-  //   body.appendChild(h3);
+  function toggleItemDetail() {
+    qs("#content header").classList.toggle("hidden");
 
-  //   const meta = document.createElement("p");
-  //   meta.className = "muted";
-  //   const category = it.category ? " • " + it.category : "";
-  //   meta.textContent = "Seller #" + it.seller_id + category;
-  //   body.appendChild(meta);
-  // }
+    let items = qsa(".item-card");
+    items.forEach(item => {
+      item.classList.toggle("hidden");
+    });
 
-  // /**
-  //  * Adds a description paragraph to the card body if the item has one.
-  //  *
-  //  * @param {HTMLElement} body - Card body container.
-  //  * @param {Object} it - Item row possibly containing a description.
-  //  */
-  // function addCardDescription(body, it) {
-  //   if (!it.description) {
-  //     return;
-  //   }
-  //   const desc = document.createElement("p");
-  //   desc.className = "description";
-  //   desc.textContent = it.description;
-  //   body.appendChild(desc);
-  // }
+    let card = id(this.parentElement.parentElement.id);
 
-  // /**
-  //  * Adds a formatted price line to the card body if a price is provided.
-  //  *
-  //  * @param {HTMLElement} body - Card body container.
-  //  * @param {Object} it - Item row with a numeric price field.
-  //  */
-  // function addCardPrice(body, it) {
-  //   if (typeof it.price !== "number") {
-  //     return;
-  //   }
-  //   const price = document.createElement("p");
-  //   price.className = "price";
-  //   price.textContent = "$" + it.price.toFixed(2);
-  //   body.appendChild(price);
-  // }
+    if (card.classList.contains("detail-view")) {
+      card.querySelector(".title").addEventListener("click", toggleItemDetail);
+      card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
+    } else {
+      card.querySelector(".title").removeEventListener("click", toggleItemDetail);
+      card.querySelector(".img-container img").removeEventListener("click", toggleItemDetail);
+    }
 
-  // /**
-  //  * Adds a stock count and Buy button to the card body. The Buy button
-  //  * disables itself automatically for items with zero stock.
-  //  *
-  //  * @param {HTMLElement} body - Card body container.
-  //  * @param {Object} it - Item row with stock and id fields.
-  //  */
-  // function addCardStockAndButton(body, it) {
-  //   if (typeof it.stock === "number") {
-  //     const stock = document.createElement("p");
-  //     stock.className = "stock";
-  //     stock.textContent = "Stock: " + it.stock;
-  //     body.appendChild(stock);
-  //   }
+    let info = card.querySelector(".info");
+    let details = info.querySelectorAll(".detail");
+    details.forEach(detail => {
+      detail.classList.toggle("hidden");
+    });
 
-  //   const buyBtn = document.createElement("button");
-  //   buyBtn.type = "button";
-  //   buyBtn.className = "buy-btn";
+    card.classList.toggle("hidden");
+    card.classList.toggle("detail-view");
+  }
 
-  //   if (typeof it.stock === "number" && it.stock <= 0) {
-  //     buyBtn.disabled = true;
-  //     buyBtn.textContent = "Out of stock";
-  //   } else {
-  //     buyBtn.textContent = "Buy";
-  //     buyBtn.addEventListener("click", function() {
-  //       handleBuy(it);
-  //     });
-  //   }
+  /**
+   * Creates the category label that appears in detail mode.
+   * @param {Object} item - Item data object.
+   * @returns {HTMLElement} p.category.detail element.
+   */
+  function createInfoCategory(item) {
+    const category = gen("p");
+    category.textContent = item.category;
+    category.classList.add("category", "detail");
+    return category;
+  }
 
-  //   body.appendChild(buyBtn);
-  // }
+  /**
+   * Creates the rating line (star icons + numeric rating).
+   * @returns {HTMLElement} p.rating element containing a span.
+   */
+  function createInfoRating() {
+    const rating = gen("p");
+    rating.classList.add("rating");
+    rating.textContent = "★★★★☆ ";
+
+    const ratingNum = gen("span");
+    ratingNum.textContent = "4 / 5";
+    rating.appendChild(ratingNum);
+
+    return rating;
+  }
+
+  /**
+   * Creates the description paragraph for detail mode.
+   * @param {Object} item - Item data object.
+   * @returns {HTMLElement} p.description.detail element.
+   */
+  function createInfoDescription(item) {
+    const description = gen("p");
+    description.textContent = item.description;
+    description.classList.add("description", "detail");
+    return description;
+  }
+
+  /**
+   * Creates the price line for an item card.
+   * @param {Object} item - Item data object.
+   * @returns {HTMLElement} p.price element.
+   */
+  function createInfoPrice(item) {
+    const price = gen("p");
+    price.textContent = "$" + item.price;
+    price.classList.add("price");
+    return price;
+  }
+
+  /**
+   * Creates the seller / stock / posted meta info line
+   * that appears only in detail mode.
+   * @param {Object} item - Item data object.
+   * @returns {HTMLElement} p.meta-info.detail element.
+   */
+  function createInfoMeta(item) {
+    const metaInfo = gen("p");
+    metaInfo.textContent =
+      "Seller: #" + item.seller_id +
+      " · Stock: " + item.stock + " left" +
+      " · Posted: " + item.date;
+    metaInfo.classList.add("meta-info", "detail");
+    return metaInfo;
+  }
+
+  /**
+   * Creates the "Add to cart" button for an item card.
+   * @returns {HTMLElement} button.cart-btn element.
+   */
+  function createInfoCartBtn() {
+    const cartBtn = gen("button");
+    cartBtn.textContent = "Add to cart";
+    cartBtn.classList.add("cart-btn");
+
+    return cartBtn;
+  }
+
+  /**
+   * Creates the "Back to list" button that is only visible
+   * in inline detail mode.
+   * @returns {HTMLElement} button.back-btn.detail element.
+   */
+  function createInfoBackBtn() {
+    const backBtn = gen("button");
+    backBtn.textContent = "Back to list";
+    backBtn.classList.add("back-btn", "detail");
+    backBtn.addEventListener("click", toggleItemDetail);
+
+    return backBtn;
+  }
+
+
 
   // /**
   //  * Public entry point for handling a user’s Buy request.
