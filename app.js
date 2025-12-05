@@ -290,6 +290,7 @@ app.post("/logout", (req, res) => {
  * @param {string} existing - the username of the user, should be existed in our db.
  * @param {object} res - the response that we will send back.
  * @param {string} email - the uw email provided by user
+ * @returns {status} error status with message description
  */
 function errorCheck(existing, res, email) {
 
@@ -313,21 +314,21 @@ function errorCheck(existing, res, email) {
  */
 function createSessionId(user, res) {
   let sessionId = Math.random().toString(TS)
-    .slice(2) + Date.now();
-    sessions[sessionId] = user.id;
+  .slice(2) + Date.now();
+  sessions[sessionId] = user.id;
 
-    res.cookie("session", sessionId, {
-      httpOnly: true,
-      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
-      sameSite: "strict",
-      path: "/"
-    });
+  res.cookie("session", sessionId, {
+    httpOnly: true,
+    maxAge: TS * TEN * TEN * TEN * TEN * TEN,
+    sameSite: "strict",
+    path: "/"
+  });
 
-    res.json({
-      success: true,
-      id: user.id,
-      username: user.username
-    });
+  res.json({
+    success: true,
+    id: user.id,
+    username: user.username
+  });
 }
 
 /**
