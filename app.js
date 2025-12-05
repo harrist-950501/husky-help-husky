@@ -61,25 +61,7 @@ app.post("/login", async (req, res) => {
     }
 
     // Create random session ID, save session
-    let sessionId = Math.random().toString(TS).slice(2) + Date.now();
-    sessions[sessionId] = user.id;
-
-    // Set cookie
-    res.cookie("session", sessionId, {
-      httpOnly: true,
-
-      //3600000, i hate magic number linter
-      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
-      sameSite: "strict",
-      path: "/"
-    });
-
-    res.json({
-      success: true,
-      id: user.id,
-      username: user.username
-    });
-
+    createSessionId(user, res);
   } catch (err) {
     console.error(err);
     res.status(SERVER_SIDE_ERROR)
@@ -97,7 +79,8 @@ app.post("/signup", async (req, res) => {
 
     let missing = requireParams(["username", "password", "email"], req.body);
     if (missing) {
-      return res.status(CLIENT_SIDE_ERROR).send(missing);
+      return res.status(CLIENT_SIDE_ERROR)
+        .send(missing);
     }
 
     let username = req.body.username.trim();
@@ -119,31 +102,16 @@ app.post("/signup", async (req, res) => {
     // check if email end with uw.edu
     if (!email.endsWith("@uw.edu")) {
       return res.status(CLIENT_SIDE_ERROR)
-        .send("Please use your uw mail to sign up.")
+        .send("Please use your uw mail to sign up.");
     }
 
-    // Create the user
+    // Create the user and set the session id
     let user = await dbUserCreate(username, password, email);
-
-    // Log them in immediately: create session + cookie
-    let sessionId = Math.random().toString(TS).slice(2) + Date.now();
-    sessions[sessionId] = user.id;
-
-    res.cookie("session", sessionId, {
-      httpOnly: true,
-      maxAge: TS * TEN * TEN * TEN * TEN * TEN, // 3600000
-      sameSite: "strict",
-      path: "/"
-    });
-
-    res.json({
-      success: true,
-      id: user.id,
-      username: user.username
-    });
+    createSessionId(user, res);
   } catch (err) {
     console.error(err);
-    res.status(SERVER_SIDE_ERROR).send("Could not create user.");
+    res.status(SERVER_SIDE_ERROR)
+      .send("Could not create user.");
   }
 });
 
@@ -326,6 +294,30 @@ app.post("/logout", (req, res) => {
 });
 
 /* HELPERS */
+/**
+ * Create a session id for user.
+ * @param {number} user - the id of the user.
+ * @param {object} res - the response that we will send back.
+ * @returns {boolean} True if valid, false otherwise.
+ */
+function createSessionId(user, res) {
+  let sessionId = Math.random().toString(TS).slice(2) + Date.now();
+  sessions[sessionId] = user.id;
+
+  res.cookie("session", sessionId, {
+    httpOnly: true,
+    maxAge: TS * TEN * TEN * TEN * TEN * TEN,
+    sameSite: "strict",
+    path: "/"
+  });
+
+  res.json({
+    success: true,
+    id: user.id,
+    username: user.username
+  });
+}
+
 /**
  * Validates that "stars" is an int between 1 and 5.
  * Returns true if valid, false otherwise.

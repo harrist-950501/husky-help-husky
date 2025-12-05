@@ -14,8 +14,11 @@
 "use strict";
 
 (function() {
-  // Same demo user id as main.js for now.
-  // Logged-in user id, stored at login time.
+
+  /**
+   * Same demo user id as main.js for now.
+   * Logged-in user id, stored at login time.
+   */
   const CURRENT_USER_ID = Number(localStorage.getItem("userId"));
   const JSON_TYPE = "application/json";
   const MAX_STARS = 5;
@@ -25,6 +28,7 @@
 
   /**
    * Initialize page: wire back button, sorting, and load transaction history.
+   * @returns when user does not login or storage cleaned, return back to login
    */
   function init() {
     if (!CURRENT_USER_ID) {
