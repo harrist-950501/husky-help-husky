@@ -27,6 +27,8 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const CLIENT_SIDE_ERROR = 400;
+const CLIENT_INVALID_PARAM = 401;
+const FORBID = 403;
 const SERVER_SIDE_ERROR = 500;
 const PORTNUM = 8000;
 const FIVE = 5;
@@ -45,7 +47,8 @@ app.post("/login", async (req, res) => {
     res.type("json");
     let missing = requireParams(["username", "password"], req.body);
     if (missing) {
-      return res.status(400).send(missing);
+      return res.status(CLIENT_SIDE_ERROR)
+        .send(missing);
     }
 
     let username = req.body.username.trim();
@@ -53,7 +56,8 @@ app.post("/login", async (req, res) => {
 
     let user = await dbUserCheck(username, password);
     if (!user) {
-      return res.status(401).send("Invalid username or password.");
+      return res.status(CLIENT_INVALID_PARAM)
+        .send("Invalid username or password.");
     }
 
     // Create random session ID, save session
@@ -63,7 +67,9 @@ app.post("/login", async (req, res) => {
     // Set cookie
     res.cookie("session", sessionId, {
       httpOnly: true,
-      maxAge: TS * TEN * TEN * TEN * TEN * TEN, //3600000, i hate magic number linter
+
+      //3600000, i hate magic number linter
+      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
       sameSite: "strict",
       path: "/"
     });
@@ -76,7 +82,8 @@ app.post("/login", async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server error.");
+    res.status(SERVER_SIDE_ERROR)
+      .send("Server error.");
   }
 });
 
@@ -139,17 +146,6 @@ app.post("/signup", async (req, res) => {
     res.status(SERVER_SIDE_ERROR).send("Could not create user.");
   }
 });
-
-function requireLogin(req, res, next) {
-  let sessionId = req.cookies.session;
-
-  if (!sessionId || !sessions[sessionId]) {
-    return res.status(401).send("Not logged in.");
-  }
-
-  req.userId = sessions[sessionId];
-  next();
-}
 
 /**
  * Returns all items, or a single item when given an id query parameter.
@@ -235,7 +231,8 @@ app.get("/history/:id", requireLogin, async (req, res) => {
 
   // :id must match the logged-in user id
   if (Number(req.params.id) !== req.userId) {
-    return res.status(403).send("Forbidden");
+    return res.status(FORBID)
+      .send("Forbidden");
   }
 
   try {
@@ -256,40 +253,6 @@ app.get("/history/:id", requireLogin, async (req, res) => {
       .send("Could not retrieve history.");
   }
 });
-
-/**
- * Helper to process rating submission: validates and inserts into DB.
- * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
- * @returns {Promise<Object>} Resolves with success message.
- */
-async function processRatingSubmission(reqBody) {
-  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
-  if (missing) {
-    throw new Error(missing);
-  }
-
-  let stars = Number(reqBody.stars);
-  if (!isValidStars(stars)) {
-    throw new Error("Stars must be an integer between 1 and 5.");
-  }
-
-  let db = await getDBConnection();
-  let itemAndUser = await getExistingItemAndUser(
-    db,
-    reqBody.item_id,
-    reqBody.user_id
-  );
-  await insertRatingRow(
-    db,
-    itemAndUser.item.id,
-    itemAndUser.user.id,
-    stars,
-    reqBody.comment
-  );
-  await db.close();
-
-  return {message: "Rating submitted successfully."};
-}
 
 /**
  * Submits a rating for an item.
@@ -348,6 +311,9 @@ app.get("/items/:id/ratings", async (req, res) => {
   }
 });
 
+/**
+ * Logging out for current user, clear the cookie
+ */
 app.post("/logout", (req, res) => {
   let sessionId = req.cookies.session;
 
@@ -359,6 +325,7 @@ app.post("/logout", (req, res) => {
   res.json({ success: true });
 });
 
+/* HELPERS */
 /**
  * Validates that "stars" is an int between 1 and 5.
  * Returns true if valid, false otherwise.
@@ -477,7 +444,6 @@ async function dbUserCreate(username, password, email) {
     email: email
   };
 }
-
 
 /**
  * Retrieves all items from the items table.
@@ -609,23 +575,6 @@ async function dbCheckCodeDuplicate(code) {
   return false;
 }
 
-/* DB CONNECTION */
-/**
- * RENA: THIS IS COPIED FROM LEC SLIDE, WE SHOULD CHANGE TO OUR OWN VER!!
- *
- * Establishes a database connection to the database and returns the database object.
- * Any errors that occur should be caught in the function that calls this one.
- * @returns {sqlite3.Database} - The database object for the connection.
- */
-async function getDBConnection() {
-  const db = await sqlite.open({
-    filename: "husky.db",
-    driver: sqlite3.Database
-  });
-  return db;
-}
-
-/* HELPERS */
 /**
  * Checks that all required parameters exist on the given request body object.
  * @param {string[]} params - List of required parameter names.
@@ -658,8 +607,72 @@ function generateCode() {
     .toUpperCase();
 }
 
+/**
+ * Helper to process rating submission: validates and inserts into DB.
+ * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
+ * @returns {Promise<Object>} Resolves with success message.
+ */
+async function processRatingSubmission(reqBody) {
+  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
+  if (missing) {
+    throw new Error(missing);
+  }
+
+  let stars = Number(reqBody.stars);
+  if (!isValidStars(stars)) {
+    throw new Error("Stars must be an integer between 1 and 5.");
+  }
+
+  let db = await getDBConnection();
+  let itemAndUser = await getExistingItemAndUser(
+    db,
+    reqBody.item_id,
+    reqBody.user_id
+  );
+  await insertRatingRow(
+    db,
+    itemAndUser.item.id,
+    itemAndUser.user.id,
+    stars,
+    reqBody.comment
+  );
+  await db.close();
+
+  return {message: "Rating submitted successfully."};
+}
+
+/**
+ * Helpers that check the cookie for functions that required login to continue
+ * @param {Object} req - Request body with user_id, item_id, stars, comment.
+ * @param {Object} res - Response send back to clients when not logged in.
+ * @returns {Promise<Object>} Resolves with success message.
+ */
+function requireLogin(req, res) {
+  let sessionId = req.cookies.session;
+
+  if (!sessionId || !sessions[sessionId]) {
+    return res.status(CLIENT_INVALID_PARAM)
+      .send("Not logged in.");
+  }
+
+  req.userId = sessions[sessionId];
+}
+
+/* DB CONNECTION */
+/**
+ *
+ * Establishes a database connection to the database and returns the database object.
+ * Any errors that occur should be caught in the function that calls this one.
+ * @returns {sqlite3.Database} - The database object for the connection.
+ */
+async function getDBConnection() {
+  const db = await sqlite.open({
+    filename: "husky.db",
+    driver: sqlite3.Database
+  });
+  return db;
+}
+
 app.use(express.static("public"));
 const PORT = process.env.PORT || PORTNUM;
 app.listen(PORT);
-
-//app.use(express.static("public"));
