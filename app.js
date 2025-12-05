@@ -92,18 +92,8 @@ app.post("/signup", async (req, res) => {
         .send("Username, password, and email must be non-empty.");
     }
 
-    // Check if username already exists
     let existing = await dbUserGetByUsername(username);
-    if (existing) {
-      return res.status(CLIENT_SIDE_ERROR)
-        .send("Username already taken.");
-    }
-
-    // check if email end with uw.edu
-    if (!email.endsWith("@uw.edu")) {
-      return res.status(CLIENT_SIDE_ERROR)
-        .send("Please use your uw mail to sign up.");
-    }
+    errorCheck(existing, res, email);
 
     // Create the user and set the session id
     let user = await dbUserCreate(username, password, email);
@@ -294,6 +284,28 @@ app.post("/logout", (req, res) => {
 });
 
 /* HELPERS */
+/**
+ * Check login status, make sure the user name has not been taken
+ * and email suffix end up with @uw.edu
+ * @param {string} existing - the username of the user, should be existed in our db.
+ * @param {object} res - the response that we will send back.
+ * @param {string} email - the uw email provided by user
+ */
+function errorCheck(existing, res, email) {
+
+  // Check if username already exists
+  if (existing) {
+    return res.status(CLIENT_SIDE_ERROR)
+      .send("Username already taken.");
+  }
+
+  // check if email end with uw.edu
+  if (!email.endsWith("@uw.edu")) {
+    return res.status(CLIENT_SIDE_ERROR)
+      .send("Please use your uw mail to sign up.");
+  }
+}
+
 /**
  * Create a session id for user.
  * @param {number} user - the id of the user.
