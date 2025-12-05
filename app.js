@@ -130,7 +130,13 @@ app.get("/items/search", async (req, res) => {
 /**
  * Processes a purchase by decrementing stock and creating a transaction.
  */
-app.post("/buy", async (req, res) => {
+app.post("/buy", requireLogin, async (req, res) => {
+
+  // add protection to routes
+  if (Number(req.params.uid) !== req.userId) {
+    return res.status(403).send("Forbidden");
+  }
+
   try {
     res.type("text");
     let missing = requireParams(["buyer_id", "item_id"], req.body);
@@ -160,7 +166,13 @@ app.post("/buy", async (req, res) => {
 /**
  * Returns all transactions where the given user is buyer or seller.
  */
-app.get("/history/:id", async (req, res) => {
+app.get("/history/:id", requireLogin, async (req, res) => {
+
+  // add protection to routes, check login status for history before continuing
+  if (Number(req.params.uid) !== req.userId) {
+    return res.status(403).send("Forbidden");
+  }
+
   try {
     let user = await dbUserGet(req.params.id);
 
@@ -216,7 +228,13 @@ async function processRatingSubmission(reqBody) {
 /**
  * Returns ratings for items.
  */
-app.post("/ratings", async (req, res) => {
+app.post("/ratings", requireLogin, async (req, res) => {
+
+  // add protection to routes, check login status for tating before continuing
+  if (Number(req.params.uid) !== req.userId) {
+    return res.status(403).send("Forbidden");
+  }
+
   try {
     res.type("text");
     let result = await processRatingSubmission(req.body);
