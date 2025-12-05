@@ -176,13 +176,63 @@ html[data-theme="dark"] #profile-pic {
 
 /* ===== Item Board ===== */
 #item-board {
-  /* display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px; */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+}
+
+#item-board.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.2rem;
+  align-items: stretch;
+  justify-items: center;
+}
+
+#item-board.grid-layout .item-card {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.2rem;
+  box-sizing: border-box;
+}
+
+#item-board.grid-layout .item-card.hidden {
+  display: none;
+}
+
+#item-board.grid-layout .img-container {
+  margin-bottom: 0.5rem;
+}
+
+#item-board.grid-layout .img-container img {
+  width: 150px;
+}
+
+#item-board.grid-layout .info {
+  flex: 1;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 0.35rem;
+}
+
+#item-board.grid-layout .title {
+  font-size: 1rem;
+}
+
+#item-board.grid-layout .price {
+  margin-top: 0.3rem;
+}
+
+#item-board.grid-layout .item-card button {
+  align-self: center;
+  margin-top: 0.6rem;
 }
 
 /* ===== Item Card ===== */

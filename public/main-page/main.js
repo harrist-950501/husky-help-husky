@@ -32,7 +32,7 @@
     id("unsearch-btn").addEventListener("click", loadItems);
     id("category-filter").addEventListener("change", checkFilter);
 
-    // id("layout-toggle").addEventListener("click", toggleLayout);
+    id("layout-toggle").addEventListener("click", toggleLayout);
 
     id("nav-toggle-btn").addEventListener("click", navToggle);
     id("open-cart-page").addEventListener("click", openCartPage);
@@ -134,10 +134,6 @@
    * and only shows those whose ids are returned by the API (others are hidden).
    */
   async function itemSearch() {
-    // id("item-detail-view").classList.remove("hidden");
-    // id("item-board").classList.add("hidden");
-    // qs("aside").classList.add("collapsed");
-
     let url = "items/search?";
     let keyword = id("search-bar").value.trim();
     if (keyword !== "") {
@@ -147,7 +143,7 @@
     if (category !== "") {
       url += "filter=" + category;
     }
-    console.log(url);
+
     let isJson = true;
     let searchItems = await dataFetch(BASE_URL + url, isJson);
     id("search-btn").disabled = true;
@@ -166,10 +162,7 @@
    * Toggle the item grid layout between grid and list views.
    */
   function toggleLayout() {
-    const grid = id("item-grid");
-    if (grid) {
-      grid.classList.toggle("list");
-    }
+    id("item-board").classList.toggle("grid-layout");
   }
 
   /**
