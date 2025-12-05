@@ -28,6 +28,13 @@
     if (btn) {
       btn.addEventListener("click", toggleTheme);
     }
+
+    let theme = localStorage.getItem("page-color-theme");
+    if (!theme) {
+      localStorage.setItem("page-color-theme", "light");
+    } else if (theme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
   }
 
   /**
@@ -39,11 +46,13 @@
    * @fires Event when data-theme attribute changes
    */
   function toggleTheme() {
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    if (isDark) {
-      document.documentElement.removeAttribute("data-theme");
-    } else {
+    let theme = localStorage.getItem("page-color-theme");
+    if (theme === "light") {
       document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("page-color-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("page-color-theme", "light");
     }
   }
 })();

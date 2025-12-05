@@ -1,25 +1,29 @@
 /**
  * main.js
- * Renders marketplace items from the backend, supports search by keyword
- * and category, layout toggling, navigation to other pages, and inline
- * detail view for individual items.
+ * Renders marketplace items from the backend, supports search, layout toggle,
+ * logout/navigation, and basic "buy" functionality.
  *
  * Backend endpoints used:
- *  - GET /items
- *  - GET /items/search?search=<term>&filter=<category>
+ *  - GET  /items
+ *  - POST /buy
  */
+
 "use strict";
 
 (function() {
-  const BASE_URL = "http://localhost:8000/";
+  const BASE_URL = "http://localhost:8000/"
 
-  window.addEventListener("load", init);
+  // For now, assume demo logged-in user with id = 1 (see husky.db users table).
+  // const CURRENT_USER_ID = 1;
+  // const MSECOND = 100;
+  // const threeSec = 3000;
+
+  window.addEventListener("DOMContentLoaded", init);
 
   /**
-   * Initializes the main page: loads items and sets up search, layout toggle,
-   * sidebar navigation, and logout button event listeners.
+   * Initialize page: load items, hook up search, layout toggle, and nav.
    */
-  function init() {
+  async function init() {
     loadItems();
 
     id("search-bar").addEventListener("input", checkSearch);
@@ -28,29 +32,18 @@
     id("unsearch-btn").addEventListener("click", loadItems);
     id("category-filter").addEventListener("change", checkFilter);
 
-    id("layout-toggle").addEventListener("click", toggleLayout);
+    // id("layout-toggle").addEventListener("click", toggleLayout);
 
     id("nav-toggle-btn").addEventListener("click", navToggle);
-    id("open-cart-page").addEventListener("click", openCartPage);
+    // navToggle();
+    id("logout-btn").addEventListener("click", logout);
     id("open-history-page").addEventListener("click", openHistroyPage);
     id("open-profile-page").addEventListener("click", openProfilePage);
-    id("logout-btn").addEventListener("click", logout);
-
-    checkPrefernce();
-  }
-
-  function checkPrefernce() {
-    let layout = localStorage.getItem("board-layout");
-    if (!layout) {
-      localStorage.setItem("board-layout", "list");
-    } else if (layout === "grid") {
-      id("item-board").classList.toggle("grid-layout");
-    }
   }
 
   /**
    * Enables or disables the search button depending on whether
-   * a category in the filter is selected.
+   * a category in filter is selected.
    */
   function checkFilter() {
     if (this.value !== "") {
@@ -72,9 +65,6 @@
     }
   }
 
-  /**
-   * Toggles the navigation sidebar between expanded and collapsed views.
-   */
   function navToggle() {
     qs("aside").classList.toggle("collapsed");
     qs("aside h1").classList.toggle("hidden");
@@ -83,60 +73,64 @@
   }
 
   /**
-   * Loads all items from the backend and renders them onto the item board.
+   * Fetch items from backend and render them.
    */
   async function loadItems() {
     let board = id("item-board");
     board.innerHTML = "";
+    // board.textContent = "Loading items...";
 
     try {
       let res = await fetch("/items");
       res = await statusCheck(res);
+      // if (!resp.ok) {
+      //   const msg = await resp.text();
+      //   throw new Error(msg || "Failed to load items.");
+      // }
 
       let items = await res.json();
       items.forEach(item => {
         let card = createCardElement(item);
         board.appendChild(card);
       });
+      // allItems = Array.isArray(data) ? data : [];
+      // renderItems(allItems);
     } catch (err) {
       console.error(err);
+      board.textContent = "Could not load items.";
     }
   }
 
   /**
-   * Logs out the current user and navigates back to the login page.
+   * Logout. Back to login page
    */
   function logout() {
     window.location.href = "../index.html";
   }
 
   /**
-   * Opens the shopping cart page.
-   */
-  function openCartPage() {
-    window.location.href = "../cart-page/cart.html";
-  }
-
-  /**
-   * Opens the transaction history page.
+   * Open transaction history page
    */
   function openHistroyPage() {
     window.location.href = "../history-page/history.html";
   }
 
   /**
-   * Opens the profile page.
+   * Open profile page
    */
   function openProfilePage() {
     window.location.href = "../profile-page/profile.html";
   }
 
   /**
-   * Searches for items using the current keyword and category filter
-   * and updates the item board so that only matching items are shown.
-   * @return {Promise<void>} - Resolves after the search results are applied.
+   * Performs a search for Yips containing the current search term,
+   * and only shows those whose ids are returned by the API (others are hidden).
    */
   async function itemSearch() {
+    // id("item-detail-view").classList.remove("hidden");
+    // id("item-board").classList.add("hidden");
+    // qs("aside").classList.add("collapsed");
+
     let url = "items/search?";
     let keyword = id("search-bar").value.trim();
     if (keyword !== "") {
@@ -146,7 +140,7 @@
     if (category !== "") {
       url += "filter=" + category;
     }
-
+    console.log(url);
     let isJson = true;
     let searchItems = await dataFetch(BASE_URL + url, isJson);
     id("search-btn").disabled = true;
@@ -162,17 +156,44 @@
   }
 
   /**
-   * Switches the item board between list and grid layouts.
+   * Toggle the item grid layout between grid and list views.
    */
   function toggleLayout() {
-    id("item-board").classList.toggle("grid-layout");
-
-    let layout = localStorage.getItem("board-layout");
-    if (layout === "list") {
-      localStorage.setItem("board-layout", "grid");
-    } else {
-      localStorage.setItem("board-layout", "list");
+    const grid = id("item-grid");
+    if (grid) {
+      grid.classList.toggle("list");
     }
+  }
+
+  /**
+   * Render a collection of item objects into the DOM element with id
+   * `item-grid`.
+   *
+   * @param {Array<Object>} items - Array of item rows from the items table.
+   */
+  function renderItems(items) {
+    const grid = id("item-grid");
+    if (!grid) {
+      return;
+    }
+
+    // Clear existing children.
+    while (grid.firstChild) {
+      grid.removeChild(grid.firstChild);
+    }
+
+    if (!items || !items.length) {
+      const pTag = document.createElement("p");
+      pTag.className = "muted";
+      pTag.textContent = "No items found.";
+      grid.appendChild(pTag);
+      return;
+    }
+
+    items.forEach(it => {
+      const card = createCardElement(it);
+      grid.appendChild(card);
+    });
   }
 
   /**
@@ -191,7 +212,7 @@
     return card;
   }
 
-  /**
+    /**
    * Converts a user name into an avatar image path by lowercasing it,
    * replacing spaces with hyphens, and appending the ".png" extension.
    * @param {string} name - User name to convert into an image file path.
@@ -266,6 +287,34 @@
 
     title.addEventListener("click", toggleItemDetail);
     return title;
+  }
+
+  function toggleItemDetail() {
+    qs("#content header").classList.toggle("hidden");
+
+    let items = qsa(".item-card");
+    items.forEach(item => {
+      item.classList.toggle("hidden");
+    });
+
+    let card = id(this.parentElement.parentElement.id);
+
+    if (card.classList.contains("detail-view")) {
+      card.querySelector(".title").addEventListener("click", toggleItemDetail);
+      card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
+    } else {
+      card.querySelector(".title").removeEventListener("click", toggleItemDetail);
+      card.querySelector(".img-container img").removeEventListener("click", toggleItemDetail);
+    }
+
+    let info = card.querySelector(".info");
+    let details = info.querySelectorAll(".detail");
+    details.forEach(detail => {
+      detail.classList.toggle("hidden");
+    });
+
+    card.classList.toggle("hidden");
+    card.classList.toggle("detail-view");
   }
 
   /**
@@ -362,69 +411,104 @@
     return backBtn;
   }
 
+
+
+  // /**
+  //  * Public entry point for handling a user’s Buy request.
+  //  * Delegates purchase logic to performPurchase() and reports result
+  //  * to the user using showStatus().
+  //  *
+  //  * @param {Object} item - Item row containing id and price information.
+  //  */
+  // function handleBuy(item) {
+  //   performPurchase(item)
+  //     .then(msg => showStatus(msg, false))
+  //     .catch(err => showStatus("Could not complete purchase: " + err.message, true));
+  // }
+
+  // /**
+  //  * Sends a POST /buy request to the backend and returns a resolved
+  //  * message string on success, or rejects with an Error on failure.
+  //  * Also triggers a refresh via loadItems() after a successful purchase.
+  //  *
+  //  * @param {Object} item - Item being purchased.
+  //  * @returns {Promise<string>} Resolves with success message text.
+  //  */
+  // async function performPurchase(item) {
+  //   const resp = await fetch("/buy", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: JSON.stringify({
+  //       BUYER_ID: CURRENT_USER_ID,
+  //       ITEM_ID: item.id
+  //     })
+  //   });
+
+  //   const text = await resp.text();
+
+  //   if (!resp.ok) {
+  //     throw new Error(text || "Purchase failed.");
+  //   }
+
+  //   loadItems().catch(err => {
+  //     console.error("Error reloading items:", err);
+  //   });
+
+  //   return text || "Purchase complete!";
+  // }
+
   /**
-   * Toggles between the list view and an inline detail view for a single item card.
-   * When entering detail view, only the selected item's full information is shown.
+   * Updates the status message text and fades it in, then automatically
+   * fades it out after a short delay by toggling a "visible" CSS class.
+   *
+   * @param {string} message - Message text to display.
+   * @param {boolean} isError - Whether to style the message as an error.
+   * @returns {String} message.
    */
-  function toggleItemDetail() {
-    qs("#content header").classList.toggle("hidden");
-    id("item-board").classList.remove("grid-layout");
-
-    let items = qsa(".item-card");
-    items.forEach(item => {
-      item.classList.toggle("hidden");
-    });
-
-    let card = id(this.parentElement.parentElement.id);
-
-    if (card.classList.contains("detail-view")) {
-      card.querySelector(".title").addEventListener("click", toggleItemDetail);
-      card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
-    } else {
-      card.querySelector(".title").removeEventListener("click", toggleItemDetail);
-      card.querySelector(".img-container img").removeEventListener("click", toggleItemDetail);
+  function showStatus(message, isError) {
+    const status = id("status-message");
+    if (!status) {
+      return message;
     }
 
-    let info = card.querySelector(".info");
-    let details = info.querySelectorAll(".detail");
-    details.forEach(detail => {
-      detail.classList.toggle("hidden");
-    });
+    if (statusFadeTimer !== null) {
+      clearTimeout(statusFadeTimer);
+      statusFadeTimer = null;
+    }
 
-    card.classList.toggle("hidden");
-    card.classList.toggle("detail-view");
+    status.textContent = message;
+    if (isError) {
+      status.classList.add("error");
+    } else {
+      status.classList.remove("error");
+    }
+    status.classList.add("visible");
+
+    statusFadeTimer = setTimeout(function() {
+      status.classList.remove("visible");
+      statusFadeTimer = null;
+    }, threeSec);
   }
 
   // /**
-  //  * Updates the status message text and fades it in, then automatically
-  //  * fades it out after a short delay by toggling a "visible" CSS class.
-  //  * @param {string} message - Message text to display.
-  //  * @param {boolean} isError - Whether to style the message as an error.
-  //  * @returns {String} message.
+  //  * Return a debounced version of `fn` that waits `ms` milliseconds after the
+  //  * last call before invoking it.
+  //  *
+  //  * @param {Function} fn - function to debounce.
+  //  * @param {number} ms - delay in milliseconds.
+  //  * @returns {Function} debounced function.
   //  */
-  // function showStatus(message, isError) {
-  //   const status = id("status-message");
-  //   if (!status) {
-  //     return message;
-  //   }
-
-  //   if (statusFadeTimer !== null) {
-  //     clearTimeout(statusFadeTimer);
-  //     statusFadeTimer = null;
-  //   }
-
-  //   status.textContent = message;
-  //   if (isError) {
-  //     status.classList.add("error");
-  //   } else {
-  //     status.classList.remove("error");
-  //   }
-  //   status.classList.add("visible");
-
-  //   statusFadeTimer = setTimeout(function() {
-  //     status.classList.remove("visible");
-  //     statusFadeTimer = null;
-  //   }, threeSec);
+  // function debounce(fn, ms) {
+  //   let timer = null;
+  //   return function() {
+  //     clearTimeout(timer);
+  //     const args = arguments;
+  //     timer = setTimeout(function() {
+  //       fn.apply(null, args);
+  //     }, ms || MSECOND * 2);
+  //   };
   // }
 
   /**
@@ -450,6 +534,11 @@
       return await response.text();
     } catch (error) {
       console.log(error);
+      // id("yipper-data").classList.add("hidden");
+      // id("search-btn").disabled = true;
+      // id("home-btn").disabled = true;
+      // id("yip-btn").disabled = true;
+      // id("error").classList.remove("hidden");
     }
   }
 

@@ -1,0 +1,261 @@
+main {
+  padding: 20px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  height: auto;
+  justify-content: flex-start;
+  align-items: stretch;
+  overflow-y: auto;
+}
+
+/* ===== header ===== */
+
+main > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.secondary-btn {
+  background: #ffffff;
+  color: #4c1d95;
+  border: 1.5px solid #D9D4EF;
+}
+
+.secondary-btn:hover {
+  background: #f3eefe;
+}
+
+html[data-theme="dark"] .secondary-btn {
+  background: #312e3f;
+  color: #e5e7ff;
+  border-color: #4b4268;
+}
+
+html[data-theme="dark"] .secondary-btn:hover {
+  background: #3a3454;
+}
+
+#cart-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+#cart-title h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.cart-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+html[data-theme="dark"] .cart-subtitle {
+  color: #e5e7eb;
+}
+
+/* ===== left: cart-board，right: cart-summary ===== */
+
+#content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+/* ===== cart-board ===== */
+
+#cart-board {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+.cart-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  background: #F9F8FF;
+  border-radius: 20px;
+  border: 1.5px solid #E0DAF3;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 12px 24px rgba(163, 155, 216, 0.18);
+  box-sizing: border-box;
+}
+
+html[data-theme="dark"] .cart-card {
+  background: #2b2837;
+  border-color: #4b4268;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.85);
+}
+
+.cart-img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-img img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.cart-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cart-title {
+  margin: 0;
+  font-size: 1rem;
+  color: #1f2143;
+}
+
+html[data-theme="dark"] .cart-title {
+  color: #f8f7ff;
+}
+
+.cart-meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+html[data-theme="dark"] .cart-meta {
+  color: #e5e7eb;
+}
+
+.cart-price {
+  margin: 0.1rem 0 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #4c1d95;
+}
+
+html[data-theme="dark"] .cart-price {
+  color: #f5e1ff;
+}
+
+.cart-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-width: 130px;
+  text-align: right;
+}
+
+.qty-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.qty-control button {
+  padding: 3px 9px;
+}
+
+.qty-control span {
+  min-width: 1.4rem;
+  text-align: center;
+}
+
+.cart-subtotal {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.remove-btn {
+  padding: 3px 10px;
+  font-size: 0.8rem;
+}
+
+/* ===== cart-summary ===== */
+
+#cart-summary {
+  border: 1.5px solid #E0DAF3;
+  border-radius: 20px;
+  background: #F9F8FF;
+  padding: 1.1rem 1.25rem;
+  box-shadow: 0 0 0 1px rgba(111, 66, 193, 0.06);
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  box-sizing: border-box;
+}
+
+html[data-theme="dark"] #cart-summary {
+  background: #312f3a;
+  border-color: #4b4268;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.85);
+}
+
+#cart-summary h2 {
+  margin: 0 0 0.4rem 0;
+  font-size: 1.2rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.summary-row.total {
+  margin-top: 0.4rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+#checkout-btn {
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
+.summary-back-btn {
+  width: 100%;
+  margin-top: 0.3rem;
+}
+
+/* ===== 之後如果要啟用 empty-cart，可以用這一組 ===== */
+
+/* #empty-cart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+}
+
+#empty-cart h2 {
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+#empty-cart p {
+  margin: 0;
+  font-size: 0.95rem;
+} */
