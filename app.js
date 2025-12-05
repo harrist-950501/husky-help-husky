@@ -224,7 +224,7 @@ app.get("/history/:id", requireLogin, async (req, res) => {
 
 /**
  * Submits a rating for an item.
- * The user_id is taken from the logged-in session, not from the client.
+ * The userId is taken from the logged-in session, not from the client.
  */
 app.post("/ratings", requireLogin, async (req, res) => {
   try {
@@ -233,7 +233,7 @@ app.post("/ratings", requireLogin, async (req, res) => {
     // Inject logged-in user id into the payload
     let payload = {
       ...req.body,
-      user_id: req.userId
+      userId: req.userId
     };
 
     let result = await processRatingSubmission(payload);
@@ -290,7 +290,7 @@ app.post("/logout", (req, res) => {
   }
 
   res.clearCookie("session");
-  res.json({ success: true });
+  res.json({success: true});
 });
 
 /* HELPERS */
@@ -298,24 +298,24 @@ app.post("/logout", (req, res) => {
  * Create a session id for user.
  * @param {number} user - the id of the user.
  * @param {object} res - the response that we will send back.
- * @returns {boolean} True if valid, false otherwise.
  */
 function createSessionId(user, res) {
-  let sessionId = Math.random().toString(TS).slice(2) + Date.now();
-  sessions[sessionId] = user.id;
+  let sessionId = Math.random().toString(TS)
+    .slice(2) + Date.now();
+    sessions[sessionId] = user.id;
 
-  res.cookie("session", sessionId, {
-    httpOnly: true,
-    maxAge: TS * TEN * TEN * TEN * TEN * TEN,
-    sameSite: "strict",
-    path: "/"
-  });
+    res.cookie("session", sessionId, {
+      httpOnly: true,
+      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
+      sameSite: "strict",
+      path: "/"
+    });
 
-  res.json({
-    success: true,
-    id: user.id,
-    username: user.username
-  });
+    res.json({
+      success: true,
+      id: user.id,
+      username: user.username
+    });
 }
 
 /**
