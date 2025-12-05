@@ -93,7 +93,7 @@ html[data-theme="dark"] #content {
   margin-bottom: 25px;
 }
 
-#content header.hidden{
+#content header.hidden {
   display: none;
 }
 
@@ -412,12 +412,9 @@ html[data-theme="dark"] .item-card button {
 }
 
 .detail-view .back-btn {
-  padding: 0.35rem 0.9rem;
-  border-radius: 999px;
   border: 1.5px solid #D9D4EF;
   background: #ffffff;
   color: #4c1d95;
-  box-shadow: none;
 }
 
 .detail-view .back-btn:hover {

@@ -13,17 +13,12 @@
 (function() {
   const BASE_URL = "http://localhost:8000/"
 
-  // For now, assume demo logged-in user with id = 1 (see husky.db users table).
-  // const CURRENT_USER_ID = 1;
-  // const MSECOND = 100;
-  // const threeSec = 3000;
-
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("load", init);
 
   /**
    * Initialize page: load items, hook up search, layout toggle, and nav.
    */
-  async function init() {
+  function init() {
     loadItems();
 
     id("search-bar").addEventListener("input", checkSearch);
@@ -78,23 +73,16 @@
   async function loadItems() {
     let board = id("item-board");
     board.innerHTML = "";
-    // board.textContent = "Loading items...";
 
     try {
       let res = await fetch("/items");
       res = await statusCheck(res);
-      // if (!resp.ok) {
-      //   const msg = await resp.text();
-      //   throw new Error(msg || "Failed to load items.");
-      // }
 
       let items = await res.json();
       items.forEach(item => {
         let card = createCardElement(item);
         board.appendChild(card);
       });
-      // allItems = Array.isArray(data) ? data : [];
-      // renderItems(allItems);
     } catch (err) {
       console.error(err);
       board.textContent = "Could not load items.";
@@ -289,34 +277,6 @@
     return title;
   }
 
-  function toggleItemDetail() {
-    qs("#content header").classList.toggle("hidden");
-
-    let items = qsa(".item-card");
-    items.forEach(item => {
-      item.classList.toggle("hidden");
-    });
-
-    let card = id(this.parentElement.parentElement.id);
-
-    if (card.classList.contains("detail-view")) {
-      card.querySelector(".title").addEventListener("click", toggleItemDetail);
-      card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
-    } else {
-      card.querySelector(".title").removeEventListener("click", toggleItemDetail);
-      card.querySelector(".img-container img").removeEventListener("click", toggleItemDetail);
-    }
-
-    let info = card.querySelector(".info");
-    let details = info.querySelectorAll(".detail");
-    details.forEach(detail => {
-      detail.classList.toggle("hidden");
-    });
-
-    card.classList.toggle("hidden");
-    card.classList.toggle("detail-view");
-  }
-
   /**
    * Creates the category label that appears in detail mode.
    * @param {Object} item - Item data object.
@@ -411,53 +371,34 @@
     return backBtn;
   }
 
+  function toggleItemDetail() {
+    qs("#content header").classList.toggle("hidden");
+    id("item-board").classList.remove("grid-layout");
 
+    let items = qsa(".item-card");
+    items.forEach(item => {
+      item.classList.toggle("hidden");
+    });
 
-  // /**
-  //  * Public entry point for handling a user’s Buy request.
-  //  * Delegates purchase logic to performPurchase() and reports result
-  //  * to the user using showStatus().
-  //  *
-  //  * @param {Object} item - Item row containing id and price information.
-  //  */
-  // function handleBuy(item) {
-  //   performPurchase(item)
-  //     .then(msg => showStatus(msg, false))
-  //     .catch(err => showStatus("Could not complete purchase: " + err.message, true));
-  // }
+    let card = id(this.parentElement.parentElement.id);
 
-  // /**
-  //  * Sends a POST /buy request to the backend and returns a resolved
-  //  * message string on success, or rejects with an Error on failure.
-  //  * Also triggers a refresh via loadItems() after a successful purchase.
-  //  *
-  //  * @param {Object} item - Item being purchased.
-  //  * @returns {Promise<string>} Resolves with success message text.
-  //  */
-  // async function performPurchase(item) {
-  //   const resp = await fetch("/buy", {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json"
-  //     },
-  //     body: JSON.stringify({
-  //       BUYER_ID: CURRENT_USER_ID,
-  //       ITEM_ID: item.id
-  //     })
-  //   });
+    if (card.classList.contains("detail-view")) {
+      card.querySelector(".title").addEventListener("click", toggleItemDetail);
+      card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
+    } else {
+      card.querySelector(".title").removeEventListener("click", toggleItemDetail);
+      card.querySelector(".img-container img").removeEventListener("click", toggleItemDetail);
+    }
 
-  //   const text = await resp.text();
+    let info = card.querySelector(".info");
+    let details = info.querySelectorAll(".detail");
+    details.forEach(detail => {
+      detail.classList.toggle("hidden");
+    });
 
-  //   if (!resp.ok) {
-  //     throw new Error(text || "Purchase failed.");
-  //   }
-
-  //   loadItems().catch(err => {
-  //     console.error("Error reloading items:", err);
-  //   });
-
-  //   return text || "Purchase complete!";
-  // }
+    card.classList.toggle("hidden");
+    card.classList.toggle("detail-view");
+  }
 
   /**
    * Updates the status message text and fades it in, then automatically
@@ -491,25 +432,6 @@
       statusFadeTimer = null;
     }, threeSec);
   }
-
-  // /**
-  //  * Return a debounced version of `fn` that waits `ms` milliseconds after the
-  //  * last call before invoking it.
-  //  *
-  //  * @param {Function} fn - function to debounce.
-  //  * @param {number} ms - delay in milliseconds.
-  //  * @returns {Function} debounced function.
-  //  */
-  // function debounce(fn, ms) {
-  //   let timer = null;
-  //   return function() {
-  //     clearTimeout(timer);
-  //     const args = arguments;
-  //     timer = setTimeout(function() {
-  //       fn.apply(null, args);
-  //     }, ms || MSECOND * 2);
-  //   };
-  // }
 
   /**
    * Fetches data from the given URL and handles errors by disabling controls and showing an
