@@ -669,7 +669,8 @@ function requireLogin(req, res, next) {
   let sessionId = req.cookies.session;
 
   if (!sessionId || !sessions[sessionId]) {
-    return res.status(401).send("Not logged in.");
+    return res.status(CLIENT_INVALID_PARAM)
+      .send("Not logged in.");
   }
 
   req.userId = sessions[sessionId];
