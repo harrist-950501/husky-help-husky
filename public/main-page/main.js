@@ -16,8 +16,6 @@
 "use strict";
 
 (function() {
-  const BASE_URL = "http://localhost:8000/";
-
   window.addEventListener("load", init);
 
   /**
@@ -25,7 +23,7 @@
    * sidebar navigation, and logout button event listeners.
    */
   function init() {
-    checkPrefernce();
+    checkLocalStorage();
 
     id("nav-toggle-btn").addEventListener("click", navToggle);
     id("open-cart-page").addEventListener("click", openCartPage);
@@ -33,23 +31,29 @@
     id("open-profile-page").addEventListener("click", openProfilePage);
     id("logout-btn").addEventListener("click", logout);
 
-    id("search-bar").addEventListener("input", checkSearch);
+    // id("search-bar").addEventListener("input", checkSearch);
     id("search-btn").addEventListener("click", itemSearch);
-    id("search-btn").disabled = "true";
+    // id("search-btn").disabled = "true";
     id("unsearch-btn").addEventListener("click", loadItems);
-    id("category-filter").addEventListener("change", checkFilter);
+    // id("category-filter").addEventListener("change", checkFilter);
 
     id("layout-toggle").addEventListener("click", toggleLayout);
 
     loadItems();
   }
 
-  function checkPrefernce() {
+  function checkLocalStorage() {
     let layout = localStorage.getItem("board-layout");
     if (!layout) {
       localStorage.setItem("board-layout", "list");
     } else if (layout === "grid") {
       id("item-board").classList.toggle("grid-layout");
+    }
+
+    let cart = localStorage.getItem("cart");
+    if (!cart) {
+      let cart = {};
+      localStorage.setItem("cart", JSON.stringify(cart));
     }
   }
 
@@ -99,7 +103,7 @@
       let items = await dataFetch("/items", isJson);
 
       items.forEach(item => {
-        let card = createCardElement(item);
+        let card = createItemCard(item);
         board.appendChild(card);
       });
     } catch (err) {
@@ -111,28 +115,28 @@
    * Logs out the current user and navigates back to the login page.
    */
   function logout() {
-    window.location.href = "../index.html";
+    window.location.href = "/index.html";
   }
 
   /**
    * Opens the shopping cart page.
    */
   function openCartPage() {
-    window.location.href = "../cart-page/cart.html";
+    window.location.href = "/cart-page/cart.html";
   }
 
   /**
    * Opens the transaction history page.
    */
   function openHistroyPage() {
-    window.location.href = "../history-page/history.html";
+    window.location.href = "/history-page/history.html";
   }
 
   /**
    * Opens the profile page.
    */
   function openProfilePage() {
-    window.location.href = "../profile-page/profile.html";
+    window.location.href = "/profile-page/profile.html";
   }
 
   /**
@@ -140,7 +144,7 @@
    * and updates the item board so that only matching items are shown.
    */
   async function itemSearch() {
-    let url = "items/search?";
+    let url = "/items/search?";
     let keyword = id("search-bar").value.trim();
     if (keyword !== "") {
       url += "search=" + keyword + "&";
@@ -151,8 +155,7 @@
     }
 
     let isJson = true;
-    let searchItems = await dataFetch(BASE_URL + url, isJson);
-    id("search-btn").disabled = true;
+    let searchItems = await dataFetch(url, isJson);
 
     let items = qsa(".item-card");
     items.forEach(item => {
@@ -184,7 +187,7 @@
    * @param {Object} item - Item row from the backend (id, title, seller_id, etc.).
    * @returns {HTMLElement} The constructed <article> card element.
    */
-  function createCardElement(item) {
+  function createItemCard(item) {
     let card = gen("article");
     card.classList.add("item-card");
     card.id = item.id;
@@ -347,6 +350,7 @@
     const cartBtn = gen("button");
     cartBtn.textContent = "Add to cart";
     cartBtn.classList.add("cart-btn");
+    cartBtn.addEventListener("click", addItemToCart);
 
     return cartBtn;
   }
@@ -365,13 +369,23 @@
     return backBtn;
   }
 
+  function addItemToCart() {
+    let cart = JSON.parse(localStorage.getItem("cart"));
+    let itemId = this.parentElement.parentElement.id;
+    if (cart[itemId]  !== undefined) {
+      cart[itemId] =  cart[itemId] + 1;
+    } else {
+      cart[itemId] = 1;
+    }
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }
+
   /**
    * Toggles between the list view and an inline detail view for a single item card.
    * When entering detail view, only the selected item's full information is shown.
    */
   function toggleItemDetail() {
     qs("#content header").classList.toggle("hidden");
-    id("item-board").classList.remove("grid-layout");
 
     let items = qsa(".item-card");
     items.forEach(item => {
@@ -381,9 +395,16 @@
     let card = id(this.parentElement.parentElement.id);
 
     if (card.classList.contains("detail-view")) {
+      let layout = localStorage.getItem("board-layout");
+      if (layout === "grid") {
+        id("item-board").classList.add("grid-layout");
+      }
+
       card.querySelector(".title").addEventListener("click", toggleItemDetail);
       card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
     } else {
+      id("item-board").classList.remove("grid-layout");
+
       card.querySelector(".title").removeEventListener("click", toggleItemDetail);
       card.querySelector(".img-container img").removeEventListener("click", toggleItemDetail);
     }
