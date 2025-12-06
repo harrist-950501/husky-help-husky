@@ -25,7 +25,13 @@
    * sidebar navigation, and logout button event listeners.
    */
   function init() {
-    loadItems();
+    checkPrefernce();
+
+    id("nav-toggle-btn").addEventListener("click", navToggle);
+    id("open-cart-page").addEventListener("click", openCartPage);
+    id("open-history-page").addEventListener("click", openHistroyPage);
+    id("open-profile-page").addEventListener("click", openProfilePage);
+    id("logout-btn").addEventListener("click", logout);
 
     id("search-bar").addEventListener("input", checkSearch);
     id("search-btn").addEventListener("click", itemSearch);
@@ -35,13 +41,7 @@
 
     id("layout-toggle").addEventListener("click", toggleLayout);
 
-    id("nav-toggle-btn").addEventListener("click", navToggle);
-    id("open-cart-page").addEventListener("click", openCartPage);
-    id("open-history-page").addEventListener("click", openHistroyPage);
-    id("open-profile-page").addEventListener("click", openProfilePage);
-    id("logout-btn").addEventListener("click", logout);
-
-    checkPrefernce();
+    loadItems();
   }
 
   function checkPrefernce() {
@@ -95,16 +95,15 @@
     board.innerHTML = "";
 
     try {
-      let res = await fetch("/items");
-      res = await statusCheck(res);
+      let isJson = true;
+      let items = await dataFetch("/items", isJson);
 
-      let items = await res.json();
       items.forEach(item => {
         let card = createCardElement(item);
         board.appendChild(card);
       });
     } catch (err) {
-      console.error(err);
+      // Stop the code from keeping running, dataFetch already shows error message
     }
   }
 
@@ -139,7 +138,6 @@
   /**
    * Searches for items using the current keyword and category filter
    * and updates the item board so that only matching items are shown.
-   * @return {Promise<void>} - Resolves after the search results are applied.
    */
   async function itemSearch() {
     let url = "items/search?";
@@ -400,38 +398,6 @@
     card.classList.toggle("detail-view");
   }
 
-  // /**
-  //  * Updates the status message text and fades it in, then automatically
-  //  * fades it out after a short delay by toggling a "visible" CSS class.
-  //  * @param {string} message - Message text to display.
-  //  * @param {boolean} isError - Whether to style the message as an error.
-  //  * @returns {String} message.
-  //  */
-  // function showStatus(message, isError) {
-  //   const status = id("status-message");
-  //   if (!status) {
-  //     return message;
-  //   }
-
-  //   if (statusFadeTimer !== null) {
-  //     clearTimeout(statusFadeTimer);
-  //     statusFadeTimer = null;
-  //   }
-
-  //   status.textContent = message;
-  //   if (isError) {
-  //     status.classList.add("error");
-  //   } else {
-  //     status.classList.remove("error");
-  //   }
-  //   status.classList.add("visible");
-
-  //   statusFadeTimer = setTimeout(function() {
-  //     status.classList.remove("visible");
-  //     statusFadeTimer = null;
-  //   }, threeSec);
-  // }
-
   /**
    * Fetches data from the given URL and handles errors by disabling controls and showing an
    * error message. Support GET and POST, return in JSON or Plain text.
@@ -449,13 +415,27 @@
         response = await fetch(url);
       }
       await statusCheck(response);
+      showStatus("Product board ", "Browse items and add something you like", false);
       if (isJson) {
         return await response.json();
       }
       return await response.text();
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      showStatus("Website Error", err, true);
     }
+  }
+
+  function showStatus(title, message, isError) {
+    const status = id("status-message");
+
+    status.querySelector("h2").textContent = title;
+    status.querySelector("p").textContent = message;
+    if (isError) {
+      status.classList.add("error");
+    } else {
+      status.classList.remove("error");
+    }
+
   }
 
   /**

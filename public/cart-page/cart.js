@@ -11,31 +11,28 @@
   const BASE_URL = "http://localhost:8000/"
 
   // For now, assume demo logged-in user with id = 1 (see husky.db users table).
-  // const CURRENT_USER_ID = 1;
-  // const MSECOND = 100;
-  // const threeSec = 3000;
+  const CURRENT_USER_ID = 1;
+  const MSECOND = 100;
+  const threeSec = 3000;
 
-  window.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("load", init);
 
   /**
    * Initialize page: load items, hook up search, layout toggle, and nav.
    */
   async function init() {
-    loadItems();
+    // loadItems();
 
-    id("search-bar").addEventListener("input", checkSearch);
-    id("search-btn").addEventListener("click", itemSearch);
-    id("search-btn").disabled = "true";
-    id("unsearch-btn").addEventListener("click", loadItems);
-    id("category-filter").addEventListener("change", checkFilter);
+    qsa(".back-btn").forEach(button => {
+      button.addEventListener("click", back);
+    });
+  }
 
-    // id("layout-toggle").addEventListener("click", toggleLayout);
-
-    id("nav-toggle-btn").addEventListener("click", navToggle);
-    // navToggle();
-    id("logout-btn").addEventListener("click", logout);
-    id("open-history-page").addEventListener("click", openHistroyPage);
-    id("open-profile-page").addEventListener("click", openProfilePage);
+  /**
+   * Navigate back to the main page.
+   */
+  function back() {
+    window.location.href = "../main-page/main.html";
   }
 
   /**
@@ -410,51 +407,50 @@
 
 
 
-  // /**
-  //  * Public entry point for handling a user’s Buy request.
-  //  * Delegates purchase logic to performPurchase() and reports result
-  //  * to the user using showStatus().
-  //  *
-  //  * @param {Object} item - Item row containing id and price information.
-  //  */
-  // function handleBuy(item) {
-  //   performPurchase(item)
-  //     .then(msg => showStatus(msg, false))
-  //     .catch(err => showStatus("Could not complete purchase: " + err.message, true));
-  // }
+  /**
+   * Public entry point for handling a user’s Buy request.
+   * Delegates purchase logic to performPurchase() and reports result
+   * to the user using showStatus().
+   * @param {Object} item - Item row containing id and price information.
+   */
+  function handleBuy(item) {
+    performPurchase(item)
+      .then(msg => showStatus(msg, false))
+      .catch(err => showStatus("Could not complete purchase: " + err.message, true));
+  }
 
-  // /**
-  //  * Sends a POST /buy request to the backend and returns a resolved
-  //  * message string on success, or rejects with an Error on failure.
-  //  * Also triggers a refresh via loadItems() after a successful purchase.
-  //  *
-  //  * @param {Object} item - Item being purchased.
-  //  * @returns {Promise<string>} Resolves with success message text.
-  //  */
-  // async function performPurchase(item) {
-  //   const resp = await fetch("/buy", {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json"
-  //     },
-  //     body: JSON.stringify({
-  //       BUYER_ID: CURRENT_USER_ID,
-  //       ITEM_ID: item.id
-  //     })
-  //   });
+  /**
+   * Sends a POST /buy request to the backend and returns a resolved
+   * message string on success, or rejects with an Error on failure.
+   * Also triggers a refresh via loadItems() after a successful purchase.
+   *
+   * @param {Object} item - Item being purchased.
+   * @returns {Promise<string>} Resolves with success message text.
+   */
+  async function performPurchase(item) {
+    const resp = await fetch("/buy", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        BUYER_ID: CURRENT_USER_ID,
+        ITEM_ID: item.id
+      })
+    });
 
-  //   const text = await resp.text();
+    const text = await resp.text();
 
-  //   if (!resp.ok) {
-  //     throw new Error(text || "Purchase failed.");
-  //   }
+    if (!resp.ok) {
+      throw new Error(text || "Purchase failed.");
+    }
 
-  //   loadItems().catch(err => {
-  //     console.error("Error reloading items:", err);
-  //   });
+    loadItems().catch(err => {
+      console.error("Error reloading items:", err);
+    });
 
-  //   return text || "Purchase complete!";
-  // }
+    return text || "Purchase complete!";
+  }
 
   /**
    * Updates the status message text and fades it in, then automatically
@@ -489,25 +485,6 @@
     }, threeSec);
   }
 
-  // /**
-  //  * Return a debounced version of `fn` that waits `ms` milliseconds after the
-  //  * last call before invoking it.
-  //  *
-  //  * @param {Function} fn - function to debounce.
-  //  * @param {number} ms - delay in milliseconds.
-  //  * @returns {Function} debounced function.
-  //  */
-  // function debounce(fn, ms) {
-  //   let timer = null;
-  //   return function() {
-  //     clearTimeout(timer);
-  //     const args = arguments;
-  //     timer = setTimeout(function() {
-  //       fn.apply(null, args);
-  //     }, ms || MSECOND * 2);
-  //   };
-  // }
-
   /**
    * Fetches data from the given URL and handles errors by disabling controls and showing an
    * error message. Support GET and POST, return in JSON or Plain text.
@@ -531,11 +508,6 @@
       return await response.text();
     } catch (error) {
       console.log(error);
-      // id("yipper-data").classList.add("hidden");
-      // id("search-btn").disabled = true;
-      // id("home-btn").disabled = true;
-      // id("yip-btn").disabled = true;
-      // id("error").classList.remove("hidden");
     }
   }
 

@@ -8,18 +8,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:i...00;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <script src="cart.js"></script>
     <script src="../theme.js"></script>
   </head>
   <body>
     <button id="theme-toggle">Toggle Theme</button>
     <main>
       <header>
-        <button id="back-button" class="secondary-btn">Back to main page</button>
-        <section id="cart-title">
+        <button class="back-btn">Back</button>
+        <section id="title">
           <h1>Shopping Cart</h1>
-          <p class="cart-subtitle">3 items in your cart</p>
+          <p id="subtitle">3 items in your cart</p>
         </section>
       </header>
+      <section id="status-message">
+        <h2>Your cart is empty</h2>
+        <p>Browse items and add something you like.</p>
+      </section>
       <section id="content">
         <section id="cart-board">
           <article class="cart-card">
@@ -97,14 +102,9 @@
             <span>$139.00</span>
           </section>
           <button id="checkout-btn">Checkout</button>
-          <button class="secondary-btn summary-back-btn">Continue shopping</button>
+          <button class="back-btn">Continue shopping</button>
         </section>
       </section>
-      <!-- <section id="empty-cart" class="hidden">
-        <h2>Your cart is empty</h2>
-        <p>Browse items and add something you like.</p>
-        <button class="secondary-btn">Back to main page</button>
-      </section> -->
     </main>
   </body>
 </html>

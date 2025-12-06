@@ -87,6 +87,25 @@ button:hover {
   display: none;
 }
 
+#status-message h2 {
+  margin: 0 0 0.2rem 0;
+  color: #4c1d95;
+}
+
+#status-message p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b21a8;
+}
+
+html[data-theme="dark"] #status-message h2 {
+  color: #f5e1ff;
+}
+
+html[data-theme="dark"] #status-message p {
+  color: #e5e7ff;
+}
+
 .error {
   background-color: #fdecea;
   color: #b71c1c;

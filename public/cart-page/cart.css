@@ -18,46 +18,41 @@ main > header {
   gap: 1rem;
 }
 
-.secondary-btn {
-  background: #ffffff;
-  color: #4c1d95;
-  border: 1.5px solid #D9D4EF;
-}
-
-.secondary-btn:hover {
-  background: #f3eefe;
-}
-
-html[data-theme="dark"] .secondary-btn {
-  background: #312e3f;
-  color: #e5e7ff;
-  border-color: #4b4268;
-}
-
-html[data-theme="dark"] .secondary-btn:hover {
-  background: #3a3454;
-}
-
-#cart-title {
+#title {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.15rem;
 }
 
-#cart-title h1 {
+#title h1 {
   margin: 0;
   font-size: 1.6rem;
 }
 
-.cart-subtitle {
+#subtitle {
   margin: 0;
   font-size: 0.95rem;
   color: #4b5563;
 }
 
-html[data-theme="dark"] .cart-subtitle {
+html[data-theme="dark"] #subtitle {
   color: #e5e7eb;
+}
+
+/* ===== Status message ===== */
+#status-message {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+}
+
+#status-message h2 {
+  font-size: 1.5rem;
 }
 
 /* ===== left: cart-board，right: cart-summary ===== */
@@ -230,28 +225,7 @@ html[data-theme="dark"] #cart-summary {
   margin-top: 0.6rem;
 }
 
-.summary-back-btn {
+.summary-back {
   width: 100%;
   margin-top: 0.3rem;
 }
-
-/* ===== empty-cart ===== */
-/* #empty-cart {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 0.6rem;
-}
-
-#empty-cart h2 {
-  font-size: 1.6rem;
-  margin: 0;
-}
-
-#empty-cart p {
-  margin: 0;
-  font-size: 0.95rem;
-} */

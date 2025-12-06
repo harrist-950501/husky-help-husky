@@ -488,7 +488,6 @@
 
   /**
    * Navigate back to the main page.
-   * @returns {void}
    */
   function back() {
     window.location.href = "../main-page/main.html";

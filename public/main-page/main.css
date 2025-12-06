@@ -92,6 +92,9 @@ html[data-theme="dark"] #content {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 25px;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 18px;
 }
 
 #content header.hidden {
@@ -106,7 +109,7 @@ html[data-theme="dark"] #content {
 }
 
 #search-bar {
-  width: 90%;
+  width: 100%;
   box-sizing: border-box;
   padding: 10px 15px;
   border: 1.5px solid #D9D4EF;
@@ -165,6 +168,10 @@ html[data-theme="dark"] #category-filter:focus {
   box-shadow: 0 0 6px rgba(129, 140, 248, 0.6);
 }
 
+#layout-toggle {
+  text-wrap: nowrap;
+}
+
 #profile-pic {
   width: 80px;
   border-radius: 50%;
@@ -173,6 +180,12 @@ html[data-theme="dark"] #category-filter:focus {
 
 html[data-theme="dark"] #profile-pic {
   border-color: #7c6de0;
+}
+
+/* ===== Status message ===== */
+#status-message {
+  margin-top: 4px;
+  margin-bottom: 18px;
 }
 
 /* ===== Item Board ===== */
@@ -437,19 +450,3 @@ html[data-theme="dark"] .detail-view .back-btn {
 html[data-theme="dark"] .detail-view .back-btn:hover {
   background: #3a3454;
 }
-
-/* .status-message {
-  margin-top: 8px;
-  font-size: 0.9rem;
-  color: #555;
-  opacity: 0;
-  transition: opacity 0.4s ease-in-out;
-} */
-
-/* .status-message.visible {
-  opacity: 1;
-}
-
-.status-message.error {
-  color: #b00020;
-} */
