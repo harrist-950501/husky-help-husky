@@ -326,6 +326,8 @@ async function processRatingSubmission(reqBody) {
   await db.close();
 
   return {message: "Rating submitted successfully."};
+}
+
 /* HELPERS */
 /**
  * Check login status, make sure the user name has not been taken
