@@ -81,6 +81,77 @@ app.post("/login", async (req, res) => {
 });
 
 /**
+ * Creates a new user account (sign up) and logs them in.
+ * Expects JSON: { username, password, email }
+ */
+app.post("/signup", async (req, res) => {
+  try {
+    res.type("json");
+
+    let missing = requireParams(["username", "password", "email"], req.body);
+    if (missing) {
+      return res.status(CLIENT_SIDE_ERROR).send(missing);
+    }
+
+    let username = req.body.username.trim();
+    let password = req.body.password.trim();
+    let email = req.body.email.trim();
+
+    if (!username || !password || !email) {
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Username, password, and email must be non-empty.");
+    }
+
+    // Check if username already exists
+    let existing = await dbUserGetByUsername(username);
+    if (existing) {
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Username already taken.");
+    }
+
+    // check if email end with uw.edu
+    if (!email.endsWith("@uw.edu")) {
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Please use your uw mail to sign up.")
+    }
+
+    // Create the user
+    let user = await dbUserCreate(username, password, email);
+
+    // Log them in immediately: create session + cookie
+    let sessionId = Math.random().toString(TS).slice(2) + Date.now();
+    sessions[sessionId] = user.id;
+
+    res.cookie("session", sessionId, {
+      httpOnly: true,
+      maxAge: TS * TEN * TEN * TEN * TEN * TEN, // 3600000
+      sameSite: "strict",
+      path: "/"
+    });
+
+    res.json({
+      success: true,
+      id: user.id,
+      username: user.username
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(SERVER_SIDE_ERROR).send("Could not create user.");
+  }
+});
+
+function requireLogin(req, res, next) {
+  let sessionId = req.cookies.session;
+
+  if (!sessionId || !sessions[sessionId]) {
+    return res.status(401).send("Not logged in.");
+  }
+
+  req.userId = sessions[sessionId];
+  next();
+}
+
+/**
  * Returns all items, or a single item when given an id query parameter.
  */
 app.get("/items", async (req, res) => {
@@ -382,6 +453,42 @@ async function dbUserCheck(username, password) {
   await db.close();
   return user;
 }
+
+/**
+ * Retrieves a user row by username.
+ * @param {string} username - Username to look up.
+ * @return {Object|null} user row if found, otherwise null.
+ */
+async function dbUserGetByUsername(username) {
+  let query = "SELECT * FROM users WHERE username = ?;";
+  let db = await getDBConnection();
+  let user = await db.get(query, [username]);
+  await db.close();
+  return user;
+}
+
+/**
+ * Creates a new user account in the users table.
+ * @param {string} username - Unique username.
+ * @param {string} password - Plain-text password (ok for course project).
+ * @param {string} email - Email address.
+ * @return {Object} new user row with id, username, email.
+ */
+async function dbUserCreate(username, password, email) {
+  let db = await getDBConnection();
+  let query = "INSERT INTO users (username, password, email) VALUES (?, ?, ?);";
+  await db.run(query, [username, password, email]);
+
+  let row = await db.get("SELECT last_insert_rowid() AS id;");
+  await db.close();
+
+  return {
+    id: row.id,
+    username: username,
+    email: email
+  };
+}
+
 
 /**
  * Retrieves all items from the items table.
