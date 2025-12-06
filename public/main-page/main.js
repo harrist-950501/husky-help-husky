@@ -18,7 +18,7 @@
 (function() {
   const MAXSTAR = 5;
 
-  let search_result = [];
+  let searchResult = [];
 
   window.addEventListener("load", init);
 
@@ -47,6 +47,10 @@
     await loadItems();
   }
 
+  /**
+   * Ensures required keys exist in localStorage and initializes them when absent.
+   * Default board layout: "list"
+   */
   function checkLocalStorage() {
     let layout = localStorage.getItem("board-layout");
     if (!layout) {
@@ -57,7 +61,7 @@
 
     let cart = localStorage.getItem("cart");
     if (!cart) {
-      let cart = {};
+      cart = {};
       localStorage.setItem("cart", JSON.stringify(cart));
     }
   }
@@ -130,49 +134,69 @@
         let card = await createItemCard(item);
         board.appendChild(card);
 
-        search_result.push(item.id);
+        searchResult.push(item.id);
       }
     } catch (err) {
       showStatus("Website Error", "Failed to load Item", true);
     }
   }
 
+  // /**
+  //  * Searches for items using the current keyword and category filter
+  //  * and updates the item board so that only matching items are shown.
+  //  */
+  // async function itemSearch() {
+  //   let url = "/items/search?";
+  //   let keyword = id("search-bar").value.trim();
+  //   if (keyword !== "") {
+  //     url += "search=" + keyword + "&";
+  //   }
+  //   let category = id("category-filter").value;
+  //   if (category !== "") {
+  //     url += "filter=" + category;
+  //   }
+
+  //   try {
+  //     let isJson = true;
+  //     let searchItems = await dataFetch(url, isJson);
+
+  //     let items = qsa(".item-card");
+  //     items.forEach(item => {
+  //       item.classList.add("hidden");
+  //     });
+
+  //     searchResult = [];
+
+  //     if (searchItems.length === 0) {
+  //       showStatus("No matching items", "Try different keywords or categories", false);
+  //     } else {
+  //       searchItems.forEach(item => {
+  //         id(item.id).classList.remove("hidden");
+
+  //         searchResult.push(item.id);
+  //       });
+  //       showStatus("Search Results", "Found " + searchItems.length + " matching items", false);
+  //     }
+  //   } catch (err) {
+  //     console.log(err);
+  //     showStatus("Website Error", "Failed to search Item", true);
+  //   }
+
+  //   id("search-bar").value = "";
+  //   id("category-filter").value = "";
+  //   id("search-btn").disabled = true;
+  // }
+
   /**
    * Searches for items using the current keyword and category filter
-   * and updates the item board so that only matching items are shown.
+   * and updates the board so that only matching items are shown.
    */
   async function itemSearch() {
-    let url = "/items/search?";
-    let keyword = id("search-bar").value.trim();
-    if (keyword !== "") {
-      url += "search=" + keyword + "&";
-    }
-    let category = id("category-filter").value;
-    if (category !== "") {
-      url += "filter=" + category;
-    }
-
     try {
+      let url = buildSearchUrl();
       let isJson = true;
       let searchItems = await dataFetch(url, isJson);
-
-      let items = qsa(".item-card");
-      items.forEach(item => {
-        item.classList.add("hidden");
-      });
-
-      search_result = [];
-
-      if (searchItems.length === 0) {
-        showStatus("No matching items", "Try different keywords or categories", false);
-      } else {
-        searchItems.forEach(item => {
-          id(item.id).classList.remove("hidden");
-
-          search_result.push(item.id);
-        });
-        showStatus("Search Results", "Found " + searchItems.length + " matching items", false);
-      }
+      applySearchResults(searchItems);
     } catch (err) {
       console.log(err);
       showStatus("Website Error", "Failed to search Item", true);
@@ -183,12 +207,58 @@
     id("search-btn").disabled = true;
   }
 
+  /**
+   * Builds the search URL from the current keyword input and category filter.
+   * @returns {string} Fully constructed URL for the search endpoint.
+   */
+  function buildSearchUrl() {
+    let url = "/items/search?";
+    let keyword = id("search-bar").value.trim();
+    if (keyword !== "") {
+      url += "search=" + keyword + "&";
+    }
+    let category = id("category-filter").value;
+    if (category !== "") {
+      url += "filter=" + category;
+    }
+    return url;
+  }
+
+  /**
+   * Applies search results to the board: hides non-matches, reveals matches,
+   * and sets an appropriate status message.
+   * @param {Object[]} searchItems - search items returned from the backend.
+   */
+  function applySearchResults(searchItems) {
+    let items = qsa(".item-card");
+    items.forEach(item => item.classList.add("hidden"));
+
+    searchResult = [];
+    if (searchItems.length === 0) {
+      showStatus("No matching items", "Try different keywords or categories", false);
+      return;
+    }
+
+    searchItems.forEach(item => {
+      let card = id(item.id);
+      if (card) {
+        card.classList.remove("hidden");
+        searchResult.push(item.id);
+      }
+    });
+
+    showStatus("Search Results", "Found " + searchItems.length + " matching items", false);
+  }
+
+  /**
+   * Let all items become visible again.
+   */
   function reavealAllItems() {
     let items = qsa(".item-card");
-    search_result = [];
+    searchResult = [];
     items.forEach(item => {
       item.classList.remove("hidden");
-      search_result.push(item.id);
+      searchResult.push(item.id);
     });
     showStatus("Product board ", "Browse items and add something you like", false);
   }
@@ -314,6 +384,7 @@
 
   /**
    * Creates the rating line (star icons + numeric rating).
+   * @param {Object} item - Item data object.
    * @returns {HTMLElement} p.rating element containing a span.
    */
   async function createInfoRating(item) {
@@ -419,6 +490,9 @@
     return backBtn;
   }
 
+  /**
+   * Increments the quantity of the clicked item in shopping cart.
+   */
   function addItemToCart() {
     let cart = JSON.parse(localStorage.getItem("cart"));
     let itemId = this.parentElement.parentElement.id;
@@ -437,7 +511,7 @@
   function toggleItemDetail() {
     qs("#content header").classList.toggle("hidden");
 
-    for (let itemId of search_result) {
+    for (let itemId of searchResult) {
       id(itemId).classList.toggle("hidden");
     }
 
