@@ -212,6 +212,18 @@ app.get("/history/:id", requireLogin, async (req, res) => {
   }
 });
 
+app.get("/history", requireLogin, async (req, res) => {
+  try {
+    let transactions = await dbTransactionUserGet(req.userId);
+    res.json(transactions);
+  } catch (err) {
+    console.error(err);
+    res.status(SERVER_SIDE_ERROR)
+      .type("text")
+      .send("Could not retrieve history.");
+  }
+});
+
 /**
  * Submits a rating for an item.
  * The userId is taken from the logged-in session, not from the client.

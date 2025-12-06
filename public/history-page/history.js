@@ -60,11 +60,11 @@
   async function loadHistory() {
     const board = id("transaction-board");
     if (board) {
-      board.textContent = "Loading transactions...";
+      board.textContent = "Loading transactins...";
     }
 
     try {
-      const resp = await fetch("/history/" + CURRENT_USER_ID);
+      const resp = await fetch("/history");
       if (!resp.ok) {
         const msg = await resp.text();
         throw new Error(msg || "Failed to load history.");

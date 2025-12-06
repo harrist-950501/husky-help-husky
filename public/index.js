@@ -1,5 +1,4 @@
 /**
-<<<<<<< HEAD
  * Name: Rena Yin & Harry Cheng
  * Date: Nov 2025
  * Section: CSE 154 AA
@@ -14,7 +13,6 @@
  *  - Backend sets session cookie and returns {id, username}
  *  - We store id/username in localStorage and go to main page
  */
-
 "use strict";
 
 (function() {
@@ -77,12 +75,16 @@
         throw new Error(msg || "Authentication failed.");
       }
 
+      // currently fixing the hist fetching
       const data = await resp.json();
 
-      // Save logged-in user ID & name for later pages (history, etc.)
+      // store the id that the SERVER says is logged in
       localStorage.setItem("userId", data.id);
+
+      // nice for display
       localStorage.setItem("username", data.username);
 
+      // then redirect
       window.location.href = "main-page/main.html";
     } catch (err) {
       console.error(err);
