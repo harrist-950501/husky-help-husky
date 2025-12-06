@@ -104,8 +104,8 @@ const MAXSTAR = 5;
       let isJson = true;
       let items = await dataFetch("/items", isJson);
 
-      items.forEach(item => {
-        let card = createItemCard(item);
+      items.forEach(async (item) => {
+        let card = await createItemCard(item);
         board.appendChild(card);
       });
     } catch (err) {
@@ -189,13 +189,13 @@ const MAXSTAR = 5;
    * @param {Object} item - Item row from the backend (id, title, seller_id, etc.).
    * @returns {HTMLElement} The constructed <article> card element.
    */
-  function createItemCard(item) {
+  async function createItemCard(item) {
     let card = gen("article");
     card.classList.add("item-card");
     card.id = item.id;
 
     card.appendChild(createCardImg(item.title));
-    card.appendChild(createCardMeta(item));
+    card.appendChild(await createCardInfo(item));
     return card;
   }
 
@@ -241,13 +241,13 @@ const MAXSTAR = 5;
    * @param {Object} item - Item data object from the backend.
    * @returns {HTMLElement} section.info element.
    */
-  function createCardInfo(item) {
+  async function createCardInfo(item) {
     const info = gen("section");
     info.classList.add("info");
 
     info.appendChild(createInfoTitle(item));
     info.appendChild(createInfoCategory(item));
-    info.appendChild(createInfoRating());
+    info.appendChild(await createInfoRating(item));
     info.appendChild(createInfoDescription(item));
     info.appendChild(createInfoPrice(item));
     info.appendChild(createInfoMeta(item));
@@ -292,13 +292,69 @@ const MAXSTAR = 5;
    * Creates the rating line (star icons + numeric rating).
    * @returns {HTMLElement} p.rating element containing a span.
    */
-  function createInfoRating() {
+  async function createInfoRating(item) {
     const rating = gen("p");
     rating.classList.add("rating");
-    rating.textContent = "★★★★☆ ";
+    // rating.textContent = "☆☆☆☆☆ ";
+    // rating.textContent = "★★★★☆ ";
 
     const ratingNum = gen("span");
-    ratingNum.textContent = "4 / 5";
+    // let ratingValue = "4.0 / 5";
+    // ratingNum.textContent = ratingValue;
+
+    let isJson = true;
+    let ratingValue = await dataFetch("/items/" + item.id + "/ratings", isJson);
+    let avgStar = parseInt(ratingValue.average);
+    let maxStar = 5;
+    let count = ratingValue.count;
+
+    let star = "";
+    for (let i = 0; i < maxStar; i++) {
+      if (i < avgStar) {
+        star += "★";
+      } else {
+        star += "☆";
+      }
+    }
+
+    if (count === 0 || avgStar === null) {
+      ratingNum.textContent = "No ratings yet";
+    } else {
+      rating.textContent = star + " ";
+      ratingNum.textContent = avgStar + " / " + maxStar + " (" + count + ")";
+    }
+
+    // rating.textContent = star + " ";
+    // ratingNum.textContent = avgStar + " / " + maxStar + " (" + count + ")";
+    // console.log(ratingValue)
+    // fetch(`/items/${item.id}/ratings`)
+    //   .then(resp => {
+    //     if (!resp.ok) {
+    //       throw new Error("Failed to load rating.");
+    //     }
+    //     return resp.json();
+    //   })
+    //   .then(summary => {
+    //     if (summary && summary.count > 0 && summary.average !== null) {
+    //       const avg = Number(summary.average);
+    //       const rounded = Math.round(avg);
+
+    //       // Rena: lmk if u have better choice
+    //       const filled = "★★★★★".slice(0, rounded);
+    //       const empty = "☆☆☆☆☆".slice(0, MAXSTAR - rounded);
+
+    //       starsSpan.textContent = filled + empty;
+    //       valueSpan.textContent = ` ${avg.toFixed(1)} / 5`;
+    //       countSpan.textContent = ` (${summary.count})`;
+    //     } else {
+    //       rating.textContent = "No ratings yet";
+    //     }
+    //   })
+    //   .catch(err => {
+    //     console.error("Error fetching rating for item", item.id, err);
+    //     rating.textContent = "Rating unavailable";
+    //   });
+
     rating.appendChild(ratingNum);
 
     return rating;
@@ -334,75 +390,14 @@ const MAXSTAR = 5;
    * @param {Object} item - Item data object.
    * @returns {HTMLElement} p.meta-info.detail element.
    */
-  function createCardMeta(item) {
-    let metainfo = gen("section");
-    metainfo.classList.add("metainfo");
-
-    // title
-    let title = gen("h2");
-    title.textContent = item.title;
-    title.classList.add("title");
-
-    // rating container
-    const rating = gen("p");
-    rating.classList.add("rating");
-
-    const starsSpan = gen("span");
-    starsSpan.classList.add("rating-stars");
-    starsSpan.textContent = "☆☆☆☆☆";
-
-    const valueSpan = gen("span");
-    valueSpan.classList.add("rating-value");
-
-    const countSpan = gen("span");
-    countSpan.classList.add("rating-count");
-
-    rating.append(starsSpan, valueSpan, countSpan);
-
-    // price
-    let price = gen("p");
-    price.textContent = "$" + item.price;
-    price.classList.add("price");
-
-    let cartBtn = gen("button");
-    cartBtn.textContent = "Add to cart";
-    cartBtn.addEventListener("click", () => addToCart(item)); //maybe add item to cart, im not very sure. pls take a look here
-
-    metainfo.appendChild(title);
-    metainfo.appendChild(rating);
-    metainfo.appendChild(price);
-    metainfo.appendChild(cartBtn);
-
-    // fetch rating summary for this item
-    fetch(`/items/${item.id}/ratings`)
-      .then(resp => {
-        if (!resp.ok) {
-          throw new Error("Failed to load rating.");
-        }
-        return resp.json();
-      })
-      .then(summary => {
-        if (summary && summary.count > 0 && summary.average !== null) {
-          const avg = Number(summary.average);
-          const rounded = Math.round(avg);
-
-          // Rena: lmk if u have better choice
-          const filled = "★★★★★".slice(0, rounded);
-          const empty = "☆☆☆☆☆".slice(0, MAXSTAR - rounded);
-
-          starsSpan.textContent = filled + empty;
-          valueSpan.textContent = ` ${avg.toFixed(1)} / 5`;
-          countSpan.textContent = ` (${summary.count})`;
-        } else {
-          rating.textContent = "No ratings yet";
-        }
-      })
-      .catch(err => {
-        console.error("Error fetching rating for item", item.id, err);
-        rating.textContent = "Rating unavailable";
-      });
-
-    return metainfo;
+  function createInfoMeta(item) {
+    const metaInfo = gen("p");
+    metaInfo.textContent =
+      "Seller: #" + item.seller_id +
+      " · Stock: " + item.stock + " left" +
+      " · Posted: " + item.date;
+    metaInfo.classList.add("meta-info", "detail");
+    return metaInfo;
   }
 
   /**
@@ -430,6 +425,38 @@ const MAXSTAR = 5;
     backBtn.addEventListener("click", toggleItemDetail);
 
     return backBtn;
+  }
+
+  function getRatingValue(item) {
+    // fetch rating summary for this item
+
+    fetch(`/items/${item.id}/ratings`)
+      .then(resp => {
+        if (!resp.ok) {
+          throw new Error("Failed to load rating.");
+        }
+        return resp.json();
+      })
+      .then(summary => {
+        if (summary && summary.count > 0 && summary.average !== null) {
+          const avg = Number(summary.average);
+          const rounded = Math.round(avg);
+
+          // Rena: lmk if u have better choice
+          const filled = "★★★★★".slice(0, rounded);
+          const empty = "☆☆☆☆☆".slice(0, MAXSTAR - rounded);
+
+          starsSpan.textContent = filled + empty;
+          valueSpan.textContent = ` ${avg.toFixed(1)} / 5`;
+          countSpan.textContent = ` (${summary.count})`;
+        } else {
+          rating.textContent = "No ratings yet";
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching rating for item", item.id, err);
+        rating.textContent = "Rating unavailable";
+      });
   }
 
   function addItemToCart() {
