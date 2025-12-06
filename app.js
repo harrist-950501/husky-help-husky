@@ -235,7 +235,7 @@ app.post("/ratings", requireLogin, async (req, res) => {
     // Inject logged-in user id into the payload
     let payload = {
       ...req.body,
-      userId: req.userId
+      user_id: req.userId
     };
 
     let result = await processRatingSubmission(payload);
@@ -294,51 +294,6 @@ app.post("/logout", (req, res) => {
   res.clearCookie("session");
   res.json({success: true});
 });
-
-function requireLogin(req, res, next) {
-  let sessionId = req.cookies.session;
-
-  if (!sessionId || !sessions[sessionId]) {
-    return res.status(401).send("Not logged in.");
-  }
-
-  req.userId = sessions[sessionId];
-  next();
-}
-
-/**
- * Helper to process rating submission: validates and inserts into DB.
- * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
- * @returns {Promise<Object>} Resolves with success message.
- */
-async function processRatingSubmission(reqBody) {
-  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
-  if (missing) {
-    throw new Error(missing);
-  }
-
-  let stars = Number(reqBody.stars);
-  if (!isValidStars(stars)) {
-    throw new Error("Stars must be an integer between 1 and 5.");
-  }
-
-  let db = await getDBConnection();
-  let itemAndUser = await getExistingItemAndUser(
-    db,
-    reqBody.item_id,
-    reqBody.user_id
-  );
-  await insertRatingRow(
-    db,
-    itemAndUser.item.id,
-    itemAndUser.user.id,
-    stars,
-    reqBody.comment
-  );
-  await db.close();
-
-  return {message: "Rating submitted successfully."};
-}
 
 /* HELPERS */
 /**
@@ -707,17 +662,18 @@ async function processRatingSubmission(reqBody) {
  * Helpers that check the cookie for functions that required login to continue
  * @param {Object} req - Request body with user_id, item_id, stars, comment.
  * @param {Object} res - Response send back to clients when not logged in.
+ * @param {Obeject} next - Calling next and make sure the real route handler run
  * @returns {Promise<Object>} Resolves with success message.
  */
-function requireLogin(req, res) {
+function requireLogin(req, res, next) {
   let sessionId = req.cookies.session;
 
   if (!sessionId || !sessions[sessionId]) {
-    return res.status(CLIENT_INVALID_PARAM)
-      .send("Not logged in.");
+    return res.status(401).send("Not logged in.");
   }
 
   req.userId = sessions[sessionId];
+  next();
 }
 
 /* DB CONNECTION */
