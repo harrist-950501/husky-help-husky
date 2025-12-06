@@ -10,7 +10,7 @@
 (function() {
   window.addEventListener("load", init);
 
-  async function init() {
+  function init() {
     checkLocalStorage();
 
     loadItems();
@@ -23,7 +23,7 @@
   function checkLocalStorage() {
     let cart = localStorage.getItem("cart");
     if (!cart) {
-      let cart = {};
+      cart = {};
       localStorage.setItem("cart", JSON.stringify(cart));
     }
   }
@@ -40,9 +40,7 @@
 
     let cart = JSON.parse(localStorage.getItem("cart"));
     let ids = Object.keys(cart);
-    if (ids.length === 0) {
-      showStatus("Your cart is empty", "Add some items to your cart first!", false);
-    } else {
+    if (!checkEmptyCart()) {
       try {
         let isJson = true;
         for (let i = 0; i < ids.length; i++) {
@@ -92,8 +90,7 @@
     return imgSection;
   }
 
-
-    /**
+  /**
    * Converts a user name into an avatar image path by lowercasing it,
    * replacing spaces with hyphens, and appending the ".png" extension.
    * @param {string} name - User name to convert into an image file path.
@@ -142,20 +139,21 @@
     let actions = gen("section");
     actions.classList.add("cart-actions");
 
-    actions.appendChild(createQtyControl(quantity));
+    actions.appendChild(createQtyControl(quantity, item.stock));
     actions.appendChild(createCartSubtotal(item.price, quantity));
     actions.appendChild(createCartRemoveBtn());
 
     return actions;
   }
 
-  function createQtyControl(quantity) {
+  function createQtyControl(quantity, stock) {
     let box = gen("section");
     box.classList.add("qty-control");
 
     let minus = gen("button");
     minus.textContent = "-";
     minus.classList.add("qty-minus");
+    minus.addEventListener("click", minusCartQty);
 
     let count = gen("span");
     count.textContent = quantity;
@@ -163,6 +161,8 @@
     let plus = gen("button");
     plus.textContent = "+";
     plus.classList.add("qty-plus");
+    plus.id = stock;
+    plus.addEventListener("click", addCartQty);
 
     box.appendChild(minus);
     box.appendChild(count);
@@ -182,7 +182,70 @@
     let btn = gen("button");
     btn.classList.add("remove-btn");
     btn.textContent = "Remove";
+    btn.addEventListener("click", removeCart);
     return btn;
+  }
+
+  function minusCartQty() {
+    let cartId = this.closest(".cart-card").id;
+    let cart = JSON.parse(localStorage.getItem("cart"));
+    let qty = parseInt(cart[cartId]);
+
+    let qtySpan = this.parentElement.querySelector("span");
+    qty--;
+    qtySpan.textContent = qty;
+    cart[cartId] = qty;
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    this.parentElement.querySelector(".qty-plus").disabled = false;
+    if (qty === 0) {
+      let card = this.closest(".cart-card");
+      card.remove();
+      delete cart[cartId];
+      localStorage.setItem("cart", JSON.stringify(cart));
+      checkEmptyCart();
+    }
+  }
+
+  function addCartQty() {
+    let stock = parseInt(this.id);
+
+    let cartId = this.closest(".cart-card").id;
+    let cart = JSON.parse(localStorage.getItem("cart"));
+    let qty = parseInt(cart[cartId]);
+
+    let qtySpan = this.parentElement.querySelector("span");
+    qty++;
+    qtySpan.textContent = qty;
+    cart[cartId] = qty;
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    if (qty === stock) {
+      this.disabled = true;
+    }
+  }
+
+  function removeCart() {
+    let cartId = this.closest(".cart-card").id;
+    let card = this.closest(".cart-card");
+    card.remove();
+    let cart = JSON.parse(localStorage.getItem("cart"));
+    delete cart[cartId];
+    localStorage.setItem("cart", JSON.stringify(cart));
+    checkEmptyCart();
+  }
+
+
+  function checkEmptyCart() {
+    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cartNum = Object.keys(cart).length;
+    if(cartNum === 0) {
+      showStatus("Your cart is empty", "Add some items to your cart first!", false);
+      return true;
+    }
+    return false;
   }
 
   /**
