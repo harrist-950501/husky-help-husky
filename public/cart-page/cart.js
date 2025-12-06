@@ -206,14 +206,13 @@
    * @returns {Promise<string>} Resolves with success message text.
    */
   async function performPurchase(item) {
+
+    // Rena: I changed this corresponding buy fetch bc the backend also changes im dead.
     const resp = await fetch("/buy", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        BUYER_ID: CURRENT_USER_ID,
-        ITEM_ID: item.id
+        item_id: item.id
       })
     });
 
