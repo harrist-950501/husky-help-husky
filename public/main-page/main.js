@@ -15,16 +15,18 @@
  */
 "use strict";
 
-const MAXSTAR = 5;
-
 (function() {
+  const MAXSTAR = 5;
+
+  let search_result = [];
+
   window.addEventListener("load", init);
 
   /**
    * Initializes the main page: loads items and sets up search, layout toggle,
    * sidebar navigation, and logout button event listeners.
    */
-  function init() {
+  async function init() {
     checkLocalStorage();
 
     id("nav-toggle-btn").addEventListener("click", navToggle);
@@ -33,15 +35,16 @@ const MAXSTAR = 5;
     id("open-profile-page").addEventListener("click", openProfilePage);
     id("logout-btn").addEventListener("click", logout);
 
-    // id("search-bar").addEventListener("input", checkSearch);
+    id("search-bar").addEventListener("input", checkSearch);
     id("search-btn").addEventListener("click", itemSearch);
-    // id("search-btn").disabled = "true";
-    id("unsearch-btn").addEventListener("click", loadItems);
-    // id("category-filter").addEventListener("change", checkFilter);
+    id("search-btn").disabled = "true";
+    id("unsearch-btn").addEventListener("click", reavealAllItems);
+
+    id("category-filter").addEventListener("change", checkSearch);
 
     id("layout-toggle").addEventListener("click", toggleLayout);
 
-    loadItems();
+    await loadItems();
   }
 
   function checkLocalStorage() {
@@ -60,30 +63,6 @@ const MAXSTAR = 5;
   }
 
   /**
-   * Enables or disables the search button depending on whether
-   * a category in the filter is selected.
-   */
-  function checkFilter() {
-    if (this.value !== "") {
-      id("search-btn").disabled = false;
-    } else {
-      id("search-btn").disabled = true;
-    }
-  }
-
-  /**
-   * Enables or disables the search button depending on whether
-   * the search input has any non-whitespace characters.
-   */
-  function checkSearch() {
-    if (this.value.trim() !== "") {
-      id("search-btn").disabled = false;
-    } else {
-      id("search-btn").disabled = true;
-    }
-  }
-
-  /**
    * Toggles the navigation sidebar between expanded and collapsed views.
    */
   function navToggle() {
@@ -91,33 +70,6 @@ const MAXSTAR = 5;
     qs("aside h1").classList.toggle("hidden");
     qs("aside section").classList.toggle("hidden");
     qs("aside footer").classList.toggle("hidden");
-  }
-
-  /**
-   * Loads all items from the backend and renders them onto the item board.
-   */
-  async function loadItems() {
-    let board = id("item-board");
-    board.innerHTML = "";
-
-    try {
-      let isJson = true;
-      let items = await dataFetch("/items", isJson);
-
-      items.forEach(async (item) => {
-        let card = await createItemCard(item);
-        board.appendChild(card);
-      });
-    } catch (err) {
-      // Stop the code from keeping running, dataFetch already shows error message
-    }
-  }
-
-  /**
-   * Logs out the current user and navigates back to the login page.
-   */
-  function logout() {
-    window.location.href = "/index.html";
   }
 
   /**
@@ -142,6 +94,50 @@ const MAXSTAR = 5;
   }
 
   /**
+   * Logs out the current user and navigates back to the login page.
+   */
+  function logout() {
+    window.location.href = "/index.html";
+  }
+
+  /**
+   * Enables or disables the search button depending on whether
+   * the search input has any non-whitespace characters.
+   */
+  function checkSearch() {
+    let search = id("search-bar").value.trim;
+    let filter = id("category-filter").value;
+    if (search !== "" || filter !== "") {
+      id("search-btn").disabled = false;
+    } else {
+      id("search-btn").disabled = true;
+    }
+  }
+
+  /**
+   * Loads all items from the backend and renders them onto the item board.
+   */
+  async function loadItems() {
+    let board = id("item-board");
+    board.innerHTML = "";
+
+    try {
+      let isJson = true;
+      let items = await dataFetch("/items", isJson);
+
+      for (let i = 0; i < items.length; i++) {
+        let item = items[i];
+        let card = await createItemCard(item);
+        board.appendChild(card);
+
+        search_result.push(item.id);
+      }
+    } catch (err) {
+      showStatus("Website Error", "Failed to load Item", true);
+    }
+  }
+
+  /**
    * Searches for items using the current keyword and category filter
    * and updates the item board so that only matching items are shown.
    */
@@ -156,17 +152,45 @@ const MAXSTAR = 5;
       url += "filter=" + category;
     }
 
-    let isJson = true;
-    let searchItems = await dataFetch(url, isJson);
+    try {
+      let isJson = true;
+      let searchItems = await dataFetch(url, isJson);
 
+      let items = qsa(".item-card");
+      items.forEach(item => {
+        item.classList.add("hidden");
+      });
+
+      search_result = [];
+
+      if (searchItems.length === 0) {
+        showStatus("No matching items", "Try different keywords or categories", false);
+      } else {
+        searchItems.forEach(item => {
+          id(item.id).classList.remove("hidden");
+
+          search_result.push(item.id);
+        });
+        showStatus("Search Results", "Found " + searchItems.length + " matching items", false);
+      }
+    } catch (err) {
+      console.log(err);
+      showStatus("Website Error", "Failed to search Item", true);
+    }
+
+    id("search-bar").value = "";
+    id("category-filter").value = "";
+    id("search-btn").disabled = true;
+  }
+
+  function reavealAllItems() {
     let items = qsa(".item-card");
+    search_result = [];
     items.forEach(item => {
-      item.classList.add("hidden");
+      item.classList.remove("hidden");
+      search_result.push(item.id);
     });
-
-    searchItems.forEach(item => {
-      id(item.id).classList.remove("hidden");
-    });
+    showStatus("Product board ", "Browse items and add something you like", false);
   }
 
   /**
@@ -295,65 +319,33 @@ const MAXSTAR = 5;
   async function createInfoRating(item) {
     const rating = gen("p");
     rating.classList.add("rating");
-    // rating.textContent = "☆☆☆☆☆ ";
-    // rating.textContent = "★★★★☆ ";
 
     const ratingNum = gen("span");
-    // let ratingValue = "4.0 / 5";
-    // ratingNum.textContent = ratingValue;
+    ratingNum.textContent = "No ratings yet";
 
-    let isJson = true;
-    let ratingValue = await dataFetch("/items/" + item.id + "/ratings", isJson);
-    let avgStar = parseInt(ratingValue.average);
-    let maxStar = 5;
-    let count = ratingValue.count;
+    try {
+      let isJson = true;
+      let ratingValue = await dataFetch("/items/" + item.id + "/ratings", isJson);
+      let avgStar = parseInt(ratingValue.average);
+      let maxStar = MAXSTAR;
+      let count = ratingValue.count;
 
-    let star = "";
-    for (let i = 0; i < maxStar; i++) {
-      if (i < avgStar) {
-        star += "★";
-      } else {
-        star += "☆";
+      let star = "";
+      for (let i = 0; i < maxStar; i++) {
+        if (i < avgStar) {
+          star += "★";
+        } else {
+          star += "☆";
+        }
       }
+
+      if (count !== 0) {
+        rating.textContent = star + " ";
+        ratingNum.textContent = avgStar + " / " + maxStar + " (" + count + ")";
+      }
+    } catch (err) {
+      showStatus("Website Error", "Failed to load rating", true);
     }
-
-    if (count === 0 || avgStar === null) {
-      ratingNum.textContent = "No ratings yet";
-    } else {
-      rating.textContent = star + " ";
-      ratingNum.textContent = avgStar + " / " + maxStar + " (" + count + ")";
-    }
-
-    // rating.textContent = star + " ";
-    // ratingNum.textContent = avgStar + " / " + maxStar + " (" + count + ")";
-    // console.log(ratingValue)
-    // fetch(`/items/${item.id}/ratings`)
-    //   .then(resp => {
-    //     if (!resp.ok) {
-    //       throw new Error("Failed to load rating.");
-    //     }
-    //     return resp.json();
-    //   })
-    //   .then(summary => {
-    //     if (summary && summary.count > 0 && summary.average !== null) {
-    //       const avg = Number(summary.average);
-    //       const rounded = Math.round(avg);
-
-    //       // Rena: lmk if u have better choice
-    //       const filled = "★★★★★".slice(0, rounded);
-    //       const empty = "☆☆☆☆☆".slice(0, MAXSTAR - rounded);
-
-    //       starsSpan.textContent = filled + empty;
-    //       valueSpan.textContent = ` ${avg.toFixed(1)} / 5`;
-    //       countSpan.textContent = ` (${summary.count})`;
-    //     } else {
-    //       rating.textContent = "No ratings yet";
-    //     }
-    //   })
-    //   .catch(err => {
-    //     console.error("Error fetching rating for item", item.id, err);
-    //     rating.textContent = "Rating unavailable";
-    //   });
 
     rating.appendChild(ratingNum);
 
@@ -427,38 +419,6 @@ const MAXSTAR = 5;
     return backBtn;
   }
 
-  function getRatingValue(item) {
-    // fetch rating summary for this item
-
-    fetch(`/items/${item.id}/ratings`)
-      .then(resp => {
-        if (!resp.ok) {
-          throw new Error("Failed to load rating.");
-        }
-        return resp.json();
-      })
-      .then(summary => {
-        if (summary && summary.count > 0 && summary.average !== null) {
-          const avg = Number(summary.average);
-          const rounded = Math.round(avg);
-
-          // Rena: lmk if u have better choice
-          const filled = "★★★★★".slice(0, rounded);
-          const empty = "☆☆☆☆☆".slice(0, MAXSTAR - rounded);
-
-          starsSpan.textContent = filled + empty;
-          valueSpan.textContent = ` ${avg.toFixed(1)} / 5`;
-          countSpan.textContent = ` (${summary.count})`;
-        } else {
-          rating.textContent = "No ratings yet";
-        }
-      })
-      .catch(err => {
-        console.error("Error fetching rating for item", item.id, err);
-        rating.textContent = "Rating unavailable";
-      });
-  }
-
   function addItemToCart() {
     let cart = JSON.parse(localStorage.getItem("cart"));
     let itemId = this.parentElement.parentElement.id;
@@ -477,14 +437,14 @@ const MAXSTAR = 5;
   function toggleItemDetail() {
     qs("#content header").classList.toggle("hidden");
 
-    let items = qsa(".item-card");
-    items.forEach(item => {
-      item.classList.toggle("hidden");
-    });
+    for (let itemId of search_result) {
+      id(itemId).classList.toggle("hidden");
+    }
 
-    let card = id(this.parentElement.parentElement.id);
+    let card = this.closest(".item-card");
 
     if (card.classList.contains("detail-view")) {
+      // Exiting detail view
       let layout = localStorage.getItem("board-layout");
       if (layout === "grid") {
         id("item-board").classList.add("grid-layout");
@@ -493,6 +453,7 @@ const MAXSTAR = 5;
       card.querySelector(".title").addEventListener("click", toggleItemDetail);
       card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
     } else {
+      // Entering detail view
       id("item-board").classList.remove("grid-layout");
 
       card.querySelector(".title").removeEventListener("click", toggleItemDetail);
@@ -532,7 +493,7 @@ const MAXSTAR = 5;
       }
       return await response.text();
     } catch (err) {
-      showStatus("Website Error", err, true);
+      throw new Error(err);
     }
   }
 
