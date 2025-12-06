@@ -63,8 +63,75 @@ Invalid username or password.
 Server error logging in.
 ```
 
+## *2. Signup*
+**Request Format:** */signup*
 
-## *2. Item List*
+**Request Type:** *POST*
+
+**Returned Data Format:** Plain text
+
+**Description:** *Creates a new user account with the provided username and password. Validates that the username is unique and password meets requirements.*
+
+**Example Request:** */signup*
+
+*With JSON body:*
+
+```
+{
+  "username": "newuser@uw.edu",
+  "password": "secure123"
+}
+```
+
+**Example Success Response (200):**
+
+```
+User registered successfully
+```
+
+**Error Handling:**
+
+*400 Bad Request – Missing Parameters*
+
+*Occurs when username and/or password are missing or empty in the request body.*
+
+*Error response (Plain text):*
+
+```
+Missing parameter: 'username' 'password'.
+```
+
+*400 Bad Request – Username Already Exists*
+
+*Occurs when the provided username is already registered.*
+
+*Error response (Plain text):*
+
+```
+Username already exists.
+```
+
+*400 Bad Request – Invalid Password*
+
+*Occurs when the password does not meet requirements.*
+
+*Error response (Plain text):*
+
+```
+Password does not meet requirements.
+```
+
+*500 Server-side Error*
+
+*Generic server-side error during signup.*
+
+*Error response (Plain text):*
+
+```
+Server error registering user.
+```
+
+## *3. Item List*
 **Request Format:** */items*
 
 **Request Type:** *GET*
@@ -114,8 +181,8 @@ Server error logging in.
 Error retrieving items.
 ```
 
-## *3. Item Details*
-**Request Format:** */items/:id*
+## *4. Item Details*
+**Request Format:** */items?id=:id*
 
 **Request Type:** *GET*
 
@@ -123,7 +190,7 @@ Error retrieving items.
 
 **Description:** *Returns the full details for a single item with the given id. The response is a single JSON object containing the columns from the items table.*
 
-**Example Request:** */items/1*
+**Example Request:** */items?id=1*
 
 **Example Success Response (200):**
 
@@ -159,8 +226,8 @@ Item not found.
 Error retrieving item details.
 ```
 
-## *4. Search Items*
-**Request Format:** */search?search=*
+## *5. Search Items*
+**Request Format:** */items/search?search=&filter=*
 
 **Request Type:** *GET*
 
@@ -169,12 +236,12 @@ Error retrieving item details.
 **Description:** *Searches items by keyword. Optional category filtering is supported.*
 
 **Query Parameters**
-search (required): text to match
+search (optional): text to match
 filter (optional): category name
 
-**Example Request (keyword only):** *GET /search?search=textbook*
+**Example Request (keyword only):** *GET /items/search?search=textbook*
 
-**Example Request (keyword + category filter):** *GET /search?search=calculator&filter=electronics*
+**Example Request (keyword + category filter):** *GET /items/search?search=calculator&filter=electronics*
 
 **Example Success Response (200):**
 
@@ -214,7 +281,7 @@ Missing query parameter: 'keyword'
 Search failed.
 ```
 
-## *5. Submit Purchase*
+## *6. Submit Purchase (Buy)*
 **Request Format:** */buy*
 
 **Request Type:** *POST*
@@ -272,7 +339,7 @@ Item out of stock.
 Transaction failed.
 ```
 
-## *6. Purchase History*
+## *7. Purchase History*
 **Request Format:** */history/:user_id*
 
 **Request Type:** *GET*
@@ -334,7 +401,7 @@ No such user.
 Could not retrieve history..
 ```
 
-## *7. Ratings - Submit Rating*
+## *8. Ratings*
 **Request Format:** */ratings*
 
 **Request Type:** *POST*
@@ -403,7 +470,7 @@ Error submitting rating.
 Error submitting rating.
 ```
 
-## *8. Ratings - Retrieve Ratings*
+## *9. Ratings - Retrieve Ratings*
 **Request Format:** */items/:id/ratings*
 
 **Request Type:** *GET*
@@ -456,11 +523,66 @@ Item does not exist.
 Error retrieving ratings.
 ```
 
+## *10. Logout*
+**Request Format:** */logout*
+
+**Request Type:** *POST*
+
+**Returned Data Format:** Plain text
+
+**Description:** *Logs out the current user by clearing their session.*
+
+**Example Request:** */logout*
+
+```
+{
+  "user_id": 2
+}
+```
+
+**Example Success Response (200):**
+
+```
+User logged out successfully
+```
+
+**Error Handling:**
+
+*400 Bad Request – Missing Parameters*
+
+*Occurs when user_id is missing or empty in the request body.*
+
+*Error response (Plain text):*
+
+```
+Missing parameter: 'user_id'.
+```
+
+*400 Bad Request – Invalid User*
+
+*Occurs when no user matches the given user_id.*
+
+*Error response (Plain text):*
+
+```
+Invalid user.
+```
+
+*500 Server-side Error*
+
+*Generic server-side error during logout.*
+
+*Error response (Plain text):*
+
+```
+Server error logging out.
+```
+
 # *Future Extensions (Not Implemented)*
 
 *This section describes a potential extension to the API for a future version of Husky Help Husky.*
 
-## *7. Optional Feature 1: User Registration*
+## Optional Feature 1: User Registration*
 **Request Format:** */users*
 
 **Request Type:** *POST*
@@ -508,7 +630,7 @@ Provide valid 'username', 'email', and 'password'.
 Failed to create user.
 ```
 
-## *9. User Profile*
+## User Profile*
 **Request Format:** */users/:id*
 
 **Request Type:** *GET*
