@@ -193,7 +193,7 @@
     card.id = item.id;
 
     card.appendChild(createCardImg(item.title));
-    card.appendChild(createCardInfo(item));
+    card.appendChild(createCardMeta(item));
     return card;
   }
 
@@ -332,14 +332,75 @@
    * @param {Object} item - Item data object.
    * @returns {HTMLElement} p.meta-info.detail element.
    */
-  function createInfoMeta(item) {
-    const metaInfo = gen("p");
-    metaInfo.textContent =
-      "Seller: #" + item.seller_id +
-      " · Stock: " + item.stock + " left" +
-      " · Posted: " + item.date;
-    metaInfo.classList.add("meta-info", "detail");
-    return metaInfo;
+  function createCardMeta(item) {
+    let metainfo = gen("section");
+    metainfo.classList.add("metainfo");
+
+    // title
+    let title = gen("h2");
+    title.textContent = item.title;
+    title.classList.add("title");
+
+    // rating container
+    const rating = gen("p");
+    rating.classList.add("rating");
+
+    const starsSpan = gen("span");
+    starsSpan.classList.add("rating-stars");
+    starsSpan.textContent = "☆☆☆☆☆";
+
+    const valueSpan = gen("span");
+    valueSpan.classList.add("rating-value");
+
+    const countSpan = gen("span");
+    countSpan.classList.add("rating-count");
+
+    rating.append(starsSpan, valueSpan, countSpan);
+
+    // price
+    let price = gen("p");
+    price.textContent = "$" + item.price;
+    price.classList.add("price");
+
+    let cartBtn = gen("button");
+    cartBtn.textContent = "Add to cart";
+    cartBtn.addEventListener("click", () => addToCart(item));
+
+    metainfo.appendChild(title);
+    metainfo.appendChild(rating);
+    metainfo.appendChild(price);
+    metainfo.appendChild(cartBtn);
+
+    // fetch rating summary for this item
+    fetch(`/items/${item.id}/ratings`)
+      .then(resp => {
+        if (!resp.ok) {
+          throw new Error("Failed to load rating.");
+        }
+        return resp.json();
+      })
+      .then(summary => {
+        if (summary && summary.count > 0 && summary.average != null) {
+          const avg = Number(summary.average);
+          const rounded = Math.round(avg);
+
+          // Rena: lmk if u have better choice
+          const filled = "★★★★★".slice(0, rounded);
+          const empty = "☆☆☆☆☆".slice(0, 5 - rounded);
+
+          starsSpan.textContent = filled + empty;
+          valueSpan.textContent = ` ${avg.toFixed(1)} / 5`;
+          countSpan.textContent = ` (${summary.count})`;
+        } else {
+          rating.textContent = "No ratings yet";
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching rating for item", item.id, err);
+        rating.textContent = "Rating unavailable";
+      });
+
+    return metainfo;
   }
 
   /**
@@ -446,6 +507,13 @@
     }
   }
 
+  /**
+   * Update the global status message area.
+   *
+   * @param {string} title - Short heading text for the status area.
+   * @param {string|Error} message - Detailed status text or Error.
+   * @param {boolean} isError - When true, apply error styling
+   */
   function showStatus(title, message, isError) {
     const status = id("status-message");
 
