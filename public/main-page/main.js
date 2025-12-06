@@ -15,6 +15,8 @@
  */
 "use strict";
 
+const MAXSTAR = 5;
+
 (function() {
   window.addEventListener("load", init);
 
@@ -364,7 +366,7 @@
 
     let cartBtn = gen("button");
     cartBtn.textContent = "Add to cart";
-    cartBtn.addEventListener("click", () => addToCart(item));
+    cartBtn.addEventListener("click", () => addToCart(item)); //maybe add item to cart, im not very sure. pls take a look here
 
     metainfo.appendChild(title);
     metainfo.appendChild(rating);
@@ -380,13 +382,13 @@
         return resp.json();
       })
       .then(summary => {
-        if (summary && summary.count > 0 && summary.average != null) {
+        if (summary && summary.count > 0 && summary.average !== null) {
           const avg = Number(summary.average);
           const rounded = Math.round(avg);
 
           // Rena: lmk if u have better choice
           const filled = "★★★★★".slice(0, rounded);
-          const empty = "☆☆☆☆☆".slice(0, 5 - rounded);
+          const empty = "☆☆☆☆☆".slice(0, MAXSTAR - rounded);
 
           starsSpan.textContent = filled + empty;
           valueSpan.textContent = ` ${avg.toFixed(1)} / 5`;
@@ -433,7 +435,7 @@
   function addItemToCart() {
     let cart = JSON.parse(localStorage.getItem("cart"));
     let itemId = this.parentElement.parentElement.id;
-    if (cart[itemId]  !== undefined) {
+    if (cart[itemId] !== undefined) {
       cart[itemId] =  cart[itemId] + 1;
     } else {
       cart[itemId] = 1;
