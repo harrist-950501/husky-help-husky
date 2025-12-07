@@ -4,16 +4,16 @@
 -->
 <html>
   <head lang="en">
-  <meta charset="utf-8">
-  <title>User Profile</title>
-  <link rel="stylesheet" href="../style.css">
-  <link rel="stylesheet" href="profile.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-  <script src="profile.js"></script>
-  <script src="../theme.js"></script>
-</head>
+    <meta charset="utf-8">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="profile.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="profile.js"></script>
+    <script src="../theme.js"></script>
+  </head>
   <body>
     <button id="theme-toggle">Toggle Theme</button>
     <main>
@@ -21,27 +21,40 @@
         <button id="back">Back</button>
         <img id="profile-pic" src="../img/logo.png" alt="User profile">
       </header>
+
       <section id="basic-information">
         <div class="profile-field">
-          <h2 id="name-display">Harry Cheng</h2>
-          <input type="text" id="name-edit" class="edit-field hidden" value="Harry Cheng">
+          <h2 id="name-display">Your Name</h2>
+          <input type="text" id="name-edit" class="edit-field hidden"
+            placeholder="Your name">
         </div>
+
         <div class="profile-field">
-          <address id="address-display">4001 E Stevens Way NE, Seattle, WA 98195</address>
+          <address id="address-display">Add your address so buyers can find you.</address>
           <input type="text" id="address-edit" class="edit-field hidden"
-          value="4001 E Stevens Way NE, Seattle, WA 98195">
+            placeholder="Address (city, campus, etc.)">
         </div>
+
+        <div class="profile-field">
+          <label for="img-edit">Profile image URL</label>
+          <input type="text" id="img-edit" class="edit-field hidden"
+            placeholder="https://...">
+        </div>
+
         <div class="profile-actions">
           <button id="edit-btn">Edit</button>
           <button id="save-btn" class="hidden">Save</button>
           <button id="cancel-btn" class="hidden">Cancel</button>
         </div>
       </section>
+
       <section id="other-information">
-        <p>
-          Other info.
-          Note from Rena: the change of name is not yet permanent, waiting for future improvement.
+        <h2>My Husky Quote</h2>
+        <p id="quote-display" class="quote">
+          No quote yet. Add something that represents you!
         </p>
+        <textarea id="quote-edit" class="edit-field hidden" rows="3"
+          placeholder="Tell other Huskies something fun or inspiring."></textarea>
       </section>
     </main>
   </body>
