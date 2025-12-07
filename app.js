@@ -232,10 +232,12 @@ app.post("/ratings", requireLogin, async (req, res) => {
   try {
     res.type("text");
 
-    // Inject logged-in user id into the payload
+    // Normalize incoming payload to camelCase keys and inject logged-in user id
     let payload = {
-      ...req.body,
-      user_id: req.userId
+      itemId: req.body.item_id || req.body.itemId,
+      stars: req.body.stars,
+      comment: req.body.comment || null,
+      userId: req.userId
     };
 
     let result = await processRatingSubmission(payload);
@@ -334,7 +336,7 @@ app.post("/users/:id/profile", async (req, res) => {
     }
 
     let profileData = {
-      display_name: req.body.display_name || null,
+      displayName: req.body.displayName || req.body.display_name || null,
       address: req.body.address || null,
       quote: req.body.quote || null
     };
@@ -654,10 +656,10 @@ async function dbUserProfileUpsert(id, profileData) {
   await db.run(
     "INSERT OR REPLACE INTO user_profiles " +
     "(user_id, display_name, address, quote) " +
-    "VALUES (?, ?, ?, ?, ?);",
+    "VALUES (?, ?, ?, ?);",
     [
       id,
-      profileData.display_name,
+      profileData.displayName,
       profileData.address,
       profileData.quote
     ]
@@ -738,11 +740,11 @@ function generateCode() {
 
 /**
  * Helper to process rating submission: validates and inserts into DB.
- * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
+ * @param {Object} reqBody - Request body with userId, itemId, stars, comment.
  * @returns {Promise<Object>} Resolves with success message.
  */
 async function processRatingSubmission(reqBody) {
-  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
+  let missing = requireParams(["userId", "itemId", "stars"], reqBody);
   if (missing) {
     throw new Error(missing);
   }
@@ -755,8 +757,8 @@ async function processRatingSubmission(reqBody) {
   let db = await getDBConnection();
   let itemAndUser = await getExistingItemAndUser(
     db,
-    reqBody.item_id,
-    reqBody.user_id
+    reqBody.itemId,
+    reqBody.userId
   );
   await insertRatingRow(
     db,

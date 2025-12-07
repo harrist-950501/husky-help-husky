@@ -431,7 +431,7 @@
     let cart = JSON.parse(localStorage.getItem("cart"));
     let cartQty = cart[item.id];
     let stock = item.stock;
-    if (cartQty && cartQty == stock) {
+    if (cartQty && cartQty === stock) {
       cartBtn.disabled = true;
       cartBtn.textContent = "Out of stock";
     }
@@ -472,7 +472,7 @@
 
     let title = card.querySelector(".title").textContent;
     let stock = card.dataset.stock;
-    if (cartQty == stock) {
+    if (cartQty === stock) {
       this.disabled = true;
       this.textContent = "Out of stock";
 

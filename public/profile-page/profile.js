@@ -55,7 +55,7 @@
       }
 
       const data = await resp.json();
-      const displayName = data.display_name || data.username || "";
+      const displayName = data['display_name'] || data.username || "";
       const address = data.address || "";
       const quote = data.quote || "";
 
@@ -97,45 +97,93 @@
    *  - Persist changes to backend
    */
   async function saveChanges() {
-    const newName = id("name-edit") ? id("name-edit").value.trim() : "";
-    const newAddress = id("address-edit") ? id("address-edit").value.trim() : "";
-    const newQuote = id("quote-edit") ? id("quote-edit").value.trim() : "";
+    const profile = getEditedProfileValues();
 
-    // Update display elements.
-    if (id("name-display") && newName) {
-      id("name-display").textContent = newName;
-    }
-    if (id("address-display") && newAddress) {
-      id("address-display").textContent = newAddress;
-    }
-    if (id("quote-display")) {
-      id("quote-display").textContent = newQuote;
-    }
-
+    updateDisplayElements(profile);
     toggleEditMode(false);
 
-    // Persist to backend.
     try {
-      const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": JSON_TYPE
-        },
-        body: JSON.stringify({
-          display_name: newName,
-          address: newAddress,
-          quote: newQuote
-        })
-      });
-
-      if (!resp.ok) {
-        const msg = await resp.text();
-        alert(msg || "Failed to save profile.");
+      const ok = await persistProfile(profile);
+      if (!ok) {
+        showProfileStatus("Failed to save profile.", true);
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to save profile.");
+      showProfileStatus("Failed to save profile.", true);
     }
+  }
+
+  /**
+   * Read edit fields and return normalized profile object.
+   * @returns {{displayName: string, address: string, quote: string}}
+   */
+  function getEditedProfileValues() {
+    return {
+      displayName: id("name-edit") ? id("name-edit").value.trim() : "",
+      address: id("address-edit") ? id("address-edit").value.trim() : "",
+      quote: id("quote-edit") ? id("quote-edit").value.trim() : ""
+    };
+  }
+
+  /**
+   * Update visible display elements with the provided profile values.
+   */
+  function updateDisplayElements(profile) {
+    if (id("name-display") && profile.displayName) {
+      id("name-display").textContent = profile.displayName;
+    }
+    if (id("address-display") && profile.address) {
+      id("address-display").textContent = profile.address;
+    }
+    if (id("quote-display")) {
+      id("quote-display").textContent = profile.quote;
+    }
+  }
+
+  /**
+   * Persist profile to backend. Returns true on success, false otherwise.
+   */
+  async function persistProfile(profile) {
+    const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile", {
+      method: "POST",
+      headers: { "Content-Type": JSON_TYPE },
+      body: JSON.stringify({
+        displayName: profile.displayName,
+        address: profile.address,
+        quote: profile.quote
+      })
+    });
+
+    if (!resp.ok) {
+      const msg = await resp.text();
+      showProfileStatus(msg || "Failed to save profile.", true);
+      return false;
+    }
+    showProfileStatus("Profile saved.", false);
+    return true;
+  }
+
+  /**
+   * Show a short status message on the profile page.
+   */
+  function showProfileStatus(message, isError) {
+    let status = id("profile-status");
+    if (!status) {
+      status = document.createElement("div");
+      status.id = "profile-status";
+      status.className = "profile-status";
+      const main = document.querySelector("main") || document.body;
+      main.insertBefore(status, main.firstChild);
+    }
+    status.textContent = message;
+    if (isError) {
+      status.classList.add("error");
+    } else {
+      status.classList.remove("error");
+    }
+    setTimeout(() => {
+      status.textContent = "";
+    }, 3000);
   }
 
   /**
