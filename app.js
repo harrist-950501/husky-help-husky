@@ -295,6 +295,60 @@ app.post("/logout", (req, res) => {
   res.json({success: true});
 });
 
+/**
+ * Returns the profile information for a user.
+ * If a profile does not exist yet, an empty one is created.
+ */
+app.get("/users/:id/profile", async (req, res) => {
+  try {
+    let user = await dbUserGet(req.params.id);
+    if (!user) {
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send("No such user.");
+      return;
+    }
+
+    // Ensure there is at least a default profile row.
+    await dbUserProfileEnsure(user.id, user.username);
+    let profile = await dbUserProfileGet(user.id);
+    res.json(profile);
+  } catch (err) {
+    res.status(SERVER_SIDE_ERROR)
+      .type("text")
+      .send("Could not retrieve profile.");
+  }
+});
+
+/**
+ * Creates or updates the profile information for a user.
+ */
+app.post("/users/:id/profile", async (req, res) => {
+  try {
+    let user = await dbUserGet(req.params.id);
+    if (!user) {
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send("No such user.");
+      return;
+    }
+
+    let profileData = {
+      display_name: req.body.display_name || null,
+      address: req.body.address || null,
+      profile_img: req.body.profile_img || null,
+      quote: req.body.quote || null
+    };
+
+    let saved = await dbUserProfileUpsert(user.id, profileData);
+    res.json(saved);
+  } catch (err) {
+    res.status(SERVER_SIDE_ERROR)
+      .type("text")
+      .send("Could not save profile.");
+  }
+});
+
 /* HELPERS */
 /**
  * Check login status, make sure the user name has not been taken
@@ -557,6 +611,66 @@ async function dbUserGet(id) {
   let user = await db.get(query, [id]);
   await db.close();
   return user;
+}
+
+/**
+ * Retrieves the profile for the given user id, or null if none exists.
+ * @param {number} id - user id.
+ * @returns {Object|null} profile row.
+ */
+async function dbUserProfileGet(id) {
+  let db = await getDBConnection();
+  let profile = await db.get(
+    "SELECT user_id, display_name, address, profile_img, quote " +
+    "FROM user_profiles WHERE user_id = ?;",
+    [id]
+  );
+  await db.close();
+  return profile;
+}
+
+/**
+ * Ensures there is at least a default profile row for the given user.
+ * Uses the username as an initial display name if no profile exists yet.
+ * @param {number} id - user id.
+ * @param {string} username - username to use as default display name.
+ */
+async function dbUserProfileEnsure(id, username) {
+  let db = await getDBConnection();
+  await db.run(
+    "INSERT OR IGNORE INTO user_profiles (user_id, display_name) VALUES (?, ?);",
+    [id, username]
+  );
+  await db.close();
+}
+
+/**
+ * Inserts or updates the profile row for a user.
+ * @param {number} id - user id.
+ * @param {Object} profileData - display_name, address, profile_img, quote.
+ * @returns {Object} the saved profile row.
+ */
+async function dbUserProfileUpsert(id, profileData) {
+  let db = await getDBConnection();
+  await db.run(
+    "INSERT OR REPLACE INTO user_profiles " +
+    "(user_id, display_name, address, profile_img, quote) " +
+    "VALUES (?, ?, ?, ?, ?);",
+    [
+      id,
+      profileData.display_name,
+      profileData.address,
+      profileData.profile_img,
+      profileData.quote
+    ]
+  );
+  let profile = await db.get(
+    "SELECT user_id, display_name, address, profile_img, quote " +
+    "FROM user_profiles WHERE user_id = ?;",
+    [id]
+  );
+  await db.close();
+  return profile;
 }
 
 /**

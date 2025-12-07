@@ -1,84 +1,205 @@
 /**
- * The javascript file for profile.html
- * It allows following interactivity:
- *    A back button to main page
+ * The javascript file for profile.html.
+ * It allows the following interactivity:
+ *  - Back button to main page
+ *  - Load the current user's profile from the backend
+ *  - Edit and save profile fields (name, address, profile image, quote)
  */
 
 "use strict";
+
 (function() {
+  // Same demo user id as other pages for now.
+  const CURRENT_USER_ID = 1;
+  const JSON_TYPE = "application/json";
+
   window.addEventListener("load", init);
 
   /**
-   * Initialize toggle functionality and event listeners
+   * Initialize event listeners and load the profile.
    */
   function init() {
-    id("back").addEventListener("click", back);
-    id("edit-btn").addEventListener("click", enableEdit);
-    id("save-btn").addEventListener("click", saveChanges);
-    id("cancel-btn").addEventListener("click", cancelEdit);
+    let backBtn = id("back");
+    if (backBtn) {
+      backBtn.addEventListener("click", back);
+    }
+
+    let editBtn = id("edit-btn");
+    if (editBtn) {
+      editBtn.addEventListener("click", enableEdit);
+    }
+
+    let saveBtn = id("save-btn");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", saveChanges);
+    }
+
+    let cancelBtn = id("cancel-btn");
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", cancelEdit);
+    }
+
+    loadProfile();
   }
 
   /**
-   * Enable editing of profile fields
+   * Fetch profile information for CURRENT_USER_ID and render it.
+   */
+  async function loadProfile() {
+    try {
+      const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile");
+      if (!resp.ok) {
+        // Leave default placeholder values in the DOM.
+        const msg = await resp.text();
+        console.error("Failed to load profile:", msg);
+        return;
+      }
+
+      const data = await resp.json();
+      const displayName = data.display_name || data.username || "";
+      const address = data.address || "";
+      const img = data.profile_img || "";
+      const quote = data.quote || "";
+
+      if (displayName && id("name-display")) {
+        id("name-display").textContent = displayName;
+      }
+      if (address && id("address-display")) {
+        id("address-display").textContent = address;
+      }
+      if (img && id("profile-pic")) {
+        id("profile-pic").src = img;
+      }
+      if (quote && id("quote-display")) {
+        id("quote-display").textContent = quote;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  /**
+   * Enable editing of profile fields.
    */
   function enableEdit() {
-    // Hide display elements and show edit fields
-    id("name-display").classList.add("hidden");
-    id("address-display").classList.add("hidden");
-    id("name-edit").classList.remove("hidden");
-    id("address-edit").classList.remove("hidden");
+    toggleEditMode(true);
 
-    // Show save and cancel buttons, hide edit button
-    id("edit-btn").classList.add("hidden");
-    id("save-btn").classList.remove("hidden");
-    id("cancel-btn").classList.remove("hidden");
-
-    // Set current values in edit fields
-    id("name-edit").value = id("name-display").textContent.trim();
-    id("address-edit").value = id("address-display").textContent.trim();
+    // Pre-fill edit fields with current display values.
+    if (id("name-edit") && id("name-display")) {
+      id("name-edit").value = id("name-display").textContent.trim();
+    }
+    if (id("address-edit") && id("address-display")) {
+      id("address-edit").value = id("address-display").textContent.trim();
+    }
+    if (id("img-edit") && id("profile-pic")) {
+      id("img-edit").value = id("profile-pic").getAttribute("src") || "";
+    }
+    if (id("quote-edit") && id("quote-display")) {
+      id("quote-edit").value = id("quote-display").textContent.trim();
+    }
   }
 
   /**
-   * Save changes made to profile
+   * Save changes made to profile:
+   *  - Update UI optimistically
+   *  - Persist changes to backend
    */
-  function saveChanges() {
-    // Get new values
-    const newName = id("name-edit").value.trim();
-    const newAddress = id("address-edit").value.trim();
+  async function saveChanges() {
+    const newName = id("name-edit") ? id("name-edit").value.trim() : "";
+    const newAddress = id("address-edit") ? id("address-edit").value.trim() : "";
+    const newImg = id("img-edit") ? id("img-edit").value.trim() : "";
+    const newQuote = id("quote-edit") ? id("quote-edit").value.trim() : "";
 
-    // Update display elements
-    id("name-display").textContent = newName;
-    id("address-display").textContent = newAddress;
+    // Update display elements.
+    if (id("name-display") && newName) {
+      id("name-display").textContent = newName;
+    }
+    if (id("address-display") && newAddress) {
+      id("address-display").textContent = newAddress;
+    }
+    if (id("profile-pic") && newImg) {
+      id("profile-pic").src = newImg;
+    }
+    if (id("quote-display")) {
+      id("quote-display").textContent = newQuote;
+    }
 
-    // Return to display mode
-    disableEdit();
+    toggleEditMode(false);
+
+    // Persist to backend.
+    try {
+      const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": JSON_TYPE
+        },
+        body: JSON.stringify({
+          display_name: newName,
+          address: newAddress,
+          profile_img: newImg,
+          quote: newQuote
+        })
+      });
+
+      if (!resp.ok) {
+        const msg = await resp.text();
+        alert(msg || "Failed to save profile.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save profile.");
+    }
   }
 
   /**
-   * Cancel editing and revert changes
+   * Cancel editing and revert to display mode without saving.
+   * (Since we never mutated display values while editing,
+   * simply hiding the edit fields is enough.)
    */
   function cancelEdit() {
-    disableEdit();
+    toggleEditMode(false);
   }
 
   /**
-   * Disable editing mode and show display elements
+   * Toggle between edit and display modes.
+   * @param {boolean} editing - true to show edit fields, false to show display.
    */
-  function disableEdit() {
-    // Show display elements and hide edit fields
-    id("name-display").classList.remove("hidden");
-    id("address-display").classList.remove("hidden");
-    id("name-edit").classList.add("hidden");
-    id("address-edit").classList.add("hidden");
+  function toggleEditMode(editing) {
+    const show = editing ? "remove" : "add";
+    const hide = editing ? "add" : "remove";
 
-    // Show edit button, hide save and cancel buttons
-    id("edit-btn").classList.remove("hidden");
-    id("save-btn").classList.add("hidden");
-    id("cancel-btn").classList.add("hidden");
+    if (id("name-display")) {
+      id("name-display").classList[hide]("hidden");
+    }
+    if (id("address-display")) {
+      id("address-display").classList[hide]("hidden");
+    }
+    if (id("name-edit")) {
+      id("name-edit").classList[show]("hidden");
+    }
+    if (id("address-edit")) {
+      id("address-edit").classList[show]("hidden");
+    }
+    if (id("img-edit")) {
+      id("img-edit").classList[show]("hidden");
+    }
+    if (id("quote-edit")) {
+      id("quote-edit").classList[show]("hidden");
+    }
+
+    if (id("edit-btn")) {
+      id("edit-btn").classList[editing ? "add" : "remove"]("hidden");
+    }
+    if (id("save-btn")) {
+      id("save-btn").classList[editing ? "remove" : "add"]("hidden");
+    }
+    if (id("cancel-btn")) {
+      id("cancel-btn").classList[editing ? "remove" : "add"]("hidden");
+    }
   }
 
   /**
-   * Back to main page
+   * Back to main page.
    */
   function back() {
     window.location.href = "../main-page/main.html";
