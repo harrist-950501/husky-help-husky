@@ -39,13 +39,6 @@
   async function handleAuthSubmit(evt) {
     evt.preventDefault();
     hideError();
-
-
-  /**
-   * Determine the auth mode ("login" or "signup") from the submitting button.
-   * @param {HTMLElement|null} submitter - The button element that triggered submit.
-   * @returns {string} "login" or "signup" depending on the button's data-mode.
-   */
     const mode = getModeFromSubmitter(evt.submitter);
     const username = valueOf("#username");
     const password = valueOf("#password");
@@ -68,8 +61,14 @@
     }
   }
 
+  /**
+   * Determine the auth mode ("login" or "signup") from the submitting button.
+   * @param {HTMLElement|null} submitter - The button element that triggered submit.
+   * @returns {string} "login" or "signup" depending on the button's data-mode.
+   */
   function getModeFromSubmitter(submitter) {
-    return submitter && submitter.dataset && submitter.dataset.mode ? submitter.dataset.mode : "login";
+    return submitter && submitter.dataset &&
+      submitter.dataset.mode ? submitter.dataset.mode : "login";
   }
 
   /**
@@ -81,8 +80,12 @@
    * @returns {true|string} Returns true when valid, otherwise an error message string.
    */
   function validateAuthInputs(mode, username, password, email) {
-    if (!username || !password) return "Please enter both username and password.";
-    if (mode === "signup" && !email) return "Please enter an email for signup.";
+    if (!username || !password) {
+      return "Please enter both username and password.";
+    }
+    if (mode === "signup" && !email) {
+      return "Please enter an email for signup.";
+    }
     return true;
   }
 
@@ -96,7 +99,9 @@
    */
   function buildAuthBody(mode, username, password, email) {
     const body = {username, password};
-    if (mode === "signup") body.email = email;
+    if (mode === "signup") {
+      body.email = email;
+    }
     return body;
   }
 

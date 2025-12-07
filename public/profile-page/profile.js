@@ -12,6 +12,7 @@
   // Same demo user id as other pages for now.
   const CURRENT_USER_ID = Number(localStorage.getItem("userId"));
   const JSON_TYPE = "application/json";
+  const STATUS_TIMEOUT = 3000;
 
   window.addEventListener("load", init);
 
@@ -115,7 +116,8 @@
 
   /**
    * Read edit fields and return normalized profile object.
-   * @returns {{displayName: string, address: string, quote: string}}
+    * @returns {{displayName: string, address: string, quote: string}} A normalized
+    * profile object containing the edited values (empty strings when unset).
    */
   function getEditedProfileValues() {
     return {
@@ -127,6 +129,7 @@
 
   /**
    * Update visible display elements with the provided profile values.
+    * @param {{displayName:string,address:string,quote:string}} profile - Profile values to show.
    */
   function updateDisplayElements(profile) {
     if (id("name-display") && profile.displayName) {
@@ -142,16 +145,14 @@
 
   /**
    * Persist profile to backend. Returns true on success, false otherwise.
+   * @param {{displayName:string,address:string,quote:string}} profile - Profile to persist.
+   * @returns {Promise<boolean>} True when saved successfully, false otherwise.
    */
   async function persistProfile(profile) {
     const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile", {
       method: "POST",
-      headers: { "Content-Type": JSON_TYPE },
-      body: JSON.stringify({
-        displayName: profile.displayName,
-        address: profile.address,
-        quote: profile.quote
-      })
+      headers: {"Content-Type": JSON_TYPE},
+      body: JSON.stringify({displayName: profile.displayName,address: profile.address,quote: profile.quote})
     });
 
     if (!resp.ok) {
@@ -165,6 +166,8 @@
 
   /**
    * Show a short status message on the profile page.
+    * @param {string} message - Message text to show to the user.
+    * @param {boolean} isError - When true, style the message as an error.
    */
   function showProfileStatus(message, isError) {
     let status = id("profile-status");
@@ -183,7 +186,7 @@
     }
     setTimeout(() => {
       status.textContent = "";
-    }, 3000);
+    }, STATUS_TIMEOUT);
   }
 
   /**
