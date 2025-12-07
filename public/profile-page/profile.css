@@ -73,3 +73,26 @@ header {
   color: #5d519e;
   line-height: 1.6em;
 }
+
+#other-information h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.3em;
+}
+
+#quote-display {
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+#quote-edit {
+  width: 100%;
+  min-height: 80px;
+  font-family: inherit;
+  font-size: 1em;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid #C8C2EB;
+  box-sizing: border-box;
+  resize: vertical;
+}

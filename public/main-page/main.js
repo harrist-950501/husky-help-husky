@@ -472,7 +472,7 @@
 
     let title = card.querySelector(".title").textContent;
     let stock = card.dataset.stock;
-    if (cartQty == stock) {
+    if (cartQty === stock) {
       this.disabled = true;
       this.textContent = "Out of stock";
 

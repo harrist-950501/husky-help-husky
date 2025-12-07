@@ -232,10 +232,12 @@ app.post("/ratings", requireLogin, async (req, res) => {
   try {
     res.type("text");
 
-    // Inject logged-in user id into the payload
+    // Normalize incoming payload to camelCase keys and inject logged-in user id
     let payload = {
-      ...req.body,
-      user_id: req.userId
+      itemId: req.body.item_id || req.body.itemId,
+      stars: req.body.stars,
+      comment: req.body.comment || null,
+      userId: req.userId
     };
 
     let result = await processRatingSubmission(payload);
@@ -293,6 +295,59 @@ app.post("/logout", (req, res) => {
 
   res.clearCookie("session");
   res.json({success: true});
+});
+
+/**
+ * Returns the profile information for a user.
+ * If a profile does not exist yet, an empty one is created.
+ */
+app.get("/users/:id/profile", async (req, res) => {
+  try {
+    let user = await dbUserGet(req.params.id);
+    if (!user) {
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send("No such user.");
+      return;
+    }
+
+    // Ensure there is at least a default profile row.
+    await dbUserProfileEnsure(user.id, user.username);
+    let profile = await dbUserProfileGet(user.id);
+    res.json(profile);
+  } catch (err) {
+    res.status(SERVER_SIDE_ERROR)
+      .type("text")
+      .send("Could not retrieve profile.");
+  }
+});
+
+/**
+ * Creates or updates the profile information for a user.
+ */
+app.post("/users/:id/profile", async (req, res) => {
+  try {
+    let user = await dbUserGet(req.params.id);
+    if (!user) {
+      res.status(CLIENT_SIDE_ERROR)
+        .type("text")
+        .send("No such user.");
+      return;
+    }
+
+    let profileData = {
+      displayName: req.body.displayName || req.body.display_name || null,
+      address: req.body.address || null,
+      quote: req.body.quote || null
+    };
+
+    let saved = await dbUserProfileUpsert(user.id, profileData);
+    res.json(saved);
+  } catch (err) {
+    res.status(SERVER_SIDE_ERROR)
+      .type("text")
+      .send("Could not save profile.");
+  }
 });
 
 /* HELPERS */
@@ -560,6 +615,65 @@ async function dbUserGet(id) {
 }
 
 /**
+ * Retrieves the profile for the given user id, or null if none exists.
+ * @param {number} id - user id.
+ * @returns {Object|null} profile row.
+ */
+async function dbUserProfileGet(id) {
+  let db = await getDBConnection();
+  let profile = await db.get(
+    "SELECT user_id, display_name, address, quote " +
+    "FROM user_profiles WHERE user_id = ?;",
+    [id]
+  );
+  await db.close();
+  return profile;
+}
+
+/**
+ * Ensures there is at least a default profile row for the given user.
+ * Uses the username as an initial display name if no profile exists yet.
+ * @param {number} id - user id.
+ * @param {string} username - username to use as default display name.
+ */
+async function dbUserProfileEnsure(id, username) {
+  let db = await getDBConnection();
+  await db.run(
+    "INSERT OR IGNORE INTO user_profiles (user_id, display_name) VALUES (?, ?);",
+    [id, username]
+  );
+  await db.close();
+}
+
+/**
+ * Inserts or updates the profile row for a user.
+ * @param {number} id - user id.
+ * @param {Object} profileData - display_name, address, quote.
+ * @returns {Object} the saved profile row.
+ */
+async function dbUserProfileUpsert(id, profileData) {
+  let db = await getDBConnection();
+  await db.run(
+    "INSERT OR REPLACE INTO user_profiles " +
+    "(user_id, display_name, address, quote) " +
+    "VALUES (?, ?, ?, ?);",
+    [
+      id,
+      profileData.displayName,
+      profileData.address,
+      profileData.quote
+    ]
+  );
+  let profile = await db.get(
+    "SELECT user_id, display_name, address, quote " +
+    "FROM user_profiles WHERE user_id = ?;",
+    [id]
+  );
+  await db.close();
+  return profile;
+}
+
+/**
  * Retrieves all transactions where the given user id is either the buyer or the seller.
  * Joined with item information and ordered by most recent first.
  * @param {number} id - The id of the user whose transactions are requested.
@@ -626,11 +740,11 @@ function generateCode() {
 
 /**
  * Helper to process rating submission: validates and inserts into DB.
- * @param {Object} reqBody - Request body with user_id, item_id, stars, comment.
+ * @param {Object} reqBody - Request body with userId, itemId, stars, comment.
  * @returns {Promise<Object>} Resolves with success message.
  */
 async function processRatingSubmission(reqBody) {
-  let missing = requireParams(["user_id", "item_id", "stars"], reqBody);
+  let missing = requireParams(["userId", "itemId", "stars"], reqBody);
   if (missing) {
     throw new Error(missing);
   }
@@ -643,8 +757,8 @@ async function processRatingSubmission(reqBody) {
   let db = await getDBConnection();
   let itemAndUser = await getExistingItemAndUser(
     db,
-    reqBody.item_id,
-    reqBody.user_id
+    reqBody.itemId,
+    reqBody.userId
   );
   await insertRatingRow(
     db,

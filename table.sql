@@ -47,3 +47,11 @@ CREATE TABLE ratings (
   FOREIGN KEY("item_id") REFERENCES "items"("id"),
   FOREIGN KEY("user_id") REFERENCES "users"("id")
 )
+
+CREATE TABLE user_profiles (
+  "user_id"     INTEGER PRIMARY KEY,
+  "display_name" TEXT,
+  "address"      TEXT,
+  "quote"        TEXT,
+  FOREIGN KEY("user_id") REFERENCES "users"("id")
+);

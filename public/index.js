@@ -39,57 +39,100 @@
   async function handleAuthSubmit(evt) {
     evt.preventDefault();
     hideError();
-
-    // identify which button was clicked
-    const button = evt.submitter;
-    const mode = button && button.dataset.mode ? button.dataset.mode : "login";
-
+    const mode = getModeFromSubmitter(evt.submitter);
     const username = valueOf("#username");
     const password = valueOf("#password");
-    const email = valueOf("#email"); // may be empty for login
+    const email = valueOf("#email");
 
-    if (!username || !password) {
-      return showError("Please enter both username and password.");
-    }
-
-    if (mode === "signup" && !email) {
-      return showError("Please enter an email for signup.");
+    const validation = validateAuthInputs(mode, username, password, email);
+    if (validation !== true) {
+      return showError(validation);
     }
 
     const endpoint = mode === "signup" ? "/signup" : "/login";
-    const body = {username, password};
-
-    if (mode === "signup") {
-      body.email = email;
-    }
+    const body = buildAuthBody(mode, username, password, email);
 
     try {
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(body)
-      });
-
-      if (!resp.ok) {
-        const msg = await resp.text();
-        throw new Error(msg || "Authentication failed.");
-      }
-
-      // currently fixing the hist fetching
-      const data = await resp.json();
-
-      // store the id that the SERVER says is logged in
-      localStorage.setItem("userId", data.id);
-
-      // nice for display
-      localStorage.setItem("username", data.username);
-
-      // then redirect
-      window.location.href = "main-page/main.html";
+      const data = await sendAuthRequest(endpoint, body);
+      persistLoginAndRedirect(data);
     } catch (err) {
       console.error(err);
       showError(err.message || "Network error. Please try again.");
     }
+  }
+
+  /**
+   * Determine the auth mode ("login" or "signup") from the submitting button.
+   * @param {HTMLElement|null} submitter - The button element that triggered submit.
+   * @returns {string} "login" or "signup" depending on the button's data-mode.
+   */
+  function getModeFromSubmitter(submitter) {
+    return submitter && submitter.dataset &&
+      submitter.dataset.mode ? submitter.dataset.mode : "login";
+  }
+
+  /**
+   * Validate form input values for auth.
+   * @param {string} mode - "login" or "signup".
+   * @param {string} username - Username value.
+   * @param {string} password - Password value.
+   * @param {string} email - Email value (may be empty for login).
+   * @returns {true|string} Returns true when valid, otherwise an error message string.
+   */
+  function validateAuthInputs(mode, username, password, email) {
+    if (!username || !password) {
+      return "Please enter both username and password.";
+    }
+    if (mode === "signup" && !email) {
+      return "Please enter an email for signup.";
+    }
+    return true;
+  }
+
+  /**
+   * Build the request body object for authentication requests.
+   * @param {string} mode - "login" or "signup".
+   * @param {string} username - Username value.
+   * @param {string} password - Password value.
+   * @param {string} email - Email value (for signup).
+   * @returns {Object} Plain object suitable for JSON.stringify in fetch body.
+   */
+  function buildAuthBody(mode, username, password, email) {
+    const body = {username, password};
+    if (mode === "signup") {
+      body.email = email;
+    }
+    return body;
+  }
+
+  /**
+   * Send authentication request to the server and return parsed JSON on success.
+   * @param {string} endpoint - API endpoint (e.g. "/login" or "/signup").
+   * @param {Object} body - Plain object to be JSON-stringified as request body.
+   * @returns {Promise<Object>} Parsed JSON response from server.
+   * @throws {Error} When response is not ok; error message contains server text.
+   */
+  async function sendAuthRequest(endpoint, body) {
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) {
+      const msg = await resp.text();
+      throw new Error(msg || "Authentication failed.");
+    }
+    return resp.json();
+  }
+
+  /**
+   * Persist the user data returned from the server and navigate to the main page.
+   * @param {{id:number,username:string}} data - Server response containing user id and username.
+   */
+  function persistLoginAndRedirect(data) {
+    localStorage.setItem("userId", data.id);
+    localStorage.setItem("username", data.username);
+    window.location.href = "main-page/main.html";
   }
 
   /**
