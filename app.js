@@ -336,7 +336,6 @@ app.post("/users/:id/profile", async (req, res) => {
     let profileData = {
       display_name: req.body.display_name || null,
       address: req.body.address || null,
-      profile_img: req.body.profile_img || null,
       quote: req.body.quote || null
     };
 
@@ -621,7 +620,7 @@ async function dbUserGet(id) {
 async function dbUserProfileGet(id) {
   let db = await getDBConnection();
   let profile = await db.get(
-    "SELECT user_id, display_name, address, profile_img, quote " +
+    "SELECT user_id, display_name, address, quote " +
     "FROM user_profiles WHERE user_id = ?;",
     [id]
   );
@@ -647,25 +646,24 @@ async function dbUserProfileEnsure(id, username) {
 /**
  * Inserts or updates the profile row for a user.
  * @param {number} id - user id.
- * @param {Object} profileData - display_name, address, profile_img, quote.
+ * @param {Object} profileData - display_name, address, quote.
  * @returns {Object} the saved profile row.
  */
 async function dbUserProfileUpsert(id, profileData) {
   let db = await getDBConnection();
   await db.run(
     "INSERT OR REPLACE INTO user_profiles " +
-    "(user_id, display_name, address, profile_img, quote) " +
+    "(user_id, display_name, address, quote) " +
     "VALUES (?, ?, ?, ?, ?);",
     [
       id,
       profileData.display_name,
       profileData.address,
-      profileData.profile_img,
       profileData.quote
     ]
   );
   let profile = await db.get(
-    "SELECT user_id, display_name, address, profile_img, quote " +
+    "SELECT user_id, display_name, address, quote " +
     "FROM user_profiles WHERE user_id = ?;",
     [id]
   );

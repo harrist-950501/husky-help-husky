@@ -10,7 +10,7 @@
 
 (function() {
   // Same demo user id as other pages for now.
-  const CURRENT_USER_ID = 1;
+  const CURRENT_USER_ID = Number(localStorage.getItem("userId"));
   const JSON_TYPE = "application/json";
 
   window.addEventListener("load", init);
@@ -49,7 +49,6 @@
     try {
       const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile");
       if (!resp.ok) {
-        // Leave default placeholder values in the DOM.
         const msg = await resp.text();
         console.error("Failed to load profile:", msg);
         return;
@@ -58,7 +57,6 @@
       const data = await resp.json();
       const displayName = data.display_name || data.username || "";
       const address = data.address || "";
-      const img = data.profile_img || "";
       const quote = data.quote || "";
 
       if (displayName && id("name-display")) {
@@ -66,9 +64,6 @@
       }
       if (address && id("address-display")) {
         id("address-display").textContent = address;
-      }
-      if (img && id("profile-pic")) {
-        id("profile-pic").src = img;
       }
       if (quote && id("quote-display")) {
         id("quote-display").textContent = quote;
@@ -91,9 +86,6 @@
     if (id("address-edit") && id("address-display")) {
       id("address-edit").value = id("address-display").textContent.trim();
     }
-    if (id("img-edit") && id("profile-pic")) {
-      id("img-edit").value = id("profile-pic").getAttribute("src") || "";
-    }
     if (id("quote-edit") && id("quote-display")) {
       id("quote-edit").value = id("quote-display").textContent.trim();
     }
@@ -107,7 +99,6 @@
   async function saveChanges() {
     const newName = id("name-edit") ? id("name-edit").value.trim() : "";
     const newAddress = id("address-edit") ? id("address-edit").value.trim() : "";
-    const newImg = id("img-edit") ? id("img-edit").value.trim() : "";
     const newQuote = id("quote-edit") ? id("quote-edit").value.trim() : "";
 
     // Update display elements.
@@ -116,9 +107,6 @@
     }
     if (id("address-display") && newAddress) {
       id("address-display").textContent = newAddress;
-    }
-    if (id("profile-pic") && newImg) {
-      id("profile-pic").src = newImg;
     }
     if (id("quote-display")) {
       id("quote-display").textContent = newQuote;
@@ -136,7 +124,6 @@
         body: JSON.stringify({
           display_name: newName,
           address: newAddress,
-          profile_img: newImg,
           quote: newQuote
         })
       });
@@ -179,9 +166,6 @@
     }
     if (id("address-edit")) {
       id("address-edit").classList[show]("hidden");
-    }
-    if (id("img-edit")) {
-      id("img-edit").classList[show]("hidden");
     }
     if (id("quote-edit")) {
       id("quote-edit").classList[show]("hidden");

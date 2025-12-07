@@ -52,7 +52,6 @@ CREATE TABLE user_profiles (
   "user_id"     INTEGER PRIMARY KEY,
   "display_name" TEXT,
   "address"      TEXT,
-  "profile_img"  TEXT,
   "quote"        TEXT,
   FOREIGN KEY("user_id") REFERENCES "users"("id")
 );
