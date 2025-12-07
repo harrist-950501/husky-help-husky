@@ -431,7 +431,7 @@
     let cart = JSON.parse(localStorage.getItem("cart"));
     let cartQty = cart[item.id];
     let stock = item.stock;
-    if (cartQty && cartQty == stock) {
+    if ((cartQty && cartQty == stock) || stock === 0) {
       cartBtn.disabled = true;
       cartBtn.textContent = "Out of stock";
     }
