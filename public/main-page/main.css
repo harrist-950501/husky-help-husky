@@ -27,6 +27,7 @@ html[data-theme="dark"] aside {
 aside header {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
   align-items: center;
 }
 
@@ -78,21 +79,21 @@ html[data-theme="dark"] aside li:hover {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  overflow-y: auto;
-  padding: 30px;
+  padding: 15px;
+  overflow-y: visible;
+  min-height: 0;
 }
 
 html[data-theme="dark"] #content {
   background: transparent;
 }
 
-/* ===== Top Bar ===== */
+/* ===== Header ===== */
 #content header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1.25rem;
-  margin-bottom: 18px;
 }
 
 #content header.hidden {
@@ -180,18 +181,17 @@ html[data-theme="dark"] #profile-pic {
   border-color: #7c6de0;
 }
 
-/* ===== Status message ===== */
-#status-message {
-  margin-top: 4px;
-  margin-bottom: 18px;
-}
-
 /* ===== Item Board ===== */
 #item-board {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 #item-board.grid-layout {

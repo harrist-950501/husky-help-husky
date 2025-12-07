@@ -141,52 +141,6 @@
     }
   }
 
-  // /**
-  //  * Searches for items using the current keyword and category filter
-  //  * and updates the item board so that only matching items are shown.
-  //  */
-  // async function itemSearch() {
-  //   let url = "/items/search?";
-  //   let keyword = id("search-bar").value.trim();
-  //   if (keyword !== "") {
-  //     url += "search=" + keyword + "&";
-  //   }
-  //   let category = id("category-filter").value;
-  //   if (category !== "") {
-  //     url += "filter=" + category;
-  //   }
-
-  //   try {
-  //     let isJson = true;
-  //     let searchItems = await dataFetch(url, isJson);
-
-  //     let items = qsa(".item-card");
-  //     items.forEach(item => {
-  //       item.classList.add("hidden");
-  //     });
-
-  //     searchResult = [];
-
-  //     if (searchItems.length === 0) {
-  //       showStatus("No matching items", "Try different keywords or categories", false);
-  //     } else {
-  //       searchItems.forEach(item => {
-  //         id(item.id).classList.remove("hidden");
-
-  //         searchResult.push(item.id);
-  //       });
-  //       showStatus("Search Results", "Found " + searchItems.length + " matching items", false);
-  //     }
-  //   } catch (err) {
-  //     console.log(err);
-  //     showStatus("Website Error", "Failed to search Item", true);
-  //   }
-
-  //   id("search-bar").value = "";
-  //   id("category-filter").value = "";
-  //   id("search-btn").disabled = true;
-  // }
-
   /**
    * Searches for items using the current keyword and category filter
    * and updates the board so that only matching items are shown.
@@ -198,7 +152,6 @@
       let searchItems = await dataFetch(url, isJson);
       applySearchResults(searchItems);
     } catch (err) {
-      console.log(err);
       showStatus("Website Error", "Failed to search Item", true);
     }
 
@@ -287,6 +240,7 @@
     let card = gen("article");
     card.classList.add("item-card");
     card.id = item.id;
+    card.dataset.stock = item.stock;
 
     card.appendChild(createCardImg(item.title));
     card.appendChild(await createCardInfo(item));
@@ -345,7 +299,7 @@
     info.appendChild(createInfoDescription(item));
     info.appendChild(createInfoPrice(item));
     info.appendChild(createInfoMeta(item));
-    info.appendChild(createInfoCartBtn());
+    info.appendChild(createInfoCartBtn(item));
     info.appendChild(createInfoBackBtn());
 
     let details = info.querySelectorAll(".detail");
@@ -465,13 +419,22 @@
 
   /**
    * Creates the "Add to cart" button for an item card.
+   * @param {Object} item - Item data object.
    * @returns {HTMLElement} button.cart-btn element.
    */
-  function createInfoCartBtn() {
+  function createInfoCartBtn(item) {
     const cartBtn = gen("button");
     cartBtn.textContent = "Add to cart";
     cartBtn.classList.add("cart-btn");
     cartBtn.addEventListener("click", addItemToCart);
+
+    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cartQty = cart[item.id];
+    let stock = item.stock;
+    if (cartQty && cartQty == stock) {
+      cartBtn.disabled = true;
+      cartBtn.textContent = "Out of stock";
+    }
 
     return cartBtn;
   }
@@ -494,13 +457,32 @@
    * Increments the quantity of the clicked item in shopping cart.
    */
   function addItemToCart() {
+    let card = this.closest(".item-card");
     let cart = JSON.parse(localStorage.getItem("cart"));
-    let itemId = this.parentElement.parentElement.id;
-    if (cart[itemId] !== undefined) {
-      cart[itemId] =  cart[itemId] + 1;
+    let itemId = card.id;
+
+    let cartQty = cart[itemId];
+    if (cart[itemId]) {
+      cartQty++;
+      cart[itemId] = cart[itemId] + 1;
     } else {
+      cartQty = 1;
       cart[itemId] = 1;
     }
+
+    let title = card.querySelector(".title").textContent;
+    let stock = card.dataset.stock;
+    if (cartQty == stock) {
+      this.disabled = true;
+      this.textContent = "Out of stock";
+
+      let msg = title + " has reached the stock limit (" + stock + ").";
+      showStatus("Out of stock", msg, false);
+    } else {
+      let message = title + " (" + cartQty + " in cart, " + stock + " in stock)";
+      showStatus("Added to cart", message, false);
+    }
+
     localStorage.setItem("cart", JSON.stringify(cart));
   }
 
