@@ -116,8 +116,8 @@
 
   /**
    * Read edit fields and return normalized profile object.
-    * @returns {{displayName: string, address: string, quote: string}} A normalized
-    * profile object containing the edited values (empty strings when unset).
+   * @returns {{displayName: string, address: string, quote: string}} A normalized
+   * profile object containing the edited values (empty strings when unset).
    */
   function getEditedProfileValues() {
     return {
@@ -129,7 +129,7 @@
 
   /**
    * Update visible display elements with the provided profile values.
-    * @param {{displayName:string,address:string,quote:string}} profile - Profile values to show.
+   * @param {{displayName:string,address:string,quote:string}} profile - Profile values to show.
    */
   function updateDisplayElements(profile) {
     if (id("name-display") && profile.displayName) {
@@ -152,7 +152,8 @@
     const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile", {
       method: "POST",
       headers: {"Content-Type": JSON_TYPE},
-      body: JSON.stringify({displayName: profile.displayName,address: profile.address,quote: profile.quote})
+      body: JSON.stringify({displayName: profile.displayName,
+        address: profile.address, quote: profile.quote})
     });
 
     if (!resp.ok) {
@@ -166,8 +167,8 @@
 
   /**
    * Show a short status message on the profile page.
-    * @param {string} message - Message text to show to the user.
-    * @param {boolean} isError - When true, style the message as an error.
+   * @param {string} message - Message text to show to the user.
+   * @param {boolean} isError - When true, style the message as an error.
    */
   function showProfileStatus(message, isError) {
     let status = id("profile-status");
