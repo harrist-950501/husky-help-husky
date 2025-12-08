@@ -387,7 +387,6 @@ html[data-theme="dark"] .item-card button {
 .detail-view {
   align-items: flex-start;
   height: auto;
-  padding: 1.4rem 1.8rem;
   gap: 1.8rem;
 }
 

@@ -16,8 +16,10 @@
 "use strict";
 
 (function() {
+  // Maximum star for rating
   const MAXSTAR = 5;
 
+  // Holds the item IDs of the current search results
   let searchResult = [];
 
   window.addEventListener("load", init);
@@ -136,6 +138,8 @@
 
         searchResult.push(item.id);
       }
+
+      showStatus("Product board ", "Browse items and add something you like", false);
     } catch (err) {
       showStatus("Website Error", "Failed to load Item", true);
     }
@@ -431,7 +435,7 @@
     let cart = JSON.parse(localStorage.getItem("cart"));
     let cartQty = cart[item.id];
     let stock = item.stock;
-    if ((cartQty && cartQty == stock) || stock === 0) {
+    if ((cartQty && cartQty >= stock) || stock === 0) {
       cartBtn.disabled = true;
       cartBtn.textContent = "Out of stock";
     }
@@ -501,6 +505,8 @@
 
     if (card.classList.contains("detail-view")) {
       // Exiting detail view
+      showStatus("Product board", "Browse items and add something you like", false);
+
       let layout = localStorage.getItem("board-layout");
       if (layout === "grid") {
         id("item-board").classList.add("grid-layout");
@@ -510,6 +516,8 @@
       card.querySelector(".img-container img").addEventListener("click", toggleItemDetail);
     } else {
       // Entering detail view
+      showStatus("Detail view", "Check out the item or return to the list", false);
+
       id("item-board").classList.remove("grid-layout");
 
       card.querySelector(".title").removeEventListener("click", toggleItemDetail);
@@ -543,7 +551,6 @@
         response = await fetch(url);
       }
       await statusCheck(response);
-      showStatus("Product board ", "Browse items and add something you like", false);
       if (isJson) {
         return await response.json();
       }

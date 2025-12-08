@@ -22,7 +22,6 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 app.use(multer().none());
 
-// I think we can use this, this is in Rasmus slide deck for storage technique
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
@@ -194,7 +193,7 @@ app.post("/bulk-buy", async (req, res) => {
     let items = req.body.items;
     try {
       items = JSON.parse(items);
-    } catch {
+    } catch (err) {
       return  res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
     }
 
@@ -203,15 +202,11 @@ app.post("/bulk-buy", async (req, res) => {
       code = generateCode();
     }
 
-    // console.log(items);
     for (let item of items) {
-      // console.log(item);
       let id = item.id;
       let quantity = item.quantity;
       let dbItem = await dbItemGet(id);
       for (let i = 0; i < quantity; i++) {
-        // console.log(id);
-        // console.log(user, dbItem["seller_id"], id, code);
         await dbItemStockSubtract(id);
         await dbTransactionMade(user, dbItem["seller_id"], id, code);
       }

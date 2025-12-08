@@ -8,6 +8,9 @@
 "use strict";
 
 (function() {
+  // The total price of all items in the cart
+  let cartTotal = 0;
+
   window.addEventListener("load", init);
 
   function init() {
@@ -43,24 +46,26 @@
     id("cart-count").textContent = ids.length;
     if (!checkEmptyCart()) {
       try {
-        let totalPrice = 0;
+        showStatus("Loading cart...", "Please wait", false);
 
         let isJson = true;
         for (let i = 0; i < ids.length; i++) {
           let id = ids[i];
-          let cartQty = parseInt(cart[id]);
           let item = await dataFetch("/items?id=" + id, isJson);
+
+          let cartQty = parseInt(cart[id]);
+          cartTotal += item.price * cartQty;
+
           let card = createCartCard(item, cartQty);
-          totalPrice += parseInt(item.price) * cartQty;
           board.appendChild(card);
         }
 
-        id("cart-total").textContent = "$" + totalPrice;
+        showStatus("Your Cart", "Review your items before purchase", false);
+
+        updateTotal(0);
       } catch (err) {
         // Stop the code from keeping running, dataFetch already shows error message
       }
-    } else {
-      id("cart-total").textContent = "$0";
     }
   }
 
@@ -77,9 +82,9 @@
     card.dataset.stock = item.stock;
     card.dataset.price = item.price;
 
-    card.appendChild(createCartImg(item));
-    card.appendChild(createCartMain(item));
-    card.appendChild(createCartActions(item, quantity));
+    card.appendChild(createCardImg(item));
+    card.appendChild(createCardMain(item));
+    card.appendChild(createCardActions(item, quantity));
 
     return card;
   }
@@ -89,9 +94,9 @@
    * @param {Object} item - item data.
    * @returns {HTMLElement} section.cart-img element.
    */
-  function createCartImg(item) {
+  function createCardImg(item) {
     let imgSection = gen("section");
-    imgSection.classList.add("cart-img");
+    imgSection.classList.add("card-img");
 
     let img = gen("img");
     img.src = parseName(item.title);
@@ -121,22 +126,22 @@
    * @param {Object} item - item data.
    * @returns {HTMLElement} section.cart-main element.
    */
-  function createCartMain(item) {
+  function createCardMain(item) {
     let mainSection = gen("section");
-    mainSection.classList.add("cart-main");
+    mainSection.classList.add("card-main");
 
     let title = gen("h3");
-    title.classList.add("cart-title");
+    title.classList.add("card-title");
     title.textContent = item.title;
 
     let meta = gen("p");
-    meta.classList.add("cart-meta");
+    meta.classList.add("card-meta");
     meta.textContent = item.category +
       " · Seller #" + item.seller_id +
       " · " + item.stock + " left";
 
     let price = gen("p");
-    price.classList.add("cart-price");
+    price.classList.add("card-price");
     price.textContent = "$" + item.price;
 
     mainSection.appendChild(title);
@@ -146,13 +151,13 @@
     return mainSection;
   }
 
-  function createCartActions(item, quantity) {
+  function createCardActions(item, quantity) {
     let actions = gen("section");
-    actions.classList.add("cart-actions");
+    actions.classList.add("card-actions");
 
     actions.appendChild(createQtyControl(item, quantity));
-    actions.appendChild(createCartSubtotal(item.price, quantity));
-    actions.appendChild(createCartRemoveBtn());
+    actions.appendChild(createCardSubtotal(item.price, quantity));
+    actions.appendChild(createCardRemoveBtn());
 
     return actions;
   }
@@ -164,7 +169,7 @@
     let minus = gen("button");
     minus.textContent = "-";
     minus.classList.add("qty-minus");
-    minus.addEventListener("click", minusCartQty);
+    minus.addEventListener("click", minusCardQty);
 
     let count = gen("span");
     count.textContent = quantity;
@@ -172,7 +177,7 @@
     let plus = gen("button");
     plus.textContent = "+";
     plus.classList.add("qty-plus");
-    plus.addEventListener("click", addCartQty);
+    plus.addEventListener("click", addCardQty);
 
     if (quantity === item.stock) {
       plus.disabled = true;
@@ -185,91 +190,93 @@
     return box;
   }
 
-  function createCartSubtotal(price, quantity) {
+  function createCardSubtotal(price, quantity) {
     let subtotal = gen("p");
-    subtotal.classList.add("cart-subtotal");
+    subtotal.classList.add("card-subtotal");
     subtotal.textContent = "$" + (price * quantity);
     return subtotal;
   }
 
-  function createCartRemoveBtn() {
+  function createCardRemoveBtn() {
     let btn = gen("button");
     btn.classList.add("remove-btn");
     btn.textContent = "Remove";
-    btn.addEventListener("click", removeCart);
+    btn.addEventListener("click", cartRemove);
     return btn;
   }
 
-  function minusCartQty() {
+  function minusCardQty() {
     let card = this.closest(".cart-card");
+    changeCartQty(card, -1);
+  }
+
+  function addCardQty() {
+    let card = this.closest(".cart-card");
+    changeCartQty(card, 1);
+  }
+
+  function changeCartQty(card, delta) {
     let cartId = card.id;
     let cart = localItemGet("cart");
-    let qty = parseInt(cart[cartId]);
+    let quantity = cart[cartId];
 
-    let qtySpan = this.parentElement.querySelector("span");
-    qty--;
-    qtySpan.textContent = qty;
-    cart[cartId] = qty;
+    quantity += delta;
 
-    totalPriceUpdate(card.dataset.price, -1);
-
+    cart[cartId] = quantity;
     localItemSet("cart", cart);
 
-    this.parentElement.querySelector(".qty-plus").disabled = false;
-    if (qty === 0) {
-      card.remove();
-      delete cart[cartId];
-      localItemSet("cart", cart);
+    updateCardView(card, quantity);
+
+    let price = parseInt(card.dataset.price);
+    let change = price * delta;
+    updateTotal(change);
+  }
+
+  function updateCardView(card, quantity) {
+    if (quantity === 0) {
+      cartRemove.call(card);
       checkEmptyCart();
+    } else {
+      let qtySpan = card.querySelector(".qty-control span");
+      qtySpan.textContent = quantity;
+
+      let price = parseInt(card.dataset.price);
+      let total = card.querySelector(".card-subtotal");
+      total.textContent = "$" + (price * quantity);
+
+      let stock = parseInt(card.dataset.stock);
+      let plusBtn  = card.querySelector(".qty-plus");
+      if (quantity === stock) {
+        plusBtn.disabled = true;
+      } else {
+        plusBtn.disabled = false;
+      }
     }
   }
 
-  function addCartQty() {
-    let card = this.closest(".cart-card");
-
-    let cartId = card.id;
-    let stock = parseInt(card.dataset.stock);
-    let cart = localItemGet("cart");
-    let qty = parseInt(cart[cartId]);
-
-    let qtySpan = this.parentElement.querySelector("span");
-    qty++;
-    qtySpan.textContent = qty;
-    cart[cartId] = qty;
-
-    totalPriceUpdate(card.dataset.price, 1);
-
-    localItemSet("cart", cart);
-
-    if (qty === stock) {
-      this.disabled = true;
-    }
-  }
-
-  function totalPriceUpdate(price, quantity) {
+  function updateTotal(change) {
     let totalPrice = id("cart-total");
-    let currentTotal = parseInt(totalPrice.textContent.slice(1));
-    let total = currentTotal + price * quantity;
-    totalPrice.textContent = "$" + total;
+    cartTotal += change;
+    totalPrice.textContent = "$" + cartTotal;
   }
 
-
-  function removeCart() {
-    let cartId = this.closest(".cart-card").id;
+  function cartRemove() {
     let card = this.closest(".cart-card");
     card.remove();
+
+    let cartId = card.id;
     let cart = localItemGet("cart");
     delete cart[cartId];
     localItemSet("cart", cart);
+
     checkEmptyCart();
   }
-
 
   function checkEmptyCart() {
     let cart = localItemGet("cart");
     let cartNum = Object.keys(cart).length;
     id("cart-count").textContent = cartNum;
-    if(cartNum === 0) {
+    if (cartNum === 0) {
       showStatus("Your cart is empty", "Add some items to your cart first!", false);
       return true;
     }
@@ -345,7 +352,6 @@
         response = await fetch(url);
       }
       await statusCheck(response);
-      showStatus("Product board ", "Browse items and add something you like", false);
       if (isJson) {
         return await response.json();
       }
