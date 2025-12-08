@@ -21,10 +21,10 @@
   }
 
   function checkLocalStorage() {
-    let cart = localStorage.getItem("cart");
+    let cart = localItemGet("cart");
     if (!cart) {
       cart = {};
-      localStorage.setItem("cart", JSON.stringify(cart));
+      localItemSet("cart", cart);
     }
   }
 
@@ -38,20 +38,29 @@
   async function loadItems() {
     let board = id("cart-board");
 
-    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cart = localItemGet("cart");
     let ids = Object.keys(cart);
+    id("cart-count").textContent = ids.length;
     if (!checkEmptyCart()) {
       try {
+        let totalPrice = 0;
+
         let isJson = true;
         for (let i = 0; i < ids.length; i++) {
           let id = ids[i];
+          let cartQty = parseInt(cart[id]);
           let item = await dataFetch("/items?id=" + id, isJson);
-          let card = createCartCard(item, cart[id]);
+          let card = createCartCard(item, cartQty);
+          totalPrice += parseInt(item.price) * cartQty;
           board.appendChild(card);
         }
+
+        id("cart-total").textContent = "$" + totalPrice;
       } catch (err) {
         // Stop the code from keeping running, dataFetch already shows error message
       }
+    } else {
+      id("cart-total").textContent = "$0";
     }
   }
 
@@ -65,6 +74,8 @@
     let card = gen("article");
     card.classList.add("cart-card");
     card.id = item.id;
+    card.dataset.stock = item.stock;
+    card.dataset.price = item.price;
 
     card.appendChild(createCartImg(item));
     card.appendChild(createCartMain(item));
@@ -139,14 +150,14 @@
     let actions = gen("section");
     actions.classList.add("cart-actions");
 
-    actions.appendChild(createQtyControl(quantity, item.stock));
+    actions.appendChild(createQtyControl(item, quantity));
     actions.appendChild(createCartSubtotal(item.price, quantity));
     actions.appendChild(createCartRemoveBtn());
 
     return actions;
   }
 
-  function createQtyControl(quantity, stock) {
+  function createQtyControl(item, quantity) {
     let box = gen("section");
     box.classList.add("qty-control");
 
@@ -161,8 +172,11 @@
     let plus = gen("button");
     plus.textContent = "+";
     plus.classList.add("qty-plus");
-    plus.id = stock;
     plus.addEventListener("click", addCartQty);
+
+    if (quantity === item.stock) {
+      plus.disabled = true;
+    }
 
     box.appendChild(minus);
     box.appendChild(count);
@@ -187,8 +201,9 @@
   }
 
   function minusCartQty() {
-    let cartId = this.closest(".cart-card").id;
-    let cart = JSON.parse(localStorage.getItem("cart"));
+    let card = this.closest(".cart-card");
+    let cartId = card.id;
+    let cart = localItemGet("cart");
     let qty = parseInt(cart[cartId]);
 
     let qtySpan = this.parentElement.querySelector("span");
@@ -196,23 +211,25 @@
     qtySpan.textContent = qty;
     cart[cartId] = qty;
 
-    localStorage.setItem("cart", JSON.stringify(cart));
+    totalPriceUpdate(card.dataset.price, -1);
+
+    localItemSet("cart", cart);
 
     this.parentElement.querySelector(".qty-plus").disabled = false;
     if (qty === 0) {
-      let card = this.closest(".cart-card");
       card.remove();
       delete cart[cartId];
-      localStorage.setItem("cart", JSON.stringify(cart));
+      localItemSet("cart", cart);
       checkEmptyCart();
     }
   }
 
   function addCartQty() {
-    let stock = parseInt(this.id);
+    let card = this.closest(".cart-card");
 
-    let cartId = this.closest(".cart-card").id;
-    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cartId = card.id;
+    let stock = parseInt(card.dataset.stock);
+    let cart = localItemGet("cart");
     let qty = parseInt(cart[cartId]);
 
     let qtySpan = this.parentElement.querySelector("span");
@@ -220,27 +237,38 @@
     qtySpan.textContent = qty;
     cart[cartId] = qty;
 
-    localStorage.setItem("cart", JSON.stringify(cart));
+    totalPriceUpdate(card.dataset.price, 1);
+
+    localItemSet("cart", cart);
 
     if (qty === stock) {
       this.disabled = true;
     }
   }
 
+  function totalPriceUpdate(price, quantity) {
+    let totalPrice = id("cart-total");
+    let currentTotal = parseInt(totalPrice.textContent.slice(1));
+    let total = currentTotal + price * quantity;
+    totalPrice.textContent = "$" + total;
+  }
+
+
   function removeCart() {
     let cartId = this.closest(".cart-card").id;
     let card = this.closest(".cart-card");
     card.remove();
-    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cart = localItemGet("cart");
     delete cart[cartId];
-    localStorage.setItem("cart", JSON.stringify(cart));
+    localItemSet("cart", cart);
     checkEmptyCart();
   }
 
 
   function checkEmptyCart() {
-    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cart = localItemGet("cart");
     let cartNum = Object.keys(cart).length;
+    id("cart-count").textContent = cartNum;
     if(cartNum === 0) {
       showStatus("Your cart is empty", "Add some items to your cart first!", false);
       return true;
@@ -290,6 +318,14 @@
     });
 
     return text || "Purchase complete!";
+  }
+
+  function localItemGet(key) {
+    return JSON.parse(localStorage.getItem(key));
+  }
+
+  function localItemSet(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
   }
 
   /**

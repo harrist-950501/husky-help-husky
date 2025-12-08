@@ -181,6 +181,49 @@ app.post("/buy", requireLogin, async (req, res) => {
   }
 });
 
+app.post("/bulk-buy", async (req, res) => {
+  try {
+    res.type("text");
+    let missing = requireParams(["user_id", "items"], req.body);
+    if (missing) {
+      return res.status(CLIENT_SIDE_ERROR).send(missing);
+    }
+
+    let user = req.body["user_id"];
+
+    let items = req.body.items;
+    try {
+      items = JSON.parse(items);
+    } catch {
+      return  res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
+    }
+
+    let code = generateCode();
+    while (await dbCheckCodeDuplicate(code)) {
+      code = generateCode();
+    }
+
+    // console.log(items);
+    for (let item of items) {
+      // console.log(item);
+      let id = item.id;
+      let quantity = item.quantity;
+      let dbItem = await dbItemGet(id);
+      for (let i = 0; i < quantity; i++) {
+        // console.log(id);
+        // console.log(user, dbItem["seller_id"], id, code);
+        await dbItemStockSubtract(id);
+        await dbTransactionMade(user, dbItem["seller_id"], id, code);
+      }
+    }
+
+    res.send(code);
+  } catch (err) {
+    console.error(err);
+    res.status(SERVER_SIDE_ERROR).send("Bulk buy failed.");
+  }
+});
+
 /**
  * Returns all transactions where the given user is buyer or seller.
  * Only allows a user to view *their own* history.
@@ -697,7 +740,7 @@ async function dbTransactionUserGet(id) {
  */
 async function dbCheckCodeDuplicate(code) {
   let db = await getDBConnection();
-  let query = "SELECT *FROM transactions WHERE confirmation_code = ?";
+  let query = "SELECT * FROM transactions WHERE confirmation_code = ?";
   let transaction = await db.get(query, [code]);
   await db.close();
   if (transaction) {

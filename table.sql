@@ -27,6 +27,7 @@ CREATE TABLE "items" (
 
 CREATE TABLE "transactions" (
 	"id"	INTEGER,
+	"confirmation_code"	TEXT NOT NULL,
 	"buyer_id"	INTEGER NOT NULL,
 	"seller_id"	INTEGER NOT NULL,
 	"item_id"	INTEGER NOT NULL,

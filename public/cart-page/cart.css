@@ -26,13 +26,13 @@ main header {
   font-size: 1.6rem;
 }
 
-#subtitle {
+#title p {
   margin: 0;
   font-size: 0.95rem;
   color: #4b5563;
 }
 
-html[data-theme="dark"] #subtitle {
+html[data-theme="dark"] #title p {
   color: #e5e7eb;
 }
 

@@ -18,7 +18,7 @@
         <button class="back-btn">Back</button>
         <section id="title">
           <h1>Shopping Cart</h1>
-          <p id="subtitle">3 items in your cart</p>
+          <p><span id="cart-count">3</span> items in your cart</p>
         </section>
       </header>
       <section id="status-message">
@@ -30,17 +30,13 @@
         </section>
         <section id="cart-summary">
           <h2>Order Summary</h2>
-          <section class="summary-row">
+          <!-- <section class="summary-row">
             <span>Subtotal</span>
             <span>$139.00</span>
-          </section>
-          <section class="summary-row">
-            <span>Estimated tax</span>
-            <span>$0.00</span>
-          </section>
+          </section> -->
           <section class="summary-row total">
             <span>Total</span>
-            <span>$139.00</span>
+            <span id="cart-total">$0</span>
           </section>
           <button id="checkout-btn">Checkout</button>
           <button class="back-btn">Continue shopping</button>
