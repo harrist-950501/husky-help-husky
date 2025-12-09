@@ -27,14 +27,16 @@ app.use(cookieParser());
 
 const CLIENT_SIDE_ERROR = 400;
 const CLIENT_INVALID_PARAM = 401;
-const FORBID = 403;
 const SERVER_SIDE_ERROR = 500;
 
-const FIVE = 5;
-const TS = 36;
-const TEN = 10;
+const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  maxAge: 36 * 10 * 10 * 10 * 10 * 10,
+  sameSite: "strict",
+  path: "/"
+};
 
-const SERVER_ERROR_MESSAGE = "Server error, try again later."
+const SERVER_ERROR_MESSAGE = "Server error, try again later.";
 
 // Simple session mapping: sessionId to userId
 let sessions = {};
@@ -62,21 +64,9 @@ app.post("/login", async (req, res) => {
         .send("Incorrect username or password.");
     }
 
-    // Create random session ID, save session
-    let sessionId = createSessionId();
-    sessions[sessionId] = user.id;
-
-    res.cookie("session", sessionId, {
-      httpOnly: true,
-      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
-      sameSite: "strict",
-      path: "/"
-    });
-
-    res.json({
-      id: user.id,
-      username: user.username
-    });
+    let sessionData = buildSession(user.id, user.username);
+    res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
+    res.json(sessionData.user);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
@@ -115,20 +105,10 @@ app.post("/signup", async (req, res) => {
 
     // Create the user and set the session id
     let newUserId = await dbUserCreate(username, password, email);
-    let sessionId = createSessionId();
-    sessions[sessionId] = newUserId;
 
-    res.cookie("session", sessionId, {
-      httpOnly: true,
-      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
-      sameSite: "strict",
-      path: "/"
-    });
-
-    res.json({
-      id: newUserId,
-      username: username
-    });
+    let sessionData = buildSession(newUserId, username);
+    res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
+    res.json(sessionData.user);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
@@ -137,7 +117,8 @@ app.post("/signup", async (req, res) => {
 
 /**
  * Logs the current user out.
- */t("/logout", requireLogin, (req, res) => {
+ */
+app.post("/logout", requireLogin, (req, res) => {
   let sessionId = req.cookies.session;
 
   if (sessionId) {
@@ -148,7 +129,6 @@ app.post("/signup", async (req, res) => {
   res.type("text")
     .send("Logout successful.");
 });
-
 
 /**
  * Returns one item by id or all items when no id is given.
@@ -243,7 +223,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
     try {
       items = JSON.parse(items);
     } catch (err) {
-      return  res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
+      return res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
     }
 
     let code = generateCode();
@@ -251,15 +231,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
       code = generateCode();
     }
 
-    for (let item of items) {
-      let id = item.id;
-      let quantity = item.quantity;
-      let dbItem = await dbItemGet(id);
-      for (let i = 0; i < quantity; i++) {
-        await dbItemStockSubtract(id);
-        await dbTransactionMade(user, dbItem["seller_id"], id, code);
-      }
-    }
+    await multipleTransactionMade(items, user, code);
 
     res.send(code);
   } catch (err) {
@@ -277,7 +249,6 @@ app.get("/history", requireLogin, async (req, res) => {
     let transactions = await dbTransactionUserGet(req.userId);
     res.json(transactions);
   } catch (err) {
-    console.log(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send(SERVER_ERROR_MESSAGE);
@@ -394,7 +365,6 @@ app.post("/users/:id/profile", async (req, res) => {
   }
 });
 
-
 /**
  * Inserts a new rating row into the DB (no validation here).
  * @param {Object} db - Database connection.
@@ -402,7 +372,6 @@ app.post("/users/:id/profile", async (req, res) => {
  * @param {number} userId - User ID for rating.
  * @param {number} stars - Star rating value.
  * @param {string} comment - Optional comment text.
- * @returns {void}
  */
 async function insertRatingRow(db, itemId, userId, stars, comment) {
   let finalComment = comment || null;
@@ -416,7 +385,7 @@ async function insertRatingRow(db, itemId, userId, stars, comment) {
  * Gets rating summary + list for an item.
  * @param {Object} db - Database connection.
  * @param {number} itemId - Item ID to get ratings for.
- * @returns {Object} Object with average, count, and ratings array.
+ * @return {Object} Object with average, count, and ratings array.
  */
 async function getRatingsForItem(db, itemId) {
   let summary = await db.get(
@@ -466,7 +435,7 @@ async function dbUserGetByUsername(username) {
  * @param {string} username - Username for the new user.
  * @param {string} password - Password for the new user.
  * @param {string} email - Email address for the new user.
- * @returns {number} The id of the newly created user.
+ * @return {number} The id of the newly created user.
  */
 async function dbUserCreate(username, password, email) {
   let db = await getDBConnection();
@@ -537,6 +506,22 @@ async function dbItemSearch(keyword, filter) {
 }
 
 /**
+ * Checks if a confirmation code already exists in the transactions table.
+ * @param {string} code - Confirmation code to check.
+ * @return {boolean} True if code exists, false otherwise.
+ */
+async function dbCheckCodeDuplicate(code) {
+  let db = await getDBConnection();
+  let query = "SELECT * FROM transactions WHERE confirmation_code = ?";
+  let transaction = await db.get(query, [code]);
+  await db.close();
+  if (transaction) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Decrements the stock count of an item by 1 for the given id.
  * @param {number} id - The id of the item whose stock should be reduced.
  */
@@ -578,7 +563,7 @@ async function dbUserGet(id) {
 /**
  * Retrieves the profile for the given user id, or null if none exists.
  * @param {number} id - user id.
- * @returns {Object|null} profile row.
+ * @return {Object|null} profile row.
  */
 async function dbUserProfileGet(id) {
   let db = await getDBConnection();
@@ -610,7 +595,7 @@ async function dbUserProfileEnsure(id, username) {
  * Inserts or updates the profile row for a user.
  * @param {number} id - user id.
  * @param {Object} profileData - display_name, address, quote.
- * @returns {Object} the saved profile row.
+ * @return {Object} the saved profile row.
  */
 async function dbUserProfileUpsert(id, profileData) {
   let db = await getDBConnection();
@@ -673,38 +658,30 @@ function requireParams(params, body) {
 }
 
 /**
- * Generates a random confirmation code.
- * @returns {string} A random code string.
+ * Creates a new session id for a user and prepares auth payload data.
+ * @param {number} userId - User id to store in the session.
+ * @param {string} username - Username to include in the auth payload.
+ * @returns {Object} Object containing sessionId and auth user object.
  */
-function generateCode() {
-  return Math.random()
-    .toString(TS)
-    .substring(2, TEN)
-    .toUpperCase();
-}
+function buildSession(userId, username) {
+  let sessionId = createSessionId();
+  sessions[sessionId] = userId;
 
-/**
- * Checks if a confirmation code already exists in the transactions table.
- * @param {string} code - Confirmation code to check.
- * @returns {boolean} True if code exists, false otherwise.
- */
-async function dbCheckCodeDuplicate(code) {
-  let db = await getDBConnection();
-  let query = "SELECT * FROM transactions WHERE confirmation_code = ?";
-  let transaction = await db.get(query, [code]);
-  await db.close();
-  if (transaction) {
-    return true;
-  }
-  return false;
+  return {
+    sessionId: sessionId,
+    user: {
+      id: userId,
+      username: username
+    }
+  };
 }
 
 /**
  * Generates a new session id string for a logged-in user.
- * @returns {string} A unique session id to be stored in the cookie and sessions map.
+ * @return {string} A unique session id to be stored in the cookie and sessions map.
  */
 function createSessionId() {
-  let sessionId = Math.random().toString(TS)
+  let sessionId = Math.random().toString(36)
     .slice(2) + Date.now();
 
   return sessionId;
@@ -720,7 +697,7 @@ function requireLogin(req, res, next) {
   let sessionId = req.cookies.session;
 
   if (!sessionId || !sessions[sessionId]) {
-    return res.status(CLIENT_INVALID_PARAM)
+    res.status(CLIENT_INVALID_PARAM)
       .send("Not logged in.");
   }
 
@@ -729,13 +706,43 @@ function requireLogin(req, res, next) {
 }
 
 /**
+ * Generates a random confirmation code.
+ * @return {string} A random code string.
+ */
+function generateCode() {
+  return Math.random()
+    .toString(36)
+    .substring(2, 10)
+    .toUpperCase();
+}
+
+/**
+ * Processes a bulk purchase by updating stock and recording a transaction
+ * for each requested item and quantity under a shared confirmation code.
+ * @param {Object[]} items - List of items to purchase, each with id and quantity.
+ * @param {number} user - Id of the buyer making the purchase.
+ * @param {string} code - Confirmation code associated with this bulk purchase.
+ */
+async function multipleTransactionMade(items, user, code) {
+  for (let item of items) {
+    let id = item.id;
+    let quantity = item.quantity;
+    let dbItem = await dbItemGet(id);
+    for (let i = 0; i < quantity; i++) {
+      await dbItemStockSubtract(id);
+      await dbTransactionMade(user, dbItem["seller_id"], id, code);
+    }
+  }
+}
+
+/**
  * Validates that "stars" is an int between 1 and 5.
  * Returns true if valid, false otherwise.
  * @param {number} stars - Star rating to validate.
- * @returns {boolean} True if valid, false otherwise.
+ * @return {boolean} True if valid, false otherwise.
  */
 function isValidStars(stars) {
-  return Number.isInteger(stars) && stars >= 1 && stars <= FIVE;
+  return Number.isInteger(stars) && stars >= 1 && stars <= 5;
 }
 
 /**
@@ -743,7 +750,7 @@ function isValidStars(stars) {
  * @param {Object} db - Database connection.
  * @param {number} itemId - Item ID to check.
  * @param {number} userId - User ID to check.
- * @returns {Object} Object with item and user properties.
+ * @return {Object} Object with item and user properties.
  */
 async function getExistingItemAndUser(db, itemId, userId) {
   let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
@@ -762,7 +769,7 @@ async function getExistingItemAndUser(db, itemId, userId) {
 /**
  * Helper to process a rating submission: validates input and inserts it into the DB.
  * @param {Object} reqBody - Request body with userId, itemId, stars, and optional comment.
- * @returns {Object} Success message object after the rating is stored.
+ * @return {Object} Success message object after the rating is stored.
  */
 async function processRatingSubmission(reqBody) {
   let missing = requireParams(["userId", "itemId", "stars"], reqBody);
@@ -798,7 +805,7 @@ async function processRatingSubmission(reqBody) {
  *
  * Establishes a database connection to the database and returns the database object.
  * Any errors that occur should be caught in the function that calls this one.
- * @returns {sqlite3.Database} - The database object for the connection.
+ * @return {sqlite3.Database} - The database object for the connection.
  */
 async function getDBConnection() {
   const db = await sqlite.open({

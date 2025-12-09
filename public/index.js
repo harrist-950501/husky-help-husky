@@ -41,7 +41,6 @@
     const email = valueOf("#email");
 
     const validation = validateAuthInputs(mode, username, password, email);
-    console.log(validation);
     if (validation !== null) {
       showStatus("Invalid input", validation, true);
     } else {
@@ -49,9 +48,7 @@
         const endpoint = mode === "signup" ? "/signup" : "/login";
         let isJson = true;
         const body = buildAuthBody(mode, username, password, email);
-        console.log(body);
         let data = await dataFetch(endpoint, isJson, body);
-        console.log(data);
         persistLoginAndRedirect(data);
       } catch (err) {
         if (mode === "signup") {
@@ -119,6 +116,14 @@
     return body;
   }
 
+  /**
+   * Fetches data from the given URL using GET or POST and returns the response
+   * as parsed JSON or plain text.
+   * @param {string} url - Endpoint URL to request.
+   * @param {boolean} isJson - Whether to parse the response as JSON (true) or text.
+   * @param {FormData} [postParams] - Optional form data to send via POST.
+   * @returns {Object|string} Parsed JSON data or response text from the request.
+   */
   async function dataFetch(url, isJson, postParams) {
     try {
       let response;
@@ -147,6 +152,12 @@
     window.location.href = "main-page/main.html";
   }
 
+  /**
+   * Update the global status message area.
+   * @param {string} title - Short heading text for the status area.
+   * @param {string|Error} message - Detailed status text or Error.
+   * @param {boolean} isError - When true, apply error styling
+   */
   function showStatus(title, message, isError) {
     id("status-message").classList.remove("hidden");
 

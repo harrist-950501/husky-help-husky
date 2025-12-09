@@ -535,12 +535,12 @@
   }
 
   /**
-   * Fetches data from the given URL and handles errors by disabling controls and showing an
-   * error message. Support GET and POST, return in JSON or Plain text.
+   * Fetches data from the given URL using GET or POST and returns the response
+   * as parsed JSON or plain text.
    * @param {string} url - Endpoint URL to request.
-   * @param {boolean} isJson - Whether to parse the response as JSON, otherwise Plain text.
-   * @param {FormData} postParams - Optional form data to send via POST, null for GET
-   * @return {Object|string} - Parsed JSON object or text response.
+   * @param {boolean} isJson - Whether to parse the response as JSON (true) or text.
+   * @param {FormData} [postParams] - Optional form data to send via POST.
+   * @returns {Object|string} Parsed JSON data or response text from the request.
    */
   async function dataFetch(url, isJson, postParams) {
     try {
@@ -562,7 +562,6 @@
 
   /**
    * Update the global status message area.
-   *
    * @param {string} title - Short heading text for the status area.
    * @param {string|Error} message - Detailed status text or Error.
    * @param {boolean} isError - When true, apply error styling

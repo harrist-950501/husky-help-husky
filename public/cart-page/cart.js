@@ -496,7 +496,7 @@
 
     let url = "/bulk-buy";
     let isJson = false;
-    let confirmationCode = dataFetch(url, isJson, postForm);
+    let confirmationCode = await dataFetch(url, isJson, postForm);
 
     return confirmationCode;
   }
@@ -511,13 +511,13 @@
     let items = [];
 
     for (let id in cart) {
-        id = parseInt(id);
+      id = parseInt(id);
 
-        let qty = cart[id];
-        items.push({
-          "id": id,
-          "quantity": qty
-        });
+      let qty = cart[id];
+      items.push({
+        "id": id,
+        "quantity": qty
+      });
     }
     items = JSON.stringify(items);
 
@@ -588,11 +588,10 @@
   }
 
   /**
-   * Updates the global status message area with a title, message, and optional
-   * error styling.
+   * Update the global status message area.
    * @param {string} title - Short heading text for the status area.
    * @param {string|Error} message - Detailed status text or Error.
-   * @param {boolean} isError - When true, apply error styling.
+   * @param {boolean} isError - When true, apply error styling
    */
   function showStatus(title, message, isError) {
     const status = id("status-message");

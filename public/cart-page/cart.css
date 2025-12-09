@@ -204,20 +204,8 @@ html[data-theme="dark"] #cart-summary {
   font-size: 1rem;
 }
 
-
 #cart-summary button {
   width: 100%;
   margin-top: 0.3rem;
   text-wrap: nowrap;
 }
-
-/* #confirm-btn {
-  width: 100%;
-  margin-top: 0.6rem;
-}
-
-#summary-back {
-  width: 100%;
-  margin-top: 0.3rem;
-  text-wrap: nowrap;
-} */
