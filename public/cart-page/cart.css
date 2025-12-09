@@ -199,13 +199,19 @@ html[data-theme="dark"] #cart-summary {
 #total {
   display: flex;
   justify-content: space-between;
-  font-size: 0.95rem;
   margin-top: 0.4rem;
   font-weight: 600;
   font-size: 1rem;
 }
 
-#checkout-btn {
+
+#cart-summary button {
+  width: 100%;
+  margin-top: 0.3rem;
+  text-wrap: nowrap;
+}
+
+/* #confirm-btn {
   width: 100%;
   margin-top: 0.6rem;
 }
@@ -214,4 +220,4 @@ html[data-theme="dark"] #cart-summary {
   width: 100%;
   margin-top: 0.3rem;
   text-wrap: nowrap;
-}
+} */

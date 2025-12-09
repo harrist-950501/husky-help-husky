@@ -19,7 +19,6 @@ CREATE TABLE "items" (
 	"description"	TEXT,
 	"price"	REAL NOT NULL,
 	"stock"	INTEGER NOT NULL,
-	"status"	TEXT,
 	"date"	DATETIME DEFAULT (datetime('now', 'localtime')),
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("seller_id") REFERENCES "users"("id")
@@ -38,21 +37,23 @@ CREATE TABLE "transactions" (
 	FOREIGN KEY("seller_id") REFERENCES "users"("id")
 );
 
-CREATE TABLE ratings (
-  "id"       INTEGER PRIMARY KEY AUTOINCREMENT,
-  "item_id"  INTEGER NOT NULL,
-  "user_id"  INTEGER NOT NULL,
-  "stars"    INTEGER NOT NULL CHECK ("stars" BETWEEN 1 AND 5),
-  "comment"  TEXT,
-  date     DATETIME DEFAULT (datetime('now', 'localtime')),
-  FOREIGN KEY("item_id") REFERENCES "items"("id"),
-  FOREIGN KEY("user_id") REFERENCES "users"("id")
-)
+CREATE TABLE "ratings" (
+	"id"	INTEGER,
+	"item_id"	INTEGER NOT NULL,
+	"user_id"	INTEGER NOT NULL,
+	"stars"	INTEGER NOT NULL CHECK("stars" BETWEEN 1 AND 5),
+	"comment"	TEXT,
+	"date"	DATETIME DEFAULT (datetime('now', 'localtime')),
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY("item_id") REFERENCES "items"("id"),
+	FOREIGN KEY("user_id") REFERENCES "users"("id")
+);
 
-CREATE TABLE user_profiles (
-  "user_id"     INTEGER PRIMARY KEY,
-  "display_name" TEXT,
-  "address"      TEXT,
-  "quote"        TEXT,
-  FOREIGN KEY("user_id") REFERENCES "users"("id")
+CREATE TABLE "user_profiles" (
+	"user_id"	INTEGER,
+	"display_name"	TEXT,
+	"address"	TEXT,
+	"quote"	TEXT,
+	PRIMARY KEY("user_id"),
+	FOREIGN KEY("user_id") REFERENCES "users"("id")
 );

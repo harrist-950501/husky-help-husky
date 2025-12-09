@@ -29,52 +29,66 @@ const CLIENT_SIDE_ERROR = 400;
 const CLIENT_INVALID_PARAM = 401;
 const FORBID = 403;
 const SERVER_SIDE_ERROR = 500;
-const PORTNUM = 8000;
+
 const FIVE = 5;
 const TS = 36;
 const TEN = 10;
+
+const SERVER_ERROR_MESSAGE = "Server error, try again later."
 
 // Simple session mapping: sessionId to userId
 let sessions = {};
 
 /* ROUTES */
 /**
- * Logs in a user with the given username and password.
+ * Logs a user in and starts a session.
  */
 app.post("/login", async (req, res) => {
   try {
-    res.type("json");
+    res.type("text");
+
     let missing = requireParams(["username", "password"], req.body);
     if (missing) {
       return res.status(CLIENT_SIDE_ERROR)
         .send(missing);
     }
 
-    let username = req.body.username.trim();
-    let password = req.body.password.trim();
+    let username = req.body.username;
+    let password = req.body.password;
 
     let user = await dbUserCheck(username, password);
     if (!user) {
       return res.status(CLIENT_INVALID_PARAM)
-        .send("Invalid username or password.");
+        .send("Incorrect username or password.");
     }
 
     // Create random session ID, save session
-    createSessionId(user, res);
+    let sessionId = createSessionId();
+    sessions[sessionId] = user.id;
+
+    res.cookie("session", sessionId, {
+      httpOnly: true,
+      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
+      sameSite: "strict",
+      path: "/"
+    });
+
+    res.json({
+      id: user.id,
+      username: user.username
+    });
   } catch (err) {
-    console.error(err);
     res.status(SERVER_SIDE_ERROR)
-      .send("Server error.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
 /**
- * Creates a new user account (sign up) and logs them in.
- * Expects JSON: { username, password, email }
+ * Creates a new user account and starts a session.
  */
 app.post("/signup", async (req, res) => {
   try {
-    res.type("json");
+    res.type("text");
 
     let missing = requireParams(["username", "password", "email"], req.body);
     if (missing) {
@@ -86,26 +100,58 @@ app.post("/signup", async (req, res) => {
     let password = req.body.password.trim();
     let email = req.body.email.trim();
 
-    if (!username || !password || !email) {
-      return res.status(CLIENT_SIDE_ERROR)
-        .send("Username, password, and email must be non-empty.");
+    // Check if username already exists
+    let user = await dbUserGetByUsername(username);
+    if (user) {
+      res.status(CLIENT_SIDE_ERROR)
+        .send("Username already taken.");
     }
 
-    let existing = await dbUserGetByUsername(username);
-    errorCheck(existing, res, email);
+    // check if email end with uw.edu
+    if (!email.endsWith("@uw.edu")) {
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Please use your uw email to sign up.");
+    }
 
     // Create the user and set the session id
-    let user = await dbUserCreate(username, password, email);
-    createSessionId(user, res);
+    let newUserId = await dbUserCreate(username, password, email);
+    let sessionId = createSessionId();
+    sessions[sessionId] = newUserId;
+
+    res.cookie("session", sessionId, {
+      httpOnly: true,
+      maxAge: TS * TEN * TEN * TEN * TEN * TEN,
+      sameSite: "strict",
+      path: "/"
+    });
+
+    res.json({
+      id: newUserId,
+      username: username
+    });
   } catch (err) {
-    console.error(err);
     res.status(SERVER_SIDE_ERROR)
-      .send("Could not create user.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
 /**
- * Returns all items, or a single item when given an id query parameter.
+ * Logs the current user out.
+ */t("/logout", requireLogin, (req, res) => {
+  let sessionId = req.cookies.session;
+
+  if (sessionId) {
+    delete sessions[sessionId];
+  }
+
+  res.clearCookie("session");
+  res.type("text")
+    .send("Logout successful.");
+});
+
+
+/**
+ * Returns one item by id or all items when no id is given.
  */
 app.get("/items", async (req, res) => {
   try {
@@ -118,12 +164,12 @@ app.get("/items", async (req, res) => {
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
       .type("text")
-      .send("Error retrieving items.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
 /**
- * Searches items by keyword and optional category filter.
+ * Returns items filtered by keyword and/or category.
  */
 app.get("/items/search", async (req, res) => {
   try {
@@ -140,13 +186,12 @@ app.get("/items/search", async (req, res) => {
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
       .type("text")
-      .send("Search failed.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
 /**
- * Processes a purchase by decrementing stock and creating a transaction.
- * Buyer is the currently logged-in user (from session cookie).
+ * Purchases a single item for the logged-in user.
  */
 app.post("/buy", requireLogin, async (req, res) => {
   try {
@@ -175,22 +220,26 @@ app.post("/buy", requireLogin, async (req, res) => {
     await dbTransactionMade(req.userId, item.seller_id, item.id, code);
     res.send(code);
   } catch (err) {
-    console.error(err);
-    res.status(SERVER_SIDE_ERROR).send("Transaction failed.");
+    res.status(SERVER_SIDE_ERROR)
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
-app.post("/bulk-buy", async (req, res) => {
+/**
+ * Purchases multiple items in one bulk transaction for the logged-in user.
+ */
+app.post("/bulk-buy", requireLogin, async (req, res) => {
   try {
     res.type("text");
-    let missing = requireParams(["user_id", "items"], req.body);
+
+    let missing = requireParams(["items"], req.body);
     if (missing) {
       return res.status(CLIENT_SIDE_ERROR).send(missing);
     }
 
-    let user = req.body["user_id"];
-
+    let user = req.userId;
     let items = req.body.items;
+
     try {
       items = JSON.parse(items);
     } catch (err) {
@@ -214,51 +263,24 @@ app.post("/bulk-buy", async (req, res) => {
 
     res.send(code);
   } catch (err) {
-    console.error(err);
-    res.status(SERVER_SIDE_ERROR).send("Bulk buy failed.");
+    res.status(SERVER_SIDE_ERROR)
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
 /**
- * Returns all transactions where the given user is buyer or seller.
- * Only allows a user to view *their own* history.
+ * Returns the purchase history for the logged-in user.
+ * ordered from most recent to oldest.
  */
-app.get("/history/:id", requireLogin, async (req, res) => {
-
-  // :id must match the logged-in user id
-  if (Number(req.params.id) !== req.userId) {
-    return res.status(FORBID)
-      .send("Forbidden");
-  }
-
-  try {
-    let user = await dbUserGet(req.params.id);
-
-    if (user) {
-      let transactions = await dbTransactionUserGet(user.id);
-      res.json(transactions);
-    } else {
-      res.status(CLIENT_SIDE_ERROR)
-        .type("text")
-        .send("No such user.");
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(SERVER_SIDE_ERROR)
-      .type("text")
-      .send("Could not retrieve history.");
-  }
-});
-
 app.get("/history", requireLogin, async (req, res) => {
   try {
     let transactions = await dbTransactionUserGet(req.userId);
     res.json(transactions);
   } catch (err) {
-    console.error(err);
+    console.log(err);
     res.status(SERVER_SIDE_ERROR)
       .type("text")
-      .send("Could not retrieve history.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
@@ -281,10 +303,8 @@ app.post("/ratings", requireLogin, async (req, res) => {
     let result = await processRatingSubmission(payload);
     res.json(result);
   } catch (err) {
-    // console.error(err);
     res.status(CLIENT_SIDE_ERROR)
-      .type("text")
-      .send(err.message || "Error submitting rating.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
@@ -293,6 +313,8 @@ app.post("/ratings", requireLogin, async (req, res) => {
  */
 app.get("/items/:id/ratings", async (req, res) => {
   try {
+    res.type("text");
+
     let itemId = req.params.id;
     let db = await getDBConnection();
 
@@ -300,7 +322,6 @@ app.get("/items/:id/ratings", async (req, res) => {
     if (!item) {
       await db.close();
       res.status(CLIENT_SIDE_ERROR)
-        .type("text")
         .send("Item does not exist.");
       return;
     }
@@ -316,23 +337,8 @@ app.get("/items/:id/ratings", async (req, res) => {
     });
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
-      .type("text")
-      .send("Error retrieving ratings.");
+      .send(SERVER_ERROR_MESSAGE);
   }
-});
-
-/**
- * Logging out for current user, clear the cookie
- */
-app.post("/logout", (req, res) => {
-  let sessionId = req.cookies.session;
-
-  if (sessionId) {
-    delete sessions[sessionId];
-  }
-
-  res.clearCookie("session");
-  res.json({success: true});
 });
 
 /**
@@ -340,11 +346,12 @@ app.post("/logout", (req, res) => {
  * If a profile does not exist yet, an empty one is created.
  */
 app.get("/users/:id/profile", async (req, res) => {
+  res.type("text");
+
   try {
     let user = await dbUserGet(req.params.id);
     if (!user) {
       res.status(CLIENT_SIDE_ERROR)
-        .type("text")
         .send("No such user.");
       return;
     }
@@ -355,8 +362,7 @@ app.get("/users/:id/profile", async (req, res) => {
     res.json(profile);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
-      .type("text")
-      .send("Could not retrieve profile.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
@@ -365,10 +371,11 @@ app.get("/users/:id/profile", async (req, res) => {
  */
 app.post("/users/:id/profile", async (req, res) => {
   try {
+    res.type("text");
+
     let user = await dbUserGet(req.params.id);
     if (!user) {
       res.status(CLIENT_SIDE_ERROR)
-        .type("text")
         .send("No such user.");
       return;
     }
@@ -383,89 +390,10 @@ app.post("/users/:id/profile", async (req, res) => {
     res.json(saved);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
-      .type("text")
-      .send("Could not save profile.");
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
-/* HELPERS */
-/**
- * Check login status, make sure the user name has not been taken
- * and email suffix end up with @uw.edu
- * @param {string} existing - the username of the user, should be existed in our db.
- * @param {object} res - the response that we will send back.
- * @param {string} email - the uw email provided by user
- * @returns {status} error status with message description
- */
-function errorCheck(existing, res, email) {
-
-  // Check if username already exists
-  if (existing) {
-    return res.status(CLIENT_SIDE_ERROR)
-      .send("Username already taken.");
-  }
-
-  // check if email end with uw.edu
-  if (!email.endsWith("@uw.edu")) {
-    return res.status(CLIENT_SIDE_ERROR)
-      .send("Please use your uw mail to sign up.");
-  }
-}
-
-/**
- * Create a session id for user.
- * @param {number} user - the id of the user.
- * @param {object} res - the response that we will send back.
- */
-function createSessionId(user, res) {
-  let sessionId = Math.random().toString(TS)
-    .slice(2) + Date.now();
-  sessions[sessionId] = user.id;
-
-  res.cookie("session", sessionId, {
-    httpOnly: true,
-    maxAge: TS * TEN * TEN * TEN * TEN * TEN,
-    sameSite: "strict",
-    path: "/"
-  });
-
-  res.json({
-    success: true,
-    id: user.id,
-    username: user.username
-  });
-}
-
-/**
- * Validates that "stars" is an int between 1 and 5.
- * Returns true if valid, false otherwise.
- * @param {number} stars - Star rating to validate.
- * @returns {boolean} True if valid, false otherwise.
- */
-function isValidStars(stars) {
-  return Number.isInteger(stars) && stars >= 1 && stars <= FIVE;
-}
-
-/**
- * Ensures both item and user exist, throws an error if not.
- * @param {Object} db - Database connection.
- * @param {number} itemId - Item ID to check.
- * @param {number} userId - User ID to check.
- * @returns {Object} Object with item and user properties.
- */
-async function getExistingItemAndUser(db, itemId, userId) {
-  let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
-  if (!item) {
-    throw new Error("Item does not exist.");
-  }
-
-  let user = await db.get("SELECT id FROM users WHERE id = ?;", [userId]);
-  if (!user) {
-    throw new Error("User does not exist.");
-  }
-
-  return {item, user};
-}
 
 /**
  * Inserts a new rating row into the DB (no validation here).
@@ -510,7 +438,7 @@ async function getRatingsForItem(db, itemId) {
  * Checks whether a user exists with the given username and password.
  * @param {string} username - Username to look up in the users table.
  * @param {string} password - Password to match for the given username.
- * @return {Object} matching user row when the username and password are valid.
+ * @return {Object|null} Matching user row if credentials are valid, otherwise null.
  */
 async function dbUserCheck(username, password) {
   let query = "SELECT * FROM users WHERE username = ? AND password = ?;";
@@ -534,25 +462,20 @@ async function dbUserGetByUsername(username) {
 }
 
 /**
- * Creates a new user account in the users table.
- * @param {string} username - Unique username.
- * @param {string} password - Plain-text password (ok for course project).
- * @param {string} email - Email address.
- * @return {Object} new user row with id, username, email.
+ * Creates a new user row in the users table.
+ * @param {string} username - Username for the new user.
+ * @param {string} password - Password for the new user.
+ * @param {string} email - Email address for the new user.
+ * @returns {number} The id of the newly created user.
  */
 async function dbUserCreate(username, password, email) {
   let db = await getDBConnection();
   let query = "INSERT INTO users (username, password, email) VALUES (?, ?, ?);";
-  await db.run(query, [username, password, email]);
-
-  let row = await db.get("SELECT last_insert_rowid() AS id;");
+  let result = await db.run(query, [username, password, email]);
   await db.close();
 
-  return {
-    id: row.id,
-    username: username,
-    email: email
-  };
+  let userId = result.lastID;
+  return userId;
 }
 
 /**
@@ -569,7 +492,7 @@ async function dbItemGetAll() {
 /**
  * Retrieves a single item by its id.
  * @param {number} id - The id of the item to retrieve.
- * @return {Object} item row for the given id.
+ * @return {Object|null} Item row for the given id, or null if no such item exists.
  */
 async function dbItemGet(id) {
   let query = "SELECT * FROM items WHERE id = ?;";
@@ -642,7 +565,7 @@ async function dbTransactionMade(buyerId, sellerId, itemId, code) {
 /**
  * Retrieves a user row by its id.
  * @param {number} id - The id of the user to retrieve.
- * @return {Object} user row for the given id.
+ * @return {Object|null} User row for the given id, or null if no such user exists.
  */
 async function dbUserGet(id) {
   let query = "SELECT * FROM users WHERE id = ?;";
@@ -712,36 +635,20 @@ async function dbUserProfileUpsert(id, profileData) {
 }
 
 /**
- * Retrieves all transactions where the given user id is either the buyer or the seller.
+ * Retrieves all transactions where the given user id is the buyer.
  * Joined with item information and ordered by most recent first.
  * @param {number} id - The id of the user whose transactions are requested.
- * @return {Object[]} array of joined transaction and item rows for the user.
+ * @return {Object[]} Array of joined transaction and item rows for the user.
  */
 async function dbTransactionUserGet(id) {
   let db = await getDBConnection();
   let query = "SELECT *FROM transactions t" +
     " JOIN items i ON t.item_id = i.id" +
-    " WHERE t.buyer_id = ? OR t.seller_id = ?" +
+    " WHERE t.buyer_id = ? " +
     " ORDER BY t.date DESC;";
-  let transactions = await db.all(query, [id, id]);
+  let transactions = await db.all(query, [id]);
   await db.close();
   return transactions;
-}
-
-/**
- * Checks if a confirmation code already exists in the transactions table.
- * @param {string} code - Confirmation code to check.
- * @returns {boolean} True if code exists, false otherwise.
- */
-async function dbCheckCodeDuplicate(code) {
-  let db = await getDBConnection();
-  let query = "SELECT * FROM transactions WHERE confirmation_code = ?";
-  let transaction = await db.get(query, [code]);
-  await db.close();
-  if (transaction) {
-    return true;
-  }
-  return false;
 }
 
 /**
@@ -777,9 +684,85 @@ function generateCode() {
 }
 
 /**
- * Helper to process rating submission: validates and inserts into DB.
- * @param {Object} reqBody - Request body with userId, itemId, stars, comment.
- * @returns {Promise<Object>} Resolves with success message.
+ * Checks if a confirmation code already exists in the transactions table.
+ * @param {string} code - Confirmation code to check.
+ * @returns {boolean} True if code exists, false otherwise.
+ */
+async function dbCheckCodeDuplicate(code) {
+  let db = await getDBConnection();
+  let query = "SELECT * FROM transactions WHERE confirmation_code = ?";
+  let transaction = await db.get(query, [code]);
+  await db.close();
+  if (transaction) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Generates a new session id string for a logged-in user.
+ * @returns {string} A unique session id to be stored in the cookie and sessions map.
+ */
+function createSessionId() {
+  let sessionId = Math.random().toString(TS)
+    .slice(2) + Date.now();
+
+  return sessionId;
+}
+
+/**
+ * Middleware that restricts access to logged-in users and exposes the user id on req.userId.
+ * @param {Object} req - Express request object containing cookies.
+ * @param {Object} res - Express response object for sending an error if not logged in.
+ * @param {Function} next - Callback to continue to the route handler.
+ */
+function requireLogin(req, res, next) {
+  let sessionId = req.cookies.session;
+
+  if (!sessionId || !sessions[sessionId]) {
+    return res.status(CLIENT_INVALID_PARAM)
+      .send("Not logged in.");
+  }
+
+  req.userId = sessions[sessionId];
+  next();
+}
+
+/**
+ * Validates that "stars" is an int between 1 and 5.
+ * Returns true if valid, false otherwise.
+ * @param {number} stars - Star rating to validate.
+ * @returns {boolean} True if valid, false otherwise.
+ */
+function isValidStars(stars) {
+  return Number.isInteger(stars) && stars >= 1 && stars <= FIVE;
+}
+
+/**
+ * Ensures both item and user exist, throws an error if not.
+ * @param {Object} db - Database connection.
+ * @param {number} itemId - Item ID to check.
+ * @param {number} userId - User ID to check.
+ * @returns {Object} Object with item and user properties.
+ */
+async function getExistingItemAndUser(db, itemId, userId) {
+  let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
+  if (!item) {
+    throw new Error("Item does not exist.");
+  }
+
+  let user = await db.get("SELECT id FROM users WHERE id = ?;", [userId]);
+  if (!user) {
+    throw new Error("User does not exist.");
+  }
+
+  return {item, user};
+}
+
+/**
+ * Helper to process a rating submission: validates input and inserts it into the DB.
+ * @param {Object} reqBody - Request body with userId, itemId, stars, and optional comment.
+ * @returns {Object} Success message object after the rating is stored.
  */
 async function processRatingSubmission(reqBody) {
   let missing = requireParams(["userId", "itemId", "stars"], reqBody);
@@ -810,25 +793,6 @@ async function processRatingSubmission(reqBody) {
   return {message: "Rating submitted successfully."};
 }
 
-/**
- * Helpers that check the cookie for functions that required login to continue
- * @param {Object} req - Request body with user_id, item_id, stars, comment.
- * @param {Object} res - Response send back to clients when not logged in.
- * @param {Obeject} next - Calling next and make sure the real route handler run
- * @returns {Promise<Object>} Resolves with success message.
- */
-function requireLogin(req, res, next) {
-  let sessionId = req.cookies.session;
-
-  if (!sessionId || !sessions[sessionId]) {
-    return res.status(CLIENT_INVALID_PARAM)
-      .send("Not logged in.");
-  }
-
-  req.userId = sessions[sessionId];
-  next();
-}
-
 /* DB CONNECTION */
 /**
  *
@@ -845,5 +809,5 @@ async function getDBConnection() {
 }
 
 app.use(express.static("public"));
-const PORT = process.env.PORT || PORTNUM;
+const PORT = process.env.PORT || 8000;
 app.listen(PORT);

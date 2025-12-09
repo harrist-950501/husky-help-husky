@@ -18,18 +18,14 @@
 (function() {
   window.addEventListener("DOMContentLoaded", init);
 
+  window.logout = logout;
+
   /**
    * Initializes the auth page by wiring the form submit handler.
    */
   function init() {
-    const form = document.querySelector("#auth-form") || document.querySelector("form");
-    if (!form) {
-      console.error("Auth form not found on index.html");
-      return;
-    }
-
     // One handler for both login and signup.
-    form.addEventListener("submit", handleAuthSubmit);
+    id("auth-form").addEventListener("submit", handleAuthSubmit);
   }
 
   /**
@@ -38,27 +34,43 @@
    */
   async function handleAuthSubmit(evt) {
     evt.preventDefault();
-    hideError();
+    hideStauts();
     const mode = getModeFromSubmitter(evt.submitter);
     const username = valueOf("#username");
     const password = valueOf("#password");
     const email = valueOf("#email");
 
     const validation = validateAuthInputs(mode, username, password, email);
-    if (validation !== true) {
-      return showError(validation);
+    console.log(validation);
+    if (validation !== null) {
+      showStatus("Invalid input", validation, true);
+    } else {
+      try {
+        const endpoint = mode === "signup" ? "/signup" : "/login";
+        let isJson = true;
+        const body = buildAuthBody(mode, username, password, email);
+        console.log(body);
+        let data = await dataFetch(endpoint, isJson, body);
+        console.log(data);
+        persistLoginAndRedirect(data);
+      } catch (err) {
+        if (mode === "signup") {
+          showStatus("Failed signup:", err.message, true);
+        } else {
+          showStatus("Failed login:", err.message, true);
+        }
+      }
     }
+  }
 
-    const endpoint = mode === "signup" ? "/signup" : "/login";
-    const body = buildAuthBody(mode, username, password, email);
-
-    try {
-      const data = await sendAuthRequest(endpoint, body);
-      persistLoginAndRedirect(data);
-    } catch (err) {
-      console.error(err);
-      showError(err.message || "Network error. Please try again.");
-    }
+  /**
+   * Get trimmed value of an input element.
+   * @param {string} sel - CSS selector.
+   * @returns {string} Trimmed value or "" if not found.
+   */
+  function valueOf(sel) {
+    const el = qs(sel);
+    return el ? el.value.trim() : "";
   }
 
   /**
@@ -86,7 +98,7 @@
     if (mode === "signup" && !email) {
       return "Please enter an email for signup.";
     }
-    return true;
+    return null;
   }
 
   /**
@@ -98,31 +110,31 @@
    * @returns {Object} Plain object suitable for JSON.stringify in fetch body.
    */
   function buildAuthBody(mode, username, password, email) {
-    const body = {username, password};
+    let body = new FormData();
+    body.append("username", username);
+    body.append("password", password);
     if (mode === "signup") {
-      body.email = email;
+      body.append("email", email);
     }
     return body;
   }
 
-  /**
-   * Send authentication request to the server and return parsed JSON on success.
-   * @param {string} endpoint - API endpoint (e.g. "/login" or "/signup").
-   * @param {Object} body - Plain object to be JSON-stringified as request body.
-   * @returns {Promise<Object>} Parsed JSON response from server.
-   * @throws {Error} When response is not ok; error message contains server text.
-   */
-  async function sendAuthRequest(endpoint, body) {
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(body)
-    });
-    if (!resp.ok) {
-      const msg = await resp.text();
-      throw new Error(msg || "Authentication failed.");
+  async function dataFetch(url, isJson, postParams) {
+    try {
+      let response;
+      if (postParams) {
+        response = await fetch(url, {method: "POST", body: postParams});
+      } else {
+        response = await fetch(url);
+      }
+      await statusCheck(response);
+      if (isJson) {
+        return await response.json();
+      }
+      return await response.text();
+    } catch (err) {
+      throw new Error(err);
     }
-    return resp.json();
   }
 
   /**
@@ -135,37 +147,25 @@
     window.location.href = "main-page/main.html";
   }
 
-  /**
-   * Get trimmed value of an input element.
-   * @param {string} sel - CSS selector.
-   * @returns {string} Trimmed value or "" if not found.
-   */
-  function valueOf(sel) {
-    const el = document.querySelector(sel);
-    return el ? el.value.trim() : "";
-  }
+  function showStatus(title, message, isError) {
+    id("status-message").classList.remove("hidden");
 
-  /**
-   * Displays an error message in #error or .error element.
-   * @param {string} msg - Message to display.
-   */
-  function showError(msg) {
-    const box = document.querySelector("#error") || document.querySelector(".error");
-    if (box) {
-      box.textContent = msg;
-      box.classList.remove("hidden");
+    const status = id("status-message");
+
+    status.querySelector("h2").textContent = title;
+    status.querySelector("p").textContent = message;
+    if (isError) {
+      status.classList.add("error");
+    } else {
+      status.classList.remove("error");
     }
   }
 
   /**
-   * Hides the error box if present.
+   * Hides the status message.
    */
-  function hideError() {
-    const box = document.querySelector("#error") || document.querySelector(".error");
-    if (box) {
-      box.textContent = "";
-      box.classList.add("hidden");
-    }
+  function hideStauts() {
+    id("status-message").classList.add("hidden");
   }
 
   /**
@@ -183,5 +183,35 @@
     }
   }
 
-  window.logout = logout;
+  /**
+   * Helper function to return the response's result text if successful, otherwise
+   * returns the rejected Promise result with an error status and corresponding text
+   * @param {object} res - response to check for success/error
+   * @return {object} - valid response if response was successful, otherwise rejected
+   *                    Promise result
+   */
+  async function statusCheck(res) {
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+    return res;
+  }
+
+  /**
+   * Returns the element that has the ID attribute with the specified value.
+   * @param {string} id - element ID.
+   * @returns {object} - DOM object associated with id.
+   */
+  function id(id) {
+    return document.getElementById(id);
+  }
+
+  /**
+   * Returns first element matching selector.
+   * @param {string} selector - CSS query selector.
+   * @returns {object} - DOM object associated selector.
+   */
+  function qs(selector) {
+    return document.querySelector(selector);
+  }
 })();

@@ -13,9 +13,6 @@
  * Expected DOM Structure:
  * - Button with id="theme-toggle" must exist in the document
  * - CSS should define styles for html[data-theme="dark"]
- *
- * Note: This implementation toggles theme live but does not persist the
- * preference across page reloads. Theme resets to light on page refresh.
  */
 
 "use strict";
