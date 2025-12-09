@@ -691,6 +691,7 @@ function createSessionId() {
  * @param {Object} req - Express request object containing cookies.
  * @param {Object} res - Express response object for sending an error if not logged in.
  * @param {Function} next - Callback to continue to the route handler.
+ * @returns {void} Does not return a value, meanifully bread the route.
  */
 function requireLogin(req, res, next) {
   let sessionId = req.cookies.session;
