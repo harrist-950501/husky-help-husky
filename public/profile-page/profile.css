@@ -80,6 +80,11 @@ header {
   font-size: 1.3em;
 }
 
+html[data-theme="dark"] #other-information {
+  background-color: #1f2933;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
 #quote-display {
   font-style: italic;
   margin-bottom: 10px;

@@ -18,8 +18,6 @@
 (function() {
   window.addEventListener("DOMContentLoaded", init);
 
-  window.logout = logout;
-
   /**
    * Initializes the auth page by wiring the form submit handler.
    */
@@ -177,21 +175,6 @@
    */
   function hideStauts() {
     id("status-message").classList.add("hidden");
-  }
-
-  /**
-   * Logout handler (used from other pages, not index.html).
-   * Clears cookie server-side and redirects to login page.
-   */
-  async function logout() {
-    try {
-      await fetch("/logout", {method: "POST"});
-      localStorage.removeItem("userId");
-      localStorage.removeItem("username");
-      window.location.href = "../index.html";
-    } catch (err) {
-      console.error(err);
-    }
   }
 
   /**

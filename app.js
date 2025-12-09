@@ -26,7 +26,6 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const CLIENT_SIDE_ERROR = 400;
-const CLIENT_INVALID_PARAM = 401;
 const SERVER_SIDE_ERROR = 500;
 
 const SESSION_COOKIE_OPTIONS = {
@@ -60,7 +59,7 @@ app.post("/login", async (req, res) => {
 
     let user = await dbUserCheck(username, password);
     if (!user) {
-      return res.status(CLIENT_INVALID_PARAM)
+      return res.status(CLIENT_SIDE_ERROR)
         .send("Incorrect username or password.");
     }
 
@@ -93,11 +92,11 @@ app.post("/signup", async (req, res) => {
     // Check if username already exists
     let user = await dbUserGetByUsername(username);
     if (user) {
-      res.status(CLIENT_SIDE_ERROR)
+      return res.status(CLIENT_SIDE_ERROR)
         .send("Username already taken.");
     }
 
-    // check if email end with uw.edu
+    // Check if email end with uw.edu
     if (!email.endsWith("@uw.edu")) {
       return res.status(CLIENT_SIDE_ERROR)
         .send("Please use your uw email to sign up.");
@@ -118,7 +117,7 @@ app.post("/signup", async (req, res) => {
 /**
  * Logs the current user out.
  */
-app.post("/logout", requireLogin, (req, res) => {
+app.post("/logout", (req, res) => {
   let sessionId = req.cookies.session;
 
   if (sessionId) {
@@ -274,7 +273,7 @@ app.post("/ratings", requireLogin, async (req, res) => {
     let result = await processRatingSubmission(payload);
     res.json(result);
   } catch (err) {
-    res.status(CLIENT_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -483,7 +482,7 @@ async function dbItemSearch(keyword, filter) {
   let params = [];
 
   if (keyword && filter) {
-    query += "WHERE title LIKE ? OR description LIKE ? AND category = ?";
+    query += "WHERE (title LIKE ? OR description LIKE ?) AND category = ?";
     keyword = "%" + keyword + "%";
     params.push(keyword);
     params.push(keyword);
@@ -627,7 +626,7 @@ async function dbUserProfileUpsert(id, profileData) {
  */
 async function dbTransactionUserGet(id) {
   let db = await getDBConnection();
-  let query = "SELECT *FROM transactions t" +
+  let query = "SELECT * FROM transactions t" +
     " JOIN items i ON t.item_id = i.id" +
     " WHERE t.buyer_id = ? " +
     " ORDER BY t.date DESC;";
@@ -697,7 +696,7 @@ function requireLogin(req, res, next) {
   let sessionId = req.cookies.session;
 
   if (!sessionId || !sessions[sessionId]) {
-    res.status(CLIENT_INVALID_PARAM)
+    return res.status(CLIENT_SIDE_ERROR)
       .send("Not logged in.");
   }
 

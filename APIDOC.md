@@ -1,41 +1,50 @@
 # *Husky Help Husky* API Documentation
-*This API powers the Husky Help Husky campus marketplace web app. It allows clients to authenticate users, browse and search items for sale, view detailed item information, confirm and submit purchases, and retrieve a user’s transaction history.*
 
-*Additional optional features include user registration and item ratings.*
+*This API powers the Husky Help Husky campus marketplace web app. It allows clients to authenticate users, browse and search items for sale, view detailed item information, submit purchases (single or bulk), manage ratings, view a user’s purchase history, and manage basic user profile information.*
 
-*All data is stored in a server-side relational database.*
+*All authenticated endpoints rely on an HTTP-only `session` cookie set by `/login` or `/signup`.*
+
+---
 
 ## *1. Login*
 **Request Format:** */login*
 
 **Request Type:** *POST*
 
-**Returned Data Format:** Plain text
+**Returned Data Format:** JSON
 
-**Description:** *Checks provided credentials against the server-side users table. If the username and password match an existing user, the server responds with a simple success message. Supports JSON, application/x-www-form-urlencoded, or multipart/form-data bodies.*
+**Description:** *Authenticates a user with a username and password. On success, creates a new login session, sets an HTTP-only `session` cookie on the client, and returns the user’s basic information. This cookie must be included automatically by the browser for all future authenticated requests.*
+
+**Required Body Parameters:**
+
+- `username` (string): The user’s login name.
+- `password` (string): The user’s password.
 
 **Example Request:** */login*
 
-*With JSON body:*
+*Body (JSON):*
 
 ```
 {
-  "username": "dubs@uw.edu",
-  "password": "woofwoof"
+  "username": "alice",
+  "password": 1234
 }
 ```
 
 **Example Success Response (200):**
 
 ```
-User login sucessfully
+{
+  "id": 1,
+  "username": "alice"
+}
 ```
 
 **Error Handling:**
 
 *400 Bad Request – Missing Parameters*
 
-*Occurs when username and/or password are missing or empty in the request body.*
+*Returned when one or more required body parameters are missing or blank.*
 
 *Error response (Plain text):*
 
@@ -45,22 +54,22 @@ Missing parameter: 'username' 'password'.
 
 *400 Bad Request – Invalid Credentials*
 
-*Occurs when no user matches the given username and password.*
+*Returned when the username and password do not match any existing account.*
 
 *Error response (Plain text):*
 
 ```
-Invalid username or password.
+Incorrect username or password.
 ```
 
 *500 Server-side Error*
 
-*Generic server-side error during login.*
+*Generic server error when the login request cannot be processed.*
 
 *Error response (Plain text):*
 
 ```
-Server error logging in.
+Server error, try again later.
 ```
 
 ## *2. Signup*

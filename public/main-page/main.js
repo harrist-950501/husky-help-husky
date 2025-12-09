@@ -102,8 +102,18 @@
   /**
    * Logs out the current user and navigates back to the login page.
    */
-  function logout() {
-    window.location.href = "/index.html";
+  async function logout() {
+    try {
+      let body = new FormData();
+      await dataFetch("/logout", false, body);
+
+      localStorage.removeItem("userId");
+      localStorage.removeItem("username");
+
+      window.location.href = "/index.html";
+    } catch (err) {
+      showStatus("Logout Error", "Failed to logout", true);
+    }
   }
 
   /**
@@ -111,7 +121,7 @@
    * the search input has any non-whitespace characters.
    */
   function checkSearch() {
-    let search = id("search-bar").value.trim;
+    let search = id("search-bar").value.trim();
     let filter = id("category-filter").value;
     if (search !== "" || filter !== "") {
       id("search-btn").disabled = false;

@@ -31,6 +31,14 @@ h1 span {
   max-width: 80%;
 }
 
+html[data-theme="dark"] #welcome-area h1 {
+  color: #e6e0ff;
+}
+
+html[data-theme="dark"] #welcome-area p {
+  color: #cfc6f7;
+}
+
 #login-area {
   gap: 10px;
   flex: 1;
@@ -69,10 +77,28 @@ h1 span {
 #login-area button {
   width: 120px;
   padding: 6px 0;
-  align-self: center;
-  background: linear-gradient(90deg, #A39BD8, #C8BFE7);
 }
 
-#login-area button:hover {
-  opacity: 0.9;
+html[data-theme="dark"] #login-area {
+  background-color: #1f1b2e;
+  border-color: #4b4268;
+  color: #d8d6e8;
+}
+
+html[data-theme="dark"] #login-area h2 {
+  color: #c4b8ff;
+}
+
+html[data-theme="dark"] #login-area label {
+  color: #d8d6e8;
+}
+
+html[data-theme="dark"] #login-area input {
+  background-color: #2a2538;
+  border: 1px solid #564f76;
+  color: #f4f3ff;
+}
+
+html[data-theme="dark"] #login-area input::placeholder {
+  color: #9a94b8;
 }
