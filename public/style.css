@@ -78,7 +78,7 @@ button.secondary-btn {
   background: #ffffff;
   color: #4b21a8;
   border: 1px solid #D9D4EF;
-  transition: background 0.0s;
+  transition: background 0s;
 }
 
 html[data-theme="dark"] .secondary-btn {
@@ -97,7 +97,6 @@ button:disabled {
 button:disabled:hover {
   opacity: 0.75;
 }
-
 
 button:hover {
   opacity: 0.9;
