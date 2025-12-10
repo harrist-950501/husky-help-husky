@@ -461,7 +461,7 @@
   function createInfoBackBtn() {
     const backBtn = gen("button");
     backBtn.textContent = "Back to list";
-    backBtn.classList.add("back-btn", "detail");
+    backBtn.classList.add("back-btn", "secondary-btn", "detail");
     backBtn.addEventListener("click", toggleItemDetail);
 
     return backBtn;

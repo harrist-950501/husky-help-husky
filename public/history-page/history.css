@@ -1,82 +1,274 @@
-/*
-  This is the css file for history page. It help establish a smooth experience  for user.
-*/
 main {
+  padding: 20px 24px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: start;
-  gap: 25px;
-  font-family: "Inter", sans-serif;
-  color: #4b3f80;
-  overflow-y: auto;
+  gap: 1rem;
 }
 
-/* ===== Header ===== */
-header {
-  position: relative;
+/* Top header (Back + title) */
+main > header {
   display: flex;
   align-items: center;
-  width: 90%;
-  margin-top: 20px;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
 }
 
-#transaction-page {
-  text-align: center;
-  font-size: large;
-  width: 40%;
-  padding: 10px 15px;
-  border: 2px solid #c8bfe7;
-  border-radius: 999px;
-  outline: none;
-  transition: 0.3s;
-  margin-left: auto;
-  margin-right: auto;
+main > header h1 {
+  margin: 0;
+  font-size: 1.4rem;
 }
 
 #back {
-  position: absolute;
+  padding: 6px 14px;
+  font-size: 0.8rem;
 }
 
-/* ===== Sorting ===== */
+/* Sorting console */
+#console {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
 #transaction-sorting {
-  width: 75%;
-  text-align: center;
-  border: 2px solid #c8bfe7;
-  border-radius: 999px;
-  padding: 6px 12px;
-  background-color: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #D9D4EF;
+  font-size: 0.9rem;
+  background: #F7F4FF;
   outline: none;
-  transition: 0.3s;
 }
 
-#transaction-sorting:hover, #transaction-sorting:focus {
-  border-color: #a39bd8;
-  box-shadow: 0 0 6px rgba(163, 155, 216, 0.25);
+html[data-theme="dark"] #transaction-sorting {
+  background: #312e3f;
+  border-color: #4b4268;
+  color: #e5e7ff;
+}
+
+#status-message {
+  margin-bottom: 0.4rem;
 }
 
 /* ===== Transaction board ===== */
+
 #transaction-board {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  width: 90%;
+  gap: 2rem;
+  overflow-y: auto;
 }
 
-.transaction {
-  width: 60%;
-  background-color: #faf8ff;
-  border: 2px solid #c8bfe7;
-  border-radius: 20px;
-  padding: 14px 20px;
-  font-size: 1.2em;
-  text-align: center;
-  transition: 0.3s;
+/* ===== Transaction card ===== */
+
+.transaction-card {
+  width: 80%;
+  background: #F9F7FF;
+  border: 1.5px solid #E0DAF3;
+  border-radius: 18px;
+  padding: 0.9rem 1.0rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
-.transaction:hover {
-  background-color: #f1edfd;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(163, 155, 216, 0.25);
+html[data-theme="dark"] .transaction-card {
+  background: #26242f;
+  border-color: #4b4268;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+}
+
+.transaction-card > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-bottom: 1px solid #E6DEF6;
+  padding-bottom: 0.4rem;
+}
+
+html[data-theme="dark"] .transaction-card > header {
+  border-color: #40395d;
+}
+
+.transaction-card .main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.transaction-card .label {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b21a8;
+}
+
+.transaction-card .code {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.transaction-card .meta {
+  text-align: right;
+}
+
+.transaction-card .date {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.transaction-card .summary {
+  margin: 0.1rem 0 0;
+  font-size: 0.85rem;
+}
+
+/* ===== Item list inside a transaction ===== */
+
+.order-items {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+}
+
+.order-item + .order-item {
+  border-top: 1px dashed #E4DDF5;
+}
+
+html[data-theme="dark"] .order-item + .order-item {
+  border-top-color: #4b4268;
+}
+
+.order-item .main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.order-item .title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.order-item .meta {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.order-item .rate-btn {
+  padding: 5px 11px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* ===== Footer rating panel ===== */
+
+.transaction-card footer {
+  margin-top: 0.2rem;
+}
+
+.rate-panel {
+  margin-top: 0.4rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #E6DEF6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rate-panel.hidden {
+  display: none;
+}
+
+html[data-theme="dark"] .rate-panel {
+  border-top-color: #40395d;
+}
+
+.rtarget-label {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b21a8;
+}
+
+.target-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Stars + comment fields */
+.rate-row label {
+  font-size: 0.85rem;
+}
+
+.rate-stars {
+  margin-left: 4px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1.5px solid #D9D4EF;
+  font-size: 0.85rem;
+  background: #fff;
+  outline: none;
+}
+
+html[data-theme="dark"] .rate-stars {
+  background: #312e3f;
+  border-color: #4b4268;
+  color: #e5e7ff;
+}
+
+.rate-comment {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid #D9D4EF;
+  font-size: 0.85rem;
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+html[data-theme="dark"] .rate-comment {
+  background: #312e3f;
+  border-color: #4b4268;
+  color: #e5e7ff;
+}
+
+/* Rate actions (Submit / Cancel) */
+.rate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.submit-btn {
+  padding: 6px 14px;
+  font-size: 0.8rem;
+}
+
+.cancel-btn {
+  padding: 6px 14px;
+  font-size: 0.8rem;
 }

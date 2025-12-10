@@ -376,7 +376,7 @@ html[data-theme="dark"] .price {
   padding: 0.35rem 0.9rem;
 }
 
-html[data-theme="dark"] .item-card button {
+html[data-theme="dark"] .cart-btn {
   background: linear-gradient(120deg, #8b5cf6, #ec4899);
   color: #f9fafb;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
@@ -422,12 +422,6 @@ html[data-theme="dark"] .item-card button {
   margin-top: 0.9rem;
 }
 
-.detail-view .back-btn {
-  border: 1.5px solid #D9D4EF;
-  background: #ffffff;
-  color: #4c1d95;
-}
-
 .detail-view .back-btn:hover {
   background: #f3eefe;
   border-color: #c7bff1;
@@ -436,14 +430,4 @@ html[data-theme="dark"] .item-card button {
 html[data-theme="dark"] .detail-view .description,
 html[data-theme="dark"] .detail-view .meta-info {
   color: #e5e7eb;
-}
-
-html[data-theme="dark"] .detail-view .back-btn {
-  background: #312e3f;
-  border-color: #4b4268;
-  color: #e5e7ff;
-}
-
-html[data-theme="dark"] .detail-view .back-btn:hover {
-  background: #3a3454;
 }

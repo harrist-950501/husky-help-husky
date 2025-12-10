@@ -23,7 +23,12 @@ body {
   color: #1c0978;
 }
 
-h1, h2 {
+html[data-theme="dark"] body {
+  background: radial-gradient(circle at top left, #2C2541 0%, #1A1625 60%, #342B4A 100%);
+  color: #e2e7ff;
+}
+
+h1, h2, h3 {
   font-family: "Poppins", sans-serif;
   font-style: normal;
   font-weight: 600;
@@ -33,22 +38,6 @@ h1, h2 {
   position: static;
   align-self: flex-end;
   margin: 0 8px 12px 0;
-}
-
-/* Dark theme styles */
-html[data-theme="dark"] body {
-  background: radial-gradient(circle at top left, #2C2541 0%, #1A1625 60%, #342B4A 100%);
-  color: #b2b7d7;
-}
-
-html[data-theme="dark"] #theme-toggle {
-  background-color: #342B4A;
-}
-
-html[data-theme="dark"] main {
-  background: #26242f;
-  border-color: #4b4268;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
 }
 
 main {
@@ -63,6 +52,12 @@ main {
   box-shadow: 0 0 20px rgba(163, 155, 216, 0.2);
 }
 
+html[data-theme="dark"] main {
+  background: #26242f;
+  border-color: #4b4268;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
+}
+
 button {
   background: linear-gradient(90deg, #A39BD8, #C8BFE7);
   border: none;
@@ -73,6 +68,23 @@ button {
   padding: 8px 16px;
   cursor: pointer;
   transition: opacity, 0.3s;
+}
+
+html[data-theme="dark"] button {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+button.secondary-btn {
+  background: #ffffff;
+  color: #4b21a8;
+  border: 1px solid #D9D4EF;
+  transition: background 0.0s;
+}
+
+html[data-theme="dark"] .secondary-btn {
+  background: #312e3f;
+  color: #e5e7ff;
+  border-color: #4b4268;
 }
 
 button:disabled {
@@ -86,9 +98,6 @@ button:disabled:hover {
   opacity: 0.75;
 }
 
-html[data-theme="dark"] button {
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-}
 
 button:hover {
   opacity: 0.9;
