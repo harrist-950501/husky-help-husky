@@ -223,8 +223,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
       try {
         items = JSON.parse(items);
       } catch (err) {
-        return res.status(CLIENT_SIDE_ERROR)
-          .send("Items must be in JSON form.");
+        return res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
       }
     }
 
