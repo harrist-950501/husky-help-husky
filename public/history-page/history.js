@@ -53,7 +53,8 @@
 
     // Harry: I shut down the loadHistory because I adjust the html and css
     // Please renew your code to support current layout
-    // loadHistory();
+    // resolved
+    loadHistory();
   }
 
   /**
@@ -62,7 +63,10 @@
   async function loadHistory() {
     const board = id("transaction-board");
     if (board) {
-      board.textContent = "Loading transactins...";
+      clearBoard(board);
+      const loadMsg = document.createElement("p");
+      loadMsg.textContent = "Loading transactions...";
+      board.appendChild(loadMsg);
     }
 
     try {
@@ -77,7 +81,10 @@
       applySortAndRender();
     } catch (err) {
       if (board) {
-        board.textContent = "Could not load transactions.";
+        clearBoard(board);
+        const errMsg = document.createElement("p");
+        errMsg.textContent = "Could not load transactions.";
+        board.appendChild(errMsg);
       }
     }
   }
