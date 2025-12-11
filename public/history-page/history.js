@@ -36,7 +36,6 @@
 
     id("transaction-sorting").addEventListener("change", applySortAndRender);
 
-
     loadHistory();
   }
 
@@ -81,7 +80,6 @@
           false);
       }
     } catch (err) {
-      console.error(err);
       showStatus("Could not load transacitons", err.message, true);
     }
   }
