@@ -32,6 +32,7 @@ const SERVER_SIDE_ERROR = 500;
 const TS = 36;
 const TEN = 10;
 const FIVE = 5;
+const PORTNUM = 8000;
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -908,5 +909,5 @@ async function getDBConnection() {
 }
 
 app.use(express.static("public"));
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || PORTNUM;
 app.listen(PORT);
