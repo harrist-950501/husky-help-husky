@@ -342,17 +342,16 @@ Server error, try again later.
 
 **Returned Data Format:** Plain text
 
-**Description:** *Processes a bulk purchase of multiple items at once. Creates a single transaction record with a shared confirmation code for all items. Requires user to be logged in (authenticated via session cookie).*
-
-**Required Body Parameters:**
-
-- `items` (JSON string): Array of item IDs to purchase, e.g., `"[1, 3, 5]"`
+**Description:** *Processes a bulk purchase of multiple items at once. Uses a single shared confirmation code for all items. Each item in the bulk request includes an id and a quantity to purchase. The buyer is determined from the authenticated session (session cookie). Requires the user to be logged in.*
 
 **Example Request:** */bulk-buy*
 
 ```
 {
-  "items": "[1, 3, 5]"
+  "items": [
+    { "id": 1, "quantity": 2 },
+    { "id": 3, "quantity": 1 }
+  ]
 }
 ```
 
@@ -361,24 +360,9 @@ Server error, try again later.
 ```
 KR7XM2HJ
 ```
+(A randomly generated confirmation code shared by all items in the bulk purchase.)
 
 **Error Handling:**
-
-*400 Bad Request – Missing Parameters*
-
-*Returned Data Format:* Plain Text
-
-```
-Missing parameter: 'items'.
-```
-
-*400 Bad Request – Invalid JSON*
-
-*Returned Data Format:* Plain Text
-
-```
-Items must be in JSON form.
-```
 
 *401 Unauthorized – Not Logged In*
 
@@ -388,12 +372,44 @@ Items must be in JSON form.
 Not logged in.
 ```
 
+*400 Bad Request – Missing Items Parameter*
+
+*Returned Data Format:* Plain Text
+
+```
+Missing parameter: 'items'.
+```
+
+*400 Bad Request – Invalid JSON for items*
+
+*Returned Data Format:* Plain Text
+
+```
+Items must be in JSON form.
+```
+
+*400 Bad Request – Item Does Not Exist*
+
+*Returned Data Format:* Plain Text
+
+```
+Item does not exist.
+```
+
+*400 Bad Request – Not Enough Stock for Requested Quantity*
+
+*Returned Data Format:* Plain Text
+
+```
+Not enough stock for purchase.
+```
+
 *500 Internal Server Error*
 
 *Returned Data Format:* Plain Text
 
 ```
-Transaction failed.
+Server error, try again later.
 ```
 
 ## *8. Purchase History*
