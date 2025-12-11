@@ -77,38 +77,21 @@ app.post("/login", async (req, res) => {
  */
 app.post("/signup", async (req, res) => {
   try {
-    let missing = requireParams(["username", "password", "email"], req.body);
-    if (missing) {
+    let validationResult = await validateSignupBody(req.body);
+
+    if (typeof validationResult === "string") {
       return res.status(CLIENT_SIDE_ERROR).type("text")
-        .send(missing);
+        .send(validationResult);
     }
 
-    let username = req.body.username.trim();
-    let password = req.body.password.trim();
-    let email = req.body.email.trim();
-
-    // Check if username already exists
-    let user = await dbUserGetByUsername(username);
-    if (user) {
-      return res.status(CLIENT_SIDE_ERROR).type("text")
-        .send("Username already taken.");
-    }
-
-    // Check if email end with uw.edu
-    if (!email.endsWith("@uw.edu")) {
-      return res.status(CLIENT_SIDE_ERROR).type("text")
-        .send("Please use your uw email to sign up.");
-    }
-
-    // Create the user and set the session id
+    let {username, password, email} = validationResult;
     let newUserId = await dbUserCreate(username, password, email);
 
     let sessionData = buildSession(newUserId, username);
     res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
     res.json(sessionData.user);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR).type("text")
-      .send(SERVER_ERROR_MESSAGE);
+    handleServerError(res, err);
   }
 });
 
@@ -174,32 +157,17 @@ app.post("/buy", requireLogin, async (req, res) => {
   try {
     res.type("text");
 
-    // Client only needs to send the item_id, bc already logging in
-    let missing = requireParams(["item_id"], req.body);
-    if (missing) {
+    let validationResult = await validateSinglePurchaseBody(req.body);
+    if (typeof validationResult === "string") {
       return res.status(CLIENT_SIDE_ERROR)
-        .send(missing);
+        .send(validationResult);
     }
 
-    let item = await dbItemGet(req.body.item_id);
-    if (!item) {
-      return res.status(CLIENT_SIDE_ERROR)
-        .send("Item does not exist.");
-    } else if (item.stock <= 0) {
-      return res.status(CLIENT_SIDE_ERROR)
-        .send("Item out of stock.");
-    }
-
-    await dbItemStockSubtract(item.id);
-
-    let code = generateCode();
-    while (await dbCheckCodeDuplicate(code)) {
-      code = generateCode();
-    }
-
-    await dbTransactionMade(req.userId, item.seller_id, item.id, code);
+    let item = validationResult;
+    let code = await processSinglePurchase(req.userId, item);
     res.send(code);
   } catch (err) {
+    handleServerError(res, err);
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -212,35 +180,18 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
   try {
     res.type("text");
 
-    let missing = requireParams(["items"], req.body);
-    if (missing) {
-      return res.status(CLIENT_SIDE_ERROR).send(missing);
+    let validationResult = await validateBulkBuyBody(req.body);
+    if (typeof validationResult === "string") {
+      return res.status(CLIENT_SIDE_ERROR).send(validationResult);
     }
 
-    let user = req.userId;
-    let items = req.body.items;
-
-    if (typeof items === "string") {
-      try {
-        items = JSON.parse(items);
-      } catch (err) {
-        return res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
-      }
-    }
-
-    let code = generateCode();
-    while (await dbCheckCodeDuplicate(code)) {
-      code = generateCode();
-    }
-
-    let itemError = await checkItems(items);
-    if (itemError) {
-      return res.status(CLIENT_SIDE_ERROR).send(itemError);
-    }
-
-    await multipleTransactionMade(items, user, code);
+    let items = validationResult;
+    let code = await generateUniqueCode();
+    await multipleTransactionMade(items, req.userId, code);
     res.send(code);
   } catch (err) {
+    // If you added handleServerError earlier, you can use:
+    // handleServerError(res, err);
     res.status(SERVER_SIDE_ERROR).send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -359,6 +310,127 @@ app.post("/users/:id/profile", async (req, res) => {
       .send(SERVER_ERROR_MESSAGE);
   }
 });
+
+/**
+ * Validates and parses the request body for a bulk purchase.
+ * Returns either the parsed items array or a string describing
+ * the client-side error.
+ * @param {Object} body - Request body
+ * @returns {Promise<Array|string>}
+ */
+async function validateBulkBuyBody(body) {
+  let missing = requireParams(["items"], body);
+  if (missing) {
+    return missing;
+  }
+
+  let items = body.items;
+
+  if (typeof items === "string") {
+    try {
+      items = JSON.parse(items);
+    } catch (err) {
+      return "Items must be in JSON form.";
+    }
+  }
+
+  let itemError = await checkItems(items);
+  if (itemError) {
+    return itemError;
+  }
+
+  return items;
+}
+
+/**
+ * Validates the body for a single-item purchase and loads the item.
+ * Returns either the item row or a string describing the client-side error.
+ * @param {Object} body - Request body
+ * @returns {Promise<Object|string>}
+ */
+async function validateSinglePurchaseBody(body) {
+  let missing = requireParams(["item_id"], body);
+  if (missing) {
+    return missing;
+  }
+
+  let item = await dbItemGet(body.item_id);
+  if (!item) {
+    return "Item does not exist.";
+  } else if (item.stock <= 0) {
+    return "Item out of stock.";
+  }
+
+  return item;
+}
+
+/**
+ * Generates a unique confirmation code that does not yet exist
+ * in the transactions table.
+ * @returns {Promise<string>}
+ */
+async function generateUniqueCode() {
+  let code = generateCode();
+  while (await dbCheckCodeDuplicate(code)) {
+    code = generateCode();
+  }
+  return code;
+}
+
+/**
+ * Processes a single-item purchase transaction.
+ * Assumes the item has already been validated (exists and has stock).
+ * @param {number} userId - Buyer user id
+ * @param {Object} item - Item row from the database
+ * @returns {Promise<string>} - The generated confirmation code
+ */
+async function processSinglePurchase(userId, item) {
+  await dbItemStockSubtract(item.id);
+  let code = await generateUniqueCode();
+  await dbTransactionMade(userId, item.seller_id, item.id, code);
+  return code;
+}
+
+/**
+ * Validates and normalizes signup data.
+ * Returns either a trimmed {username, password, email} object
+ * or a string describing the client-side error.
+ * @param {Object} body - Request body
+ * @returns {Promise<Object|string>}
+ */
+async function validateSignupBody(body) {
+  let missing = requireParams(["username", "password", "email"], body);
+  if (missing) {
+    return missing;
+  }
+
+  let username = body.username.trim();
+  let password = body.password.trim();
+  let email = body.email.trim();
+
+  // Check if username already exists
+  let user = await dbUserGetByUsername(username);
+  if (user) {
+    return "Username already taken.";
+  }
+
+  // Check if email ends with uw.edu
+  if (!email.endsWith("@uw.edu")) {
+    return "Please use your uw email to sign up.";
+  }
+
+  return {username, password, email};
+}
+
+/**
+ * Sends a generic server error response.
+ * @param {Object} res - Express response object
+ * @param {Error} err - Error that occurred
+ */
+function handleServerError(res, err) {
+  // Optional: log err to server console or logging service (not to client)
+  res.status(SERVER_SIDE_ERROR).type("text").send(SERVER_ERROR_MESSAGE);
+}
 
 /**
  * Inserts a new rating row into the DB (no validation here).
