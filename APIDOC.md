@@ -44,8 +44,6 @@
 
 *400 Bad Request – Missing Parameters*
 
-*Returned when one or more required body parameters are missing or blank.*
-
 *Error response (Plain text):*
 
 ```
@@ -54,8 +52,6 @@ Missing parameter: 'username' 'password'.
 
 *400 Bad Request – Invalid Credentials*
 
-*Returned when the username and password do not match any existing account.*
-
 *Error response (Plain text):*
 
 ```
@@ -63,8 +59,6 @@ Incorrect username or password.
 ```
 
 *500 Server-side Error*
-
-*Generic server error when the login request cannot be processed.*
 
 *Error response (Plain text):*
 
@@ -77,9 +71,9 @@ Server error, try again later.
 
 **Request Type:** *POST*
 
-**Returned Data Format:** Plain text
+**Returned Data Format:** JSON
 
-**Description:** *Creates a new user account with the provided username and password. Validates that the username is unique and password meets requirements.*
+**Description:** *Creates a new user account with the provided username, password, and UW email. Validates that the username is unique and that the email ends with @uw.edu. On success, also starts a login session: sets the same HTTP-only session cookie as /login and returns the user’s basic info.*
 
 **Example Request:** */signup*
 
@@ -87,57 +81,53 @@ Server error, try again later.
 
 ```
 {
-  "username": "newuser@uw.edu",
-  "password": "secure123"
+  "username": "newuser",
+  "password": "secure123",
+  "email": "newuser@uw.edu"
 }
 ```
 
 **Example Success Response (200):**
 
 ```
-User registered successfully
+{
+  "id": 2,
+  "username": "newuser"
+}
 ```
 
 **Error Handling:**
 
 *400 Bad Request – Missing Parameters*
 
-*Occurs when username and/or password are missing or empty in the request body.*
+*Error response (Plain text):*
+
+```
+Missing parameter: 'username' 'password' 'email'.
+```
+
+*400 Bad Request – Username Already Taken*
 
 *Error response (Plain text):*
 
 ```
-Missing parameter: 'username' 'password'.
+Username already taken.
 ```
 
-*400 Bad Request – Username Already Exists*
-
-*Occurs when the provided username is already registered.*
+*400 Bad Request – Non-UW Email*
 
 *Error response (Plain text):*
 
 ```
-Username already exists.
-```
-
-*400 Bad Request – Invalid Password*
-
-*Occurs when the password does not meet requirements.*
-
-*Error response (Plain text):*
-
-```
-Password does not meet requirements.
+Please use your uw email to sign up.
 ```
 
 *500 Server-side Error*
 
-*Generic server-side error during signup.*
-
 *Error response (Plain text):*
 
 ```
-Server error registering user.
+Server error, try again later.
 ```
 
 ## *3. Item List*
@@ -187,7 +177,7 @@ Server error registering user.
 *Returned Data Format:* Plain Text
 
 ```
-Error retrieving items.
+Server error, try again later.
 ```
 
 ## *4. Item Details*
@@ -197,7 +187,7 @@ Error retrieving items.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns the full details for a single item with the given id. The response is a single JSON object containing the columns from the items table.*
+**Description:** *Returns the full details for a single item with the given id as a query parameter. If no such item exists, the response body is null.*
 
 **Example Request:** */items?id=1*
 
@@ -218,21 +208,12 @@ Error retrieving items.
 ```
 
 **Error Handling:**
-
-*400 Bad Request – Item Not Found*
-
-*Returned Data Format:* Plain Text
-
-```
-Item not found.
-```
-
 *500 Internal Server Error.*
 
 *Returned Data Format:* Plain Text
 
 ```
-Error retrieving item details.
+Server error, try again later.
 ```
 
 ## *5. Search Items*
@@ -242,7 +223,7 @@ Error retrieving item details.
 
 **Returned Data Format:** JSON
 
-**Description:** *Searches items by keyword. Optional category filtering is supported.*
+**Description:** *Searches items by an optional keyword and/or category filter. The keyword is matched against title and description. At least one of search or filter must be provided.*
 
 **Query Parameters**
 search (optional): text to match
@@ -272,14 +253,12 @@ filter (optional): category name
 
 **Error Handling:**
 
-*400 Bad Request – Missing Search Term*
+*400 Bad Request – Neither search nor filter Provided*
 
 *Returned Data Format:* Plain Text
 
-*If the search query parameter is missing or empty:*
-
 ```
-Missing query parameter: 'keyword'
+Missing query parameter: 'search' 'filter'
 ```
 
 *500 Internal Server Error*
@@ -287,7 +266,7 @@ Missing query parameter: 'keyword'
 *Returned Data Format:* Plain Text
 
 ```
-Search failed.
+Server error, try again later.
 ```
 
 ## *6. Submit Purchase (Buy)*
@@ -297,13 +276,12 @@ Search failed.
 
 **Returned Data Format:** Plain text
 
-**Description:** *Look up for the item customer wants to buy, creates a purchase record for an item and updates its availability after buying.*
+**Description:** *Creates a purchase record for a single item and decrements its stock by 1. The buyer is determined from the authenticated session (session cookie); the client only provides the item_id. Requires the user to be logged in.*
 
 **Example Request:** */buy*
 
 ```
 {
-  "buyer_id": 2,
   "item_id": 3
 }
 ```
@@ -313,15 +291,24 @@ Search failed.
 ```
 JHDNV3VM
 ```
+(A randomly generated confirmation code.)
 
 **Error Handling:**
 
-*400 Bad Request – Missing Parameters*
+*401 Unauthorized – Not Logged In*
 
 *Returned Data Format:* Plain Text
 
 ```
-Missing parameter: 'buyer_id' 'item_id'.
+Not logged in.
+```
+
+*400 Bad Request – Missing Parameter*
+
+*Returned Data Format:* Plain Text
+
+```
+Missing parameter: 'item_id'.
 ```
 
 *400 Bad Request – Item Does Not Exist*
@@ -345,7 +332,7 @@ Item out of stock.
 *Returned Data Format:* Plain Text
 
 ```
-Transaction failed.
+Server error, try again later.
 ```
 
 ## *7. Bulk Purchase (Bulk Buy)*
@@ -355,17 +342,16 @@ Transaction failed.
 
 **Returned Data Format:** Plain text
 
-**Description:** *Processes a bulk purchase of multiple items at once. Creates a single transaction record with a shared confirmation code for all items. Requires user to be logged in (authenticated via session cookie).*
-
-**Required Body Parameters:**
-
-- `items` (JSON string): Array of item IDs to purchase, e.g., `"[1, 3, 5]"`
+**Description:** *Processes a bulk purchase of multiple items at once. Uses a single shared confirmation code for all items. Each item in the bulk request includes an id and a quantity to purchase. The buyer is determined from the authenticated session (session cookie). Requires the user to be logged in.*
 
 **Example Request:** */bulk-buy*
 
 ```
 {
-  "items": "[1, 3, 5]"
+  "items": [
+    { "id": 1, "quantity": 2 },
+    { "id": 3, "quantity": 1 }
+  ]
 }
 ```
 
@@ -374,24 +360,9 @@ Transaction failed.
 ```
 KR7XM2HJ
 ```
+(A randomly generated confirmation code shared by all items in the bulk purchase.)
 
 **Error Handling:**
-
-*400 Bad Request – Missing Parameters*
-
-*Returned Data Format:* Plain Text
-
-```
-Missing parameter: 'items'.
-```
-
-*400 Bad Request – Invalid JSON*
-
-*Returned Data Format:* Plain Text
-
-```
-Items must be in JSON form.
-```
 
 *401 Unauthorized – Not Logged In*
 
@@ -401,12 +372,44 @@ Items must be in JSON form.
 Not logged in.
 ```
 
+*400 Bad Request – Missing Items Parameter*
+
+*Returned Data Format:* Plain Text
+
+```
+Missing parameter: 'items'.
+```
+
+*400 Bad Request – Invalid JSON for items*
+
+*Returned Data Format:* Plain Text
+
+```
+Items must be in JSON form.
+```
+
+*400 Bad Request – Item Does Not Exist*
+
+*Returned Data Format:* Plain Text
+
+```
+Item does not exist.
+```
+
+*400 Bad Request – Not Enough Stock for Requested Quantity*
+
+*Returned Data Format:* Plain Text
+
+```
+Not enough stock for purchase.
+```
+
 *500 Internal Server Error*
 
 *Returned Data Format:* Plain Text
 
 ```
-Transaction failed.
+Server error, try again later.
 ```
 
 ## *8. Purchase History*
@@ -416,11 +419,9 @@ Transaction failed.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns the transaction history for the currently logged-in user, ordered from most recent to oldest. Requires user to be authenticated via session cookie.*
+**Description:** *Returns the transaction history for the currently logged-in user, ordered from most recent to oldest. The user ID is obtained from the authenticated session, not from the client.*
 
 **Example Request:** */history*
-
-*No body parameters required. User ID is obtained from the authenticated session.*
 
 **Example Success Response (200):**
 
@@ -431,6 +432,7 @@ Transaction failed.
     "buyer_id": 2,
     "seller_id": 1,
     "item_id": 1,
+    "confirmation_code": "JHDNV3VM",
     "date": "2025-11-29 14:18:58",
     "title": "CSE 142 Textbook",
     "category": "books",
@@ -443,6 +445,7 @@ Transaction failed.
     "buyer_id": 2,
     "seller_id": 3,
     "item_id": 3,
+    "confirmation_code": "KR7XM2HJ",
     "date": "2025-11-29 14:18:58",
     "title": "TI-84 Calculator",
     "category": "electronics",
@@ -457,12 +460,12 @@ Transaction failed.
 
 **Error Handling:**
 
-*400 Bad Request – No Such User*
+*401 Unauthorized – Not Logged In*
 
 *Returned Data Format:* Plain Text
 
 ```
-No such user.
+Not logged in.
 ```
 
 *500 Internal Server Error*
@@ -470,7 +473,7 @@ No such user.
 *Returned Data Format:* Plain Text
 
 ```
-Could not retrieve history..
+Server error, try again later.
 ```
 
 ## *9. Ratings*
@@ -480,9 +483,27 @@ Could not retrieve history..
 
 **Returned Data Format:** JSON
 
-**Description:** *Allows a buyer to submit a star rating and optional comment for an item they purchased. Validates that the user and item exist, and that the star rating is whole number between 1 and 5.*
+**Description:** *Allows a logged-in user to submit a star rating and optional comment for an item. The user ID is taken from the current session; the client does not provide a user_id. Validates that the item and user exist and that the star rating is an integer between 1 and 5.*
 
 **Example Request:** */ratings*
+
+**Required Body Parameters:**
+
+item_id or itemId (integer): ID of the rated item.
+stars (integer): Star rating between 1 and 5 inclusive.
+
+**Optional Body Parameters:**
+comment (string): Free-form feedback. May be omitted or null.
+
+**Example Request:**
+
+```
+{
+  "item_id": 3,
+  "stars": 5,
+  "comment": "Very helpful textbook!"
+}
+```
 
 **Example Success Response (200):**
 
@@ -494,44 +515,12 @@ Could not retrieve history..
 
 **Error Handling:**
 
-*400 Bad Request – Missing Parameters*
+*401 Unauthorized – Not Logged In*
 
 *Returned Data Format:* Plain Text
 
 ```
-Missing parameter: 'user_id' 'item_id' 'stars'.
-```
-
-*400 Bad Request – Invalid Star Rating*
-
-*Returned Data Format:* Plain Text
-
-```
-Stars must be an integer between 1 and 5.
-```
-
-*400 Bad Request – Item Does Not Exist*
-
-*Returned Data Format:* Plain Text
-
-```
-Item does not exist.
-```
-
-*400 Bad Request – User Does Not Exist*
-
-*Returned Data Format:* Plain Text
-
-```
-User does not exist.
-```
-
-*400 Bad Request – Other Client Error*
-
-*Returned Data Format:* Plain Text
-
-```
-Error submitting rating.
+Not logged in.
 ```
 
 *500 Internal Server Error*
@@ -539,7 +528,7 @@ Error submitting rating.
 *Returned Data Format:* Plain Text
 
 ```
-Error submitting rating.
+Server error, try again later.
 ```
 
 ## *10. Ratings - Retrieve Ratings*
