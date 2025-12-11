@@ -54,17 +54,17 @@
    * Default board layout: "list"
    */
   function checkLocalStorage() {
-    let layout = localItemGet("board-layout", false);
+    let layout = localStorage.getItem("board-layout");
     if (!layout) {
-      localItemSet("board-layout", "list");
+      localStorage.setItem("board-layout", "list");
     } else if (layout === "grid") {
       id("item-board").classList.toggle("grid-layout");
     }
 
-    let cart = localItemGet("cart", true);
+    let cart = localStorage.getItem("cart");
     if (!cart) {
       cart = {};
-      localItemSet("cart", cart);
+      localStorage.setItem("cart", JSON.stringify(cart));
     }
   }
 
@@ -239,11 +239,11 @@
   function toggleLayout() {
     id("item-board").classList.toggle("grid-layout");
 
-    let layout = localItemGet("board-layout", false);
+    let layout = localStorage.getItem("board-layout");
     if (layout === "list") {
-      localItemSet("board-layout", "grid");
+      localStorage.setItem("board-layout", "grid");
     } else {
-      localItemSet("board-layout", "list");
+      localStorage.setItem("board-layout", "list");
     }
   }
 
@@ -443,7 +443,7 @@
     cartBtn.classList.add("cart-btn");
     cartBtn.addEventListener("click", addItemToCart);
 
-    let cart = localItemGet("cart", true);
+    let cart = JSON.parse(localStorage.getItem("cart"));
     let cartQty = cart[item.id];
     let stock = item.stock;
     if ((cartQty && cartQty >= stock) || stock === 0) {
@@ -473,7 +473,7 @@
    */
   function addItemToCart() {
     let card = this.closest(".item-card");
-    let cart = localItemGet("cart", true);
+    let cart = JSON.parse(localStorage.getItem("cart"));
     let itemId = card.id;
 
     let cartQty = cart[itemId];
@@ -498,7 +498,7 @@
       showStatus("Added to cart", message, false);
     }
 
-    localItemSet("cart", cart);
+    localStorage.setItem("cart", JSON.stringify(cart));
   }
 
   /**
@@ -518,7 +518,7 @@
       // Exiting detail view
       showStatus("Product board", "Browse items and add something you like", false);
 
-      let layout = localItemGet("board-layout", false);
+      let layout = localStorage.getItem("board-layout");
       if (layout === "grid") {
         id("item-board").classList.add("grid-layout");
       }
@@ -543,29 +543,6 @@
 
     card.classList.toggle("hidden");
     card.classList.toggle("detail-view");
-  }
-
-  /**
-   * Retrieves a value from localStorage, optionally parsing it as JSON.
-   * @param {string} key - localStorage key to read.
-   * @param {boolean} isJson - Whether to parse the stored value as JSON.
-   * @returns {string|Object|null} Parsed value if isJson is true, the raw string
-   *          value otherwise, or null if the key is not set.
-   */
-  function localItemGet(key, isJson) {
-    if (isJson) {
-      return JSON.parse(localStorage.getItem(key));
-    }
-    return localStorage.getItem(key);
-  }
-
-  /**
-   * Stringifies and stores a value in localStorage under the given key.
-   * @param {string} key - localStorage key to write.
-   * @param {*} value - Value to stringify and store.
-   */
-  function localItemSet(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
   }
 
   /**
@@ -610,7 +587,6 @@
     } else {
       status.classList.remove("error");
     }
-
   }
 
   /**

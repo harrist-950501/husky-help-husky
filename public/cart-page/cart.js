@@ -45,21 +45,21 @@
    * them when absent.
    */
   function checkLocalStorage() {
-    let userId = localItemGet("userId", false);
+    let userId = localStorage.getItem("userId");
     if (!userId) {
       window.location.href = "../index.html";
     }
 
-    let cart = localItemGet("cart", true);
+    let cart = localStorage.getItem("cart");
     if (!cart) {
       cart = {};
-      localItemSet("cart", cart);
+      localStorage.setItem("cart", JSON.stringify(cart));
     }
 
-    let isConfirm = localItemGet("order-confirm", false);
+    let isConfirm = localStorage.getItem("order-confirm");
     if (!isConfirm) {
       isConfirm = false;
-      localItemSet("order-confirm", isConfirm);
+      localStorage.setItem("order-confirm", isConfirm);
     }
   }
 
@@ -80,7 +80,7 @@
   async function loadItems() {
     let emptyCheck = checkEmptyCart();
     if (!emptyCheck) {
-      let cart = localItemGet("cart", true);
+      let cart = JSON.parse(localStorage.getItem("cart"));
       let ids = Object.keys(cart);
       id("cart-count").textContent = ids.length;
 
@@ -298,13 +298,13 @@
     disconfirmOrder();
 
     let cartId = card.id;
-    let cart = localItemGet("cart", true);
+    let cart = JSON.parse(localStorage.getItem("cart"));
     let quantity = cart[cartId];
 
     quantity += delta;
 
     cart[cartId] = quantity;
-    localItemSet("cart", cart);
+    localStorage.setItem("cart", JSON.stringify(cart));
 
     updateCardView(card, quantity);
 
@@ -366,7 +366,7 @@
     let card = this.closest(".cart-card");
 
     let cartId = card.id;
-    let cart = localItemGet("cart", true);
+    let cart = JSON.parse(localStorage.getItem("cart"));
     let qty = cart[cartId];
 
     let price = parseInt(card.dataset.price);
@@ -375,7 +375,7 @@
 
     card.remove();
     delete cart[cartId];
-    localItemSet("cart", cart);
+    localStorage.setItem("cart", JSON.stringify(cart));
 
     let emptyCheck = checkEmptyCart();
     if (emptyCheck) {
@@ -393,7 +393,7 @@
    *                       otherwise null.
    */
   function checkEmptyCart() {
-    let cart = localItemGet("cart", true);
+    let cart = JSON.parse(localStorage.getItem("cart"));
     let cartNum = Object.keys(cart).length;
     id("cart-count").textContent = cartNum;
     if (cartNum === 0) {
@@ -414,7 +414,7 @@
         true
       );
     } else {
-      localItemSet("order-confirm", true);
+      localStorage.setItem("order-confirm", true);
 
       showStatus(
         "Order confirmed!",
@@ -433,9 +433,9 @@
    * and restores the confirm/submit button visibility.
    */
   function disconfirmOrder() {
-    let orderConfirm = localItemGet("order-confirm", false);
+    let orderConfirm = localStorage.getItem("order-confirm");
     if (orderConfirm) {
-      localItemSet("order-confirm", false);
+      localStorage.setItem("order-confirm", false);
 
       showStatus(
         "Order disconfirmed!",
@@ -474,7 +474,7 @@
    *                        otherwise null.
    */
   function checkSelfBuying() {
-    let userId = localItemGet("userId", false);
+    let userId = localStorage.getItem("userId");
 
     let cart = qsa(".cart-card");
 
@@ -496,7 +496,7 @@
    * @return {string} Confirmation code string returned by the backend.
    */
   async function handleBulkBuy() {
-    let cart = localItemGet("cart", true);
+    let cart = JSON.parse(localStorage.getItem("cart"));
 
     let postForm = buildBulkBuyForm(cart);
 
@@ -537,8 +537,8 @@
    * resets the cart count and total display.
    */
   function clearCart() {
-    localItemSet("cart", {});
-    localItemSet("order-confirm", false);
+    localStorage.setItem("cart", "");
+    localStorage.setItem("order-confirm", false);
 
     let board = id("cart-board");
     board.innerHTML = "";
@@ -547,29 +547,6 @@
 
     updateTotal(-1 * cartTotal);
 
-  }
-
-  /**
-   * Retrieves a value from localStorage, optionally parsing it as JSON.
-   * @param {string} key - localStorage key to read.
-   * @param {boolean} isJson - Whether to parse the stored value as JSON.
-   * @returns {string|Object|null} Parsed value if isJson is true, the raw string
-   *          value otherwise, or null if the key is not set.
-   */
-  function localItemGet(key, isJson) {
-    if (isJson) {
-      return JSON.parse(localStorage.getItem(key));
-    }
-    return localStorage.getItem(key);
-  }
-
-  /**
-   * Stringifies and stores a value in localStorage under the given key.
-   * @param {string} key - localStorage key to write.
-   * @param {*} value - Value to stringify and store.
-   */
-  function localItemSet(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
   }
 
   /**
