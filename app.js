@@ -182,7 +182,8 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
 
     let validationResult = await validateBulkBuyBody(req.body);
     if (typeof validationResult === "string") {
-      return res.status(CLIENT_SIDE_ERROR).send(validationResult);
+      return res.status(CLIENT_SIDE_ERROR)
+        .send(validationResult);
     }
 
     let items = validationResult;
@@ -190,9 +191,9 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
     await multipleTransactionMade(items, req.userId, code);
     res.send(code);
   } catch (err) {
-    // If you added handleServerError earlier, you can use:
-    // handleServerError(res, err);
-    res.status(SERVER_SIDE_ERROR).send(SERVER_ERROR_MESSAGE);
+    handleServerError(res, err);
+    res.status(SERVER_SIDE_ERROR)
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
