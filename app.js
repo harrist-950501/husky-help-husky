@@ -27,10 +27,13 @@ app.use(cookieParser());
 
 const CLIENT_SIDE_ERROR = 400;
 const SERVER_SIDE_ERROR = 500;
+const TS = 36;
+const TEN = 10;
+const PORTNUM = 8000;
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  maxAge: 36 * 10 * 10 * 10 * 10 * 10,
+  maxAge: TS * TEN * TEN * TEN * TEN * TEN,
   sameSite: "strict",
   path: "/"
 };
@@ -681,7 +684,7 @@ function buildSession(userId, username) {
  * @return {string} A unique session id to be stored in the cookie and sessions map.
  */
 function createSessionId() {
-  let sessionId = Math.random().toString(36)
+  let sessionId = Math.random().toString(TS)
     .slice(2) + Date.now();
 
   return sessionId;
@@ -712,8 +715,8 @@ function requireLogin(req, res, next) {
  */
 function generateCode() {
   return Math.random()
-    .toString(36)
-    .substring(2, 10)
+    .toString(TS)
+    .substring(2, TEN)
     .toUpperCase();
 }
 
@@ -817,5 +820,5 @@ async function getDBConnection() {
 }
 
 app.use(express.static("public"));
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || PORTNUM;
 app.listen(PORT);
