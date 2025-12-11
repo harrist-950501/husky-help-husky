@@ -213,8 +213,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
 
     let missing = requireParams(["items"], req.body);
     if (missing) {
-      return res.status(CLIENT_SIDE_ERROR).type("text")
-        .send(missing);
+      return res.status(CLIENT_SIDE_ERROR).type("text").send(missing);
     }
 
     let user = req.userId;
@@ -223,8 +222,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
     try {
       items = JSON.parse(items);
     } catch (err) {
-      return res.status(CLIENT_SIDE_ERROR)
-        .send("Items must be in JSON form.");
+      return res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
     }
 
     let code = generateCode();
@@ -234,15 +232,13 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
 
     let itemError = checkItems(items);
     if (itemError) {
-      return res.status(CLIENT_SIDE_ERROR)
-        .send(outOfStock);
+      return res.status(CLIENT_SIDE_ERROR).send(itemError);
     }
     await multipleTransactionMade(items, user, code);
 
     res.send(code);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
-      .send(SERVER_ERROR_MESSAGE);
+    res.status(SERVER_SIDE_ERROR).send(SERVER_ERROR_MESSAGE);
   }
 });
 
