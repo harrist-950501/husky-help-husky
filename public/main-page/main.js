@@ -64,7 +64,7 @@
     let cart = localItemGet("cart", true);
     if (!cart) {
       cart = {};
-      localItemSet("cart", JSON.stringify(cart));
+      localItemSet("cart", cart);
     }
   }
 
@@ -495,7 +495,7 @@
       showStatus("Added to cart", message, false);
     }
 
-    localItemSet("cart", JSON.stringify(cart));
+    localItemSet("cart", cart);
   }
 
   /**
