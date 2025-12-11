@@ -29,10 +29,13 @@ app.use(cookieParser());
 const CLIENT_SIDE_ERROR = 400;
 const CLIENT_INVALID_PARAM = 401;
 const SERVER_SIDE_ERROR = 500;
+const TS = 36;
+const TEN = 10;
+const FIVE = 5;
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  maxAge: 36 * 10 * 10 * 10 * 10 * 10,
+  maxAge: TS * TEN * TEN * TEN * TEN * TEN,
   sameSite: "strict",
   path: "/"
 };
@@ -167,7 +170,7 @@ app.post("/buy", requireLogin, async (req, res) => {
     let code = await processSinglePurchase(req.userId, item);
     res.send(code);
   } catch (err) {
-    handleServerError(res, err);
+    handleServerError(res);
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -191,7 +194,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
     await multipleTransactionMade(items, req.userId, code);
     res.send(code);
   } catch (err) {
-    handleServerError(res, err);
+    handleServerError(res);
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -317,7 +320,7 @@ app.post("/users/:id/profile", async (req, res) => {
  * Returns either the parsed items array or a string describing
  * the client-side error.
  * @param {Object} body - Request body
- * @returns {Promise<Array|string>}
+ * @returns {Promise<Array|string>} items - items info the user want
  */
 async function validateBulkBuyBody(body) {
   let missing = requireParams(["items"], body);
@@ -347,7 +350,7 @@ async function validateBulkBuyBody(body) {
  * Validates the body for a single-item purchase and loads the item.
  * Returns either the item row or a string describing the client-side error.
  * @param {Object} body - Request body
- * @returns {Promise<Object|string>}
+ * @returns {Promise<Object|string>} item - item info
  */
 async function validateSinglePurchaseBody(body) {
   let missing = requireParams(["item_id"], body);
@@ -368,7 +371,7 @@ async function validateSinglePurchaseBody(body) {
 /**
  * Generates a unique confirmation code that does not yet exist
  * in the transactions table.
- * @returns {Promise<string>}
+ * @returns {Promise<string>} code - confirmation code
  */
 async function generateUniqueCode() {
   let code = generateCode();
@@ -383,7 +386,7 @@ async function generateUniqueCode() {
  * Assumes the item has already been validated (exists and has stock).
  * @param {number} userId - Buyer user id
  * @param {Object} item - Item row from the database
- * @returns {Promise<string>} - The generated confirmation code
+ * @returns {Promise<string>} code - The generated confirmation code
  */
 async function processSinglePurchase(userId, item) {
   await dbItemStockSubtract(item.id);
@@ -397,7 +400,7 @@ async function processSinglePurchase(userId, item) {
  * Returns either a trimmed {username, password, email} object
  * or a string describing the client-side error.
  * @param {Object} body - Request body
- * @returns {Promise<Object|string>}
+ * @returns {Promise<Object|string>} validate data
  */
 async function validateSignupBody(body) {
   let missing = requireParams(["username", "password", "email"], body);
@@ -426,11 +429,10 @@ async function validateSignupBody(body) {
 /**
  * Sends a generic server error response.
  * @param {Object} res - Express response object
- * @param {Error} err - Error that occurred
  */
-function handleServerError(res, err) {
-  // Optional: log err to server console or logging service (not to client)
-  res.status(SERVER_SIDE_ERROR).type("text").send(SERVER_ERROR_MESSAGE);
+function handleServerError(res) {
+  res.status(SERVER_SIDE_ERROR).type("text")
+    .send(SERVER_ERROR_MESSAGE);
 }
 
 /**
@@ -749,7 +751,7 @@ function buildSession(userId, username) {
  * @return {string} A unique session id to be stored in the cookie and sessions map.
  */
 function createSessionId() {
-  let sessionId = Math.random().toString(36)
+  let sessionId = Math.random().toString(TS)
     .slice(2) + Date.now();
 
   return sessionId;
@@ -780,8 +782,8 @@ function requireLogin(req, res, next) {
  */
 function generateCode() {
   return Math.random()
-    .toString(36)
-    .substring(2, 10)
+    .toString(TS)
+    .substring(2, TEN)
     .toUpperCase();
 }
 
@@ -832,7 +834,7 @@ async function multipleTransactionMade(items, user, code) {
  * @return {boolean} True if valid, false otherwise.
  */
 function isValidStars(stars) {
-  return Number.isInteger(stars) && stars >= 1 && stars <= 5;
+  return Number.isInteger(stars) && stars >= 1 && stars <= FIVE;
 }
 
 /**
