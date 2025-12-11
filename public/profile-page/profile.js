@@ -51,7 +51,7 @@
       const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile");
       if (!resp.ok) {
         const msg = await resp.text();
-        return;
+        return msg;
       }
 
       const data = await resp.json();

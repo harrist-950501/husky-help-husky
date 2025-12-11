@@ -51,8 +51,6 @@
       sortSelect.addEventListener("change", applySortAndRender);
     }
 
-    // Harry: I shut down the loadHistory because I adjust the html and css
-    // Please renew your code to support current layout
     // resolved
     loadHistory();
   }

@@ -30,6 +30,7 @@ const SERVER_SIDE_ERROR = 500;
 const TS = 36;
 const TEN = 10;
 const PORTNUM = 8000;
+const MAXSTAR = 5;
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -746,7 +747,7 @@ async function multipleTransactionMade(items, user, code) {
  * @return {boolean} True if valid, false otherwise.
  */
 function isValidStars(stars) {
-  return Number.isInteger(stars) && stars >= 1 && stars <= 5;
+  return Number.isInteger(stars) && stars >= 1 && stars <= MAXSTAR;
 }
 
 /**
