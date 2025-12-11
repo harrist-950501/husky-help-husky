@@ -96,6 +96,10 @@ html[data-theme="dark"] #content {
   gap: 1.25rem;
 }
 
+#content header.hidden {
+  display: none;
+}
+
 #search-section {
   display: flex;
   flex-direction: column;
@@ -420,7 +424,6 @@ html[data-theme="dark"] .cart-btn {
 .detail-view .back-btn {
   margin-top: 0.9rem;
 }
-
 
 html[data-theme="dark"] .detail-view .description,
 html[data-theme="dark"] .detail-view .meta-info {

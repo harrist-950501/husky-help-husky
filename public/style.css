@@ -159,5 +159,5 @@ html[data-theme="dark"] #status-message.error p {
 }
 
 .hidden {
-  display: none !important;
+  display: none;
 }

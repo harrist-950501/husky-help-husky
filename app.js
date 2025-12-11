@@ -237,7 +237,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
 
     let itemError = checkItems(items);
     if (itemError) {
-      return res.status(CLIENT_SIDE_ERROR).send(outOfStock);
+      return res.status(CLIENT_SIDE_ERROR).send(itemError);
     }
     await multipleTransactionMade(items, user, code);
 

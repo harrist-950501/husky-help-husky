@@ -69,15 +69,13 @@
       if (transactions.length === 0) {
         showStatus("No transaction yet", "Go buy something first!", false);
       } else {
-        transByCode  = transGroup(transactions);
+        transByCode = transGroup(transactions);
 
         renderTransactionList(transByCode);
 
         applySortAndRender();
 
-        showStatus("Trantaction board",
-          "Transaction load sucessful! Here you are!!",
-          false);
+        showStatus("Trantaction board", "Transaction load sucessful! Here you are!!", false);
       }
     } catch (err) {
       showStatus("Could not load transacitons", err.message, true);
@@ -199,142 +197,142 @@
     });
   }
 
-    /**
-     * Creates a transaction card and wires its subparts.
-     * Card contains a header, an order list, and a rating footer.
-     * @param {Object} tx - Transaction group object (code, date, items, totals).
-     * @returns {HTMLElement} The created article element.
-     */
-    function createTransactionCard(tx) {
-      const card = gen("article");
-      card.classList.add("transaction-card");
-      card.dataset.code = tx.code;
-      card.dataset.date = tx.date;
-      card.dataset.totalPrice = tx.totalPrice;
-      card.dataset.itemCount = tx.itemCount;
+  /**
+   * Creates a transaction card and wires its subparts.
+   * Card contains a header, an order list, and a rating footer.
+   * @param {Object} tx - Transaction group object (code, date, items, totals).
+   * @returns {HTMLElement} The created article element.
+   */
+  function createTransactionCard(tx) {
+    const card = gen("article");
+    card.classList.add("transaction-card");
+    card.dataset.code = tx.code;
+    card.dataset.date = tx.date;
+    card.dataset.totalPrice = tx.totalPrice;
+    card.dataset.itemCount = tx.itemCount;
 
-      addTransactionHeader(card, tx);
-      addTransactionList(card, tx);
-      addTransactionFooter(card);
+    addTransactionHeader(card, tx);
+    addTransactionList(card, tx);
+    addTransactionFooter(card);
 
-      return card;
+    return card;
+  }
+
+  /**
+   * Adds the header section to a transaction card.
+   * Header shows the order label, confirmation code, date, and summary.
+   * @param {HTMLElement} card - Transaction card to append to.
+   * @param {Object} tx - Transaction group object.
+   */
+  function addTransactionHeader(card, tx) {
+    const header = gen("header");
+
+    addHeaderMain(header, tx);
+    addHeaderMeta(header, tx);
+
+    card.appendChild(header);
+  }
+
+  /**
+   * Adds the main header row: static "Order" label and confirmation code.
+   * @param {HTMLElement} header - Header element to append to.
+   * @param {Object} tx - Transaction group object.
+   */
+  function addHeaderMain(header, tx) {
+    const main = gen("section");
+    main.classList.add("main");
+
+    const label = gen("p");
+    label.classList.add("label");
+    label.textContent = "ORDER";
+
+    const code = gen("h3");
+    code.classList.add("code");
+    code.textContent = "#" + tx.code;
+
+    main.appendChild(label);
+    main.appendChild(code);
+    header.appendChild(main);
+  }
+
+  /**
+   * Adds the meta header row: purchase date and item/total summary.
+   * @param {HTMLElement} header - Header element to append to.
+   * @param {Object} tx - Transaction group object.
+   */
+  function addHeaderMeta(header, tx) {
+    const meta = gen("section");
+    meta.classList.add("meta");
+
+    const date = gen("p");
+    date.classList.add("date");
+    date.textContent = tx.date;
+
+    const summary = gen("p");
+    summary.classList.add("summary");
+
+    const count = tx.itemCount;
+    summary.textContent = count +
+      (count === 1 ? " item" : " items") +
+      " · $" + (tx.totalPrice);
+
+    meta.appendChild(date);
+    meta.appendChild(summary);
+    header.appendChild(meta);
+  }
+
+  /**
+   * Adds the order list for all items in a transaction group.
+   * @param {HTMLElement} card - Transaction card to append to.
+   * @param {Object} tx - Transaction group object with an items array.
+   */
+  function addTransactionList(card, tx) {
+    const list = gen("ul");
+    list.classList.add("order-list");
+
+    for (const item of tx.items) {
+      list.appendChild(createOrderItem(item));
     }
 
-    /**
-     * Adds the header section to a transaction card.
-     * Header shows the order label, confirmation code, date, and summary.
-     * @param {HTMLElement} card - Transaction card to append to.
-     * @param {Object} tx - Transaction group object.
-     */
-    function addTransactionHeader(card, tx) {
-      const header = gen("header");
+    card.appendChild(list);
+  }
 
-      addHeaderMain(header, tx);
-      addHeaderMeta(header, tx);
+  /**
+   * Creates a single order row for one purchased item.
+   * Row shows item title, quantity, unit price, and a Rate button.
+   * @param {Object} item - Item object (id, title, quantity, price).
+   * @returns {HTMLElement} The created li element.
+   */
+  function createOrderItem(item) {
+    const li = gen("li");
+    li.classList.add("order-item");
+    li.dataset.itemId = item.id;
 
-      card.appendChild(header);
-    }
+    const main = gen("section");
+    main.classList.add("main");
 
-    /**
-     * Adds the main header row: static "Order" label and confirmation code.
-     * @param {HTMLElement} header - Header element to append to.
-     * @param {Object} tx - Transaction group object.
-     */
-    function addHeaderMain(header, tx) {
-      const main = gen("section");
-      main.classList.add("main");
+    const title = gen("p");
+    title.classList.add("title");
+    title.textContent = item.title;
 
-      const label = gen("p");
-      label.classList.add("label");
-      label.textContent = "ORDER";
+    const meta = gen("p");
+    meta.classList.add("meta");
 
-      const code = gen("h3");
-      code.classList.add("code");
-      code.textContent = "#" + tx.code;
+    meta.textContent = "Qty " + item.quantity + " · $" + item.price + " each";
 
-      main.appendChild(label);
-      main.appendChild(code);
-      header.appendChild(main);
-    }
+    main.appendChild(title);
+    main.appendChild(meta);
 
-    /**
-     * Adds the meta header row: purchase date and item/total summary.
-     * @param {HTMLElement} header - Header element to append to.
-     * @param {Object} tx - Transaction group object.
-     */
-    function addHeaderMeta(header, tx) {
-      const meta = gen("section");
-      meta.classList.add("meta");
+    const rateBtn = gen("button");
+    rateBtn.classList.add("rate-btn");
+    rateBtn.textContent = "Rate";
+    rateBtn.addEventListener("click", showRatePanel);
 
-      const date = gen("p");
-      date.classList.add("date");
-      date.textContent = tx.date;
+    li.appendChild(main);
+    li.appendChild(rateBtn);
 
-      const summary = gen("p");
-      summary.classList.add("summary");
-
-      const count = tx.itemCount;
-      summary.textContent = count +
-        (count === 1 ? " item" : " items") +
-        " · $" + (tx.totalPrice);
-
-      meta.appendChild(date);
-      meta.appendChild(summary);
-      header.appendChild(meta);
-    }
-
-    /**
-     * Adds the order list for all items in a transaction group.
-     * @param {HTMLElement} card - Transaction card to append to.
-     * @param {Object} tx - Transaction group object with an items array.
-     */
-    function addTransactionList(card, tx) {
-      const list = gen("ul");
-      list.classList.add("order-list");
-
-      for (const item of tx.items) {
-        list.appendChild(createOrderItem(item));
-      }
-
-      card.appendChild(list);
-    }
-
-    /**
-     * Creates a single order row for one purchased item.
-     * Row shows item title, quantity, unit price, and a Rate button.
-     * @param {Object} item - Item object (id, title, quantity, price).
-     * @returns {HTMLElement} The created li element.
-     */
-    function createOrderItem(item) {
-      const li = gen("li");
-      li.classList.add("order-item");
-      li.dataset.itemId = item.id;
-
-      const main = gen("section");
-      main.classList.add("main");
-
-      const title = gen("p");
-      title.classList.add("title");
-      title.textContent = item.title;
-
-      const meta = gen("p");
-      meta.classList.add("meta");
-
-      meta.textContent = "Qty " + item.quantity + " · $" + item.price + " each";
-
-      main.appendChild(title);
-      main.appendChild(meta);
-
-      const rateBtn = gen("button");
-      rateBtn.classList.add("rate-btn");
-      rateBtn.textContent = "Rate";
-      rateBtn.addEventListener("click", showRatePanel);
-
-      li.appendChild(main);
-      li.appendChild(rateBtn);
-
-      return li;
-    }
+    return li;
+  }
 
   /**
    * Adds the rating footer panel to a transaction card.
@@ -383,7 +381,7 @@
     select.classList.add("rate-stars");
     select.name = "stars";
 
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= MAX_STARS; i++) {
       const opt = gen("option");
       opt.value = String(i);
       opt.textContent = String(i);

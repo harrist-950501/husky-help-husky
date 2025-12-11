@@ -198,6 +198,10 @@ html[data-theme="dark"] .order-item + .order-item {
   gap: 0.35rem;
 }
 
+.rate-panel.hidden {
+  display: none;
+}
+
 html[data-theme="dark"] .rate-panel {
   border-top-color: #40395d;
 }
