@@ -82,6 +82,7 @@ header {
 
 html[data-theme="dark"] #other-information {
   background-color: #1f2933;
+  border-color: #4b4268;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 

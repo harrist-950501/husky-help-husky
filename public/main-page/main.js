@@ -56,7 +56,7 @@
   function checkLocalStorage() {
     let layout = localStorage.getItem("board-layout");
     if (!layout) {
-      localStorage.setItem("board-layout", "list");
+      localItemSet("board-layout", "list");
     } else if (layout === "grid") {
       id("item-board").classList.toggle("grid-layout");
     }
@@ -64,7 +64,7 @@
     let cart = localStorage.getItem("cart");
     if (!cart) {
       cart = {};
-      localStorage.setItem("cart", JSON.stringify(cart));
+      localItemSet("cart", JSON.stringify(cart));
     }
   }
 
@@ -238,9 +238,9 @@
 
     let layout = localStorage.getItem("board-layout");
     if (layout === "list") {
-      localStorage.setItem("board-layout", "grid");
+      localItemSet("board-layout", "grid");
     } else {
-      localStorage.setItem("board-layout", "list");
+      localItemSet("board-layout", "list");
     }
   }
 
@@ -442,7 +442,7 @@
     cartBtn.classList.add("cart-btn");
     cartBtn.addEventListener("click", addItemToCart);
 
-    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cart = localItemGet("cart");
     let cartQty = cart[item.id];
     let stock = item.stock;
     if ((cartQty && cartQty >= stock) || stock === 0) {
@@ -472,7 +472,7 @@
    */
   function addItemToCart() {
     let card = this.closest(".item-card");
-    let cart = JSON.parse(localStorage.getItem("cart"));
+    let cart = localItemGet("cart");
     let itemId = card.id;
 
     let cartQty = cart[itemId];
@@ -497,7 +497,7 @@
       showStatus("Added to cart", message, false);
     }
 
-    localStorage.setItem("cart", JSON.stringify(cart));
+    localItemSet("cart", JSON.stringify(cart));
   }
 
   /**
@@ -542,6 +542,24 @@
 
     card.classList.toggle("hidden");
     card.classList.toggle("detail-view");
+  }
+
+  /**
+   * Retrieves and parses a JSON value from localStorage.
+   * @param {string} key - localStorage key to read.
+   * @returns {string} Parsed value stored under the given key, or null if not set.
+   */
+  function localItemGet(key) {
+    return JSON.parse(localStorage.getItem(key));
+  }
+
+  /**
+   * Stringifies and stores a value in localStorage under the given key.
+   * @param {string} key - localStorage key to write.
+   * @param {*} value - Value to stringify and store.
+   */
+  function localItemSet(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
   }
 
   /**

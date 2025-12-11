@@ -96,10 +96,6 @@ html[data-theme="dark"] #content {
   gap: 1.25rem;
 }
 
-#content header.hidden {
-  display: none;
-}
-
 #search-section {
   display: flex;
   flex-direction: column;
@@ -115,7 +111,6 @@ html[data-theme="dark"] #content {
   border-radius: 10px;
   font-size: 0.95em;
   outline: none;
-  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 html[data-theme="dark"] #search-bar {
@@ -132,6 +127,11 @@ html[data-theme="dark"] #search-bar::placeholder {
 #search-bar:focus {
   border-color: #A39BD8;
   box-shadow: 0 0 8px rgba(163, 155, 216, 0.3);
+}
+
+html[data-theme="dark"] #search-bar:focus {
+  border-color: #b4a7ff;
+  box-shadow: 0 0 8px rgba(140, 130, 230, 0.75);
 }
 
 #search-section > section {
@@ -271,7 +271,6 @@ html[data-theme="dark"] #profile-pic {
 html[data-theme="dark"] .item-card {
   background: #312f3a;
   border-color: #4b4268;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
 }
 
 .item-card:hover {
@@ -422,10 +421,6 @@ html[data-theme="dark"] .cart-btn {
   margin-top: 0.9rem;
 }
 
-.detail-view .back-btn:hover {
-  background: #f3eefe;
-  border-color: #c7bff1;
-}
 
 html[data-theme="dark"] .detail-view .description,
 html[data-theme="dark"] .detail-view .meta-info {

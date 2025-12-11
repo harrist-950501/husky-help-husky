@@ -83,6 +83,8 @@ html[data-theme="dark"] .transaction-card {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
 }
 
+/* ===== Card header ===== */
+
 .transaction-card > header {
   display: flex;
   justify-content: space-between;
@@ -132,7 +134,7 @@ html[data-theme="dark"] .transaction-card > header {
 
 /* ===== Item list inside a transaction ===== */
 
-.order-items {
+.order-list {
   list-style: none;
   margin: 0;
   padding: 0.3rem 0 0;
@@ -196,15 +198,11 @@ html[data-theme="dark"] .order-item + .order-item {
   gap: 0.35rem;
 }
 
-.rate-panel.hidden {
-  display: none;
-}
-
 html[data-theme="dark"] .rate-panel {
   border-top-color: #40395d;
 }
 
-.rtarget-label {
+.target-label {
   margin: 0;
   font-size: 0.75rem;
   color: #6b21a8;
@@ -216,8 +214,7 @@ html[data-theme="dark"] .rate-panel {
   font-weight: 500;
 }
 
-/* Stars + comment fields */
-.rate-row label {
+.rate-panel label {
   font-size: 0.85rem;
 }
 
@@ -255,7 +252,6 @@ html[data-theme="dark"] .rate-comment {
   color: #e5e7ff;
 }
 
-/* Rate actions (Submit / Cancel) */
 .rate-actions {
   display: flex;
   justify-content: flex-end;
@@ -263,12 +259,7 @@ html[data-theme="dark"] .rate-comment {
   margin-top: 0.2rem;
 }
 
-.submit-btn {
-  padding: 6px 14px;
-  font-size: 0.8rem;
-}
-
-.cancel-btn {
+.rate-panel button {
   padding: 6px 14px;
   font-size: 0.8rem;
 }

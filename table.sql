@@ -19,7 +19,6 @@ CREATE TABLE "items" (
 	"description"	TEXT,
 	"price"	REAL NOT NULL,
 	"stock"	INTEGER NOT NULL,
-	"date"	DATETIME DEFAULT (datetime('now', 'localtime')),
 	PRIMARY KEY("id" AUTOINCREMENT),
 	FOREIGN KEY("seller_id") REFERENCES "users"("id")
 );

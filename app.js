@@ -26,6 +26,7 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
 const CLIENT_SIDE_ERROR = 400;
+const CLIENT_INVALID_PARAM = 401;
 const SERVER_SIDE_ERROR = 500;
 
 const SESSION_COOKIE_OPTIONS = {
@@ -157,7 +158,7 @@ app.get("/items/search", async (req, res) => {
     if (!keyword && !filter) {
       res.status(CLIENT_SIDE_ERROR)
         .type("text")
-        .send("Missing query parameter: 'keyword' 'filter'");
+        .send("Missing query parameter: 'search' 'filter'");
     } else {
       let searchResult = await dbItemSearch(keyword, filter);
       res.json(searchResult);
@@ -230,6 +231,10 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
       code = generateCode();
     }
 
+    let itemError = checkItems(items);
+    if (itemError) {
+      return res.status(CLIENT_SIDE_ERROR).send(outOfStock);
+    }
     await multipleTransactionMade(items, user, code);
 
     res.send(code);
@@ -697,7 +702,7 @@ function requireLogin(req, res, next) {
   let sessionId = req.cookies.session;
 
   if (!sessionId || !sessions[sessionId]) {
-    return res.status(CLIENT_SIDE_ERROR)
+    return res.status(CLIENT_INVALID_PARAM)
       .send("Not logged in.");
   }
 
@@ -714,6 +719,27 @@ function generateCode() {
     .toString(36)
     .substring(2, 10)
     .toUpperCase();
+}
+
+/**
+ * Checks that all items in a bulk purchase exist and have enough stock.
+ * Returns an error message string if validation fails, otherwise null.
+ * @param {Object[]} items - List of items to purchase, each with id and quantity.
+ * @return {?string} Error message if validation fails, or null if all items are valid.
+ */
+async function checkItems(items) {
+  for (let item of items) {
+    let id = item.id;
+    let quantity = item.quantity;
+    let dbItem = await dbItemGet(id);
+    if (!dbItem) {
+      return "Item does not exist.";
+    }
+    if (dbItem.stock < quantity) {
+      return "Not enough stock for purchase.";
+    }
+  }
+  return null;
 }
 
 /**

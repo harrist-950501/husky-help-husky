@@ -12,96 +12,146 @@
  *  - Allows buyers to rate items (POST /ratings).
  *
  * Backend endpoints used:
- *  - GET /history/:user_id
+ *  - GET /history
  *  - POST /ratings
  */
 
 "use strict";
 
 (function() {
-
-  /**
-   * Same demo user id as main.js for now.
-   * Logged-in user id, stored at login time.
-   */
-  const CURRENT_USER_ID = Number(localStorage.getItem("userId"));
-  const JSON_TYPE = "application/json";
   const MAX_STARS = 5;
-  let allTransactions = [];
+
+  // The transaction history grouded by code, for sorting purpose
+  let transByCode = [];
 
   window.addEventListener("load", init);
 
   /**
-   * Initialize page: wire back button, sorting, and load transaction history.
+   * Initializes the history page: checks login, wires UI controls, and loads transactions.
    */
   function init() {
-    if (!CURRENT_USER_ID) {
+    checkLocalStorage();
 
-      // not logged in or localStorage cleared, go back to login
-      window.location.href = "../index.html";
-      return;
-    }
-    let backBtn = id("back");
-    if (backBtn) {
-      backBtn.addEventListener("click", back);
-    }
+    id("back").addEventListener("click", back);
 
-    let sortSelect = id("transaction-sorting");
-    if (sortSelect) {
-      sortSelect.addEventListener("change", applySortAndRender);
-    }
+    id("transaction-sorting").addEventListener("change", applySortAndRender);
 
-    // Harry: I shut down the loadHistory because I adjust the html and css
-    // Please renew your code to support current layout
-    // loadHistory();
+
+    loadHistory();
   }
 
   /**
-   * Fetch transaction history for CURRENT_USER_ID and render it.
+   * Redirects to the login page when no user id is stored locally.
+   */
+  function checkLocalStorage() {
+    let userId = localItemGet("userId");
+    if (!userId) {
+      window.location.href = "../index.html";
+    }
+  }
+
+  /**
+   * Navigate back to the main page.
+   */
+  function back() {
+    window.location.href = "../main-page/main.html";
+  }
+
+  /**
+   * Fetches and renders transaction history for the logged-in user.
    */
   async function loadHistory() {
-    const board = id("transaction-board");
-    if (board) {
-      board.textContent = "Loading transactins...";
-    }
+    showStatus("Loading transactions...", "Please wait", false);
 
     try {
-      const resp = await fetch("/history");
-      if (!resp.ok) {
-        const msg = await resp.text();
-        throw new Error(msg || "Failed to load history.");
-      }
+      let url = "/history";
+      let isJson = true;
+      let transactions = await dataFetch(url, isJson);
+      if (transactions.length === 0) {
+        showStatus("No transaction yet", "Go buy something first!", false);
+      } else {
+        transByCode  = transGroup(transactions);
 
-      const data = await resp.json();
-      allTransactions = Array.isArray(data) ? data : [];
-      applySortAndRender();
+        renderTransactionList(transByCode);
+
+        applySortAndRender();
+
+        showStatus("Trantaction board",
+          "Transaction load sucessful! Here you are!!",
+          false);
+      }
     } catch (err) {
       console.error(err);
-      if (board) {
-        board.textContent = "Could not load transactions.";
-      }
+      showStatus("Could not load transacitons", err.message, true);
     }
   }
 
   /**
-   * Applies the current sort selection to allTransactions and re-renders.
+   * Groups flat transaction rows by confirmation code and aggregates items.
+   * Same (code, item_id) rows are merged and quantity is counted.
+   * @param {Object[]} transactions - Flat transaction rows from /history.
+   * @returns {Object[]} Array of grouped transactions by code.
    */
+  function transGroup(transactions) {
+    let groupsByCode = {};
+
+    for (let tran of transactions) {
+      const code = tran["confirmation_code"];
+
+      if (!groupsByCode[code]) {
+        groupsByCode[code] = {
+          code: code,
+          date: tran.date,
+          items: [],
+          itemCount: 0,
+          totalPrice: 0
+        };
+      }
+
+      let group = groupsByCode[code];
+
+      let item = group.items.find(it => it.id === tran["item_id"]);
+
+      if (!item) {
+        item = {
+          id: tran["item_id"],
+          title: tran.title,
+          price: tran.price,
+          quantity: 0
+        };
+        group.items.push(item);
+      }
+
+      item.quantity += 1;
+      group.itemCount += 1;
+      group.totalPrice += tran.price;
+    }
+
+    return Object.values(groupsByCode);
+  }
+
   /**
-   * Applies the current sort selection to allTransactions and re-renders.
-   * @returns {void}
+   * Applies the current sort option to grouped transactions and updates the board.
    */
   function applySortAndRender() {
-    const select = id("transaction-sorting");
-    const criterion = select ? select.value : "time";
-    const list = allTransactions.slice();
+    // Copy of transByCod, protect the original sequence
+    let list = transByCode.slice();
 
-    if (criterion === "price") {
+    const sort = id("transaction-sorting").value;
+
+    if (sort === "price") {
       list.sort(compareByPrice);
     } else {
       list.sort(compareByTime);
     }
 
-    renderTransactions(list);
+    const board = id("transaction-board");
+
+    list.forEach(tx => {
+      board.appendChild(tx.node);
+    });
+
+    showStatus("Trantaction board", "Sorting applied: " + sort, false);
   }
 
   /**
@@ -133,375 +183,435 @@
    * @returns {number} Positive when left < right (for descending sort).
    */
   function compareByPrice(left, right) {
-    const priceLeft = typeof left.price === "number" ? left.price : 0;
-    const priceRight = typeof right.price === "number" ? right.price : 0;
+    const priceLeft = typeof left.totalPrice === "number" ? left.totalPrice : 0;
+    const priceRight = typeof right.totalPrice === "number" ? right.totalPrice : 0;
     return priceRight - priceLeft;
   }
 
   /**
-   * Renders transaction data into the #transaction-board area.
+   * Renders each grouped transaction into the history board.
+   * @param {Object[]} transactions - Transaction groups to display on the board.
    */
-  /**
-   * Render a list of transactions into the board element.
-   * @param {Array<Object>} transactions - Array of transaction objects.
-   * @returns {void}
-   */
-  function renderTransactions(transactions) {
-    const board = id("transaction-board");
-    if (!board) {
-      return;
-    }
-
-    clearBoard(board);
-
-    if (!transactions.length) {
-      renderEmptyMessage(board);
-      return;
-    }
-
-    renderTransactionList(board, transactions);
-  }
-
-  /**
-   * Clear all children from an element.
-   * @param {Element} board - Element to clear.
-   * @returns {void}
-   */
-  function clearBoard(board) {
-    while (board.firstChild) {
-      board.removeChild(board.firstChild);
-    }
-  }
-
-  /**
-   * Show a friendly empty message.
-   * @param {Element} board - Element to append message to.
-   * @returns {void}
-   */
-  function renderEmptyMessage(board) {
-    const pTag = document.createElement("p");
-    pTag.textContent = "No transactions yet.";
-    board.appendChild(pTag);
-  }
-
-  /**
-   * Render each transaction into the board.
-   * @param {Element} board - Container element.
-   * @param {Array<Object>} transactions - Transactions to render.
-   * @returns {void}
-   */
-  function renderTransactionList(board, transactions) {
+  function renderTransactionList(transactions) {
+    let board = id("transaction-board");
     transactions.forEach(tx => {
-      const article = createTransactionElement(tx);
+      let article = createTransactionCard(tx);
+      tx.node = article;
       board.appendChild(article);
     });
   }
 
-  /**
-   * Creates a transaction article element and wires its subparts.
-   * @param {Object} tx - Transaction object from the backend.
-   * @returns {Element} The created article element.
-   */
-  function createTransactionElement(tx) {
-    const article = document.createElement("article");
-    article.className = "transaction";
+    /**
+     * Creates a transaction card and wires its subparts.
+     * Card contains a header, an order list, and a rating footer.
+     * @param {Object} tx - Transaction group object (code, date, items, totals).
+     * @returns {HTMLElement} The created article element.
+     */
+    function createTransactionCard(tx) {
+      const card = gen("article");
+      card.classList.add("transaction-card");
+      card.dataset.code = tx.code;
+      card.dataset.date = tx.date;
+      card.dataset.totalPrice = tx.totalPrice;
+      card.dataset.itemCount = tx.itemCount;
 
-    addTransactionTitle(article, tx);
-    addTransactionMeta(article, tx);
-    addTransactionPrice(article, tx);
-    addTransactionDescription(article, tx);
-    attachRatingUI(article, tx);
+      addTransactionHeader(card, tx);
+      addTransactionList(card, tx);
+      addTransactionFooter(card);
 
-    return article;
-  }
-
-  /**
-   * Add title element to a transaction article.
-   * @param {Element} article - Article element to append to.
-   * @param {Object} tx - Transaction object.
-   * @returns {void}
-   */
-  function addTransactionTitle(article, tx) {
-    const title = document.createElement("h3");
-    title.textContent = tx.title || "Item #" + (tx.item_id || "");
-    article.appendChild(title);
-  }
-
-  /**
-   * Add metadata (role/date) to a transaction article.
-   * @param {Element} article - Article element.
-   * @param {Object} tx - Transaction object.
-   * @returns {void}
-   */
-  function addTransactionMeta(article, tx) {
-    const meta = document.createElement("p");
-    meta.className = "muted";
-
-    const roleText = tx.buyer_id === CURRENT_USER_ID ? "Buyer" : "Seller";
-    const dateText = tx.date ? " on " + tx.date : "";
-    meta.textContent = roleText + dateText;
-
-    article.appendChild(meta);
-  }
-
-  /**
-   * Add price display to a transaction article when present.
-   * @param {Element} article - Article element.
-   * @param {Object} tx - Transaction object.
-   * @returns {void}
-   */
-  function addTransactionPrice(article, tx) {
-    if (typeof tx.price !== "number") {
-      return;
-    }
-    const price = document.createElement("p");
-    price.className = "price";
-    price.textContent = "Total: $" + tx.price.toFixed(2);
-    article.appendChild(price);
-  }
-
-  /**
-   * Add description paragraph when available.
-   * @param {Element} article - Article element.
-   * @param {Object} tx - Transaction object.
-   * @returns {void}
-   */
-  function addTransactionDescription(article, tx) {
-    if (!tx.description) {
-      return;
-    }
-    const desc = document.createElement("p");
-    desc.className = "description";
-    desc.textContent = tx.description;
-    article.appendChild(desc);
-  }
-
-  /**
-   * Adds rating UI (button + display) to a transaction article
-   * if the current user is the buyer.
-   */
-  /**
-   * Attach rating UI for buyers. Creates a button and rating display.
-   * @param {Element} article - Article element to attach to.
-   * @param {Object} tx - Transaction object.
-   * @returns {void}
-   */
-  function attachRatingUI(article, tx) {
-    if (tx.buyer_id !== CURRENT_USER_ID) {
-      return;
+      return card;
     }
 
-    article.dataset.itemId = tx.item_id;
+    /**
+     * Adds the header section to a transaction card.
+     * Header shows the order label, confirmation code, date, and summary.
+     * @param {HTMLElement} card - Transaction card to append to.
+     * @param {Object} tx - Transaction group object.
+     */
+    function addTransactionHeader(card, tx) {
+      const header = gen("header");
 
-    const row = document.createElement("div");
-    row.className = "rating-row";
+      addHeaderMain(header, tx);
+      addHeaderMeta(header, tx);
 
-    const btn = document.createElement("button");
-    btn.className = "rate-btn";
-    btn.textContent = "Rate this item";
-
-    const display = document.createElement("p");
-    display.className = "rating-display";
-
-    // if we already have a rating stored show it immediately (use bracket notation for snake_case)
-    if (typeof tx["user_rating"] === "number") {
-      display.textContent = "Your rating: ⭐ " + tx["user_rating"];
+      card.appendChild(header);
     }
 
-    btn.addEventListener("click", () => {
-      showInlineRatingForm(article, tx, display);
-    });
+    /**
+     * Adds the main header row: static "Order" label and confirmation code.
+     * @param {HTMLElement} header - Header element to append to.
+     * @param {Object} tx - Transaction group object.
+     */
+    function addHeaderMain(header, tx) {
+      const main = gen("section");
+      main.classList.add("main");
 
-    row.appendChild(btn);
-    row.appendChild(display);
-    article.appendChild(row);
+      const label = gen("p");
+      label.classList.add("label");
+      label.textContent = "ORDER";
+
+      const code = gen("h3");
+      code.classList.add("code");
+      code.textContent = "#" + tx.code;
+
+      main.appendChild(label);
+      main.appendChild(code);
+      header.appendChild(main);
+    }
+
+    /**
+     * Adds the meta header row: purchase date and item/total summary.
+     * @param {HTMLElement} header - Header element to append to.
+     * @param {Object} tx - Transaction group object.
+     */
+    function addHeaderMeta(header, tx) {
+      const meta = gen("section");
+      meta.classList.add("meta");
+
+      const date = gen("p");
+      date.classList.add("date");
+      date.textContent = tx.date;
+
+      const summary = gen("p");
+      summary.classList.add("summary");
+
+      const count = tx.itemCount;
+      summary.textContent = count +
+        (count === 1 ? " item" : " items") +
+        " · $" + (tx.totalPrice);
+
+      meta.appendChild(date);
+      meta.appendChild(summary);
+      header.appendChild(meta);
+    }
+
+    /**
+     * Adds the order list for all items in a transaction group.
+     * @param {HTMLElement} card - Transaction card to append to.
+     * @param {Object} tx - Transaction group object with an items array.
+     */
+    function addTransactionList(card, tx) {
+      const list = gen("ul");
+      list.classList.add("order-list");
+
+      for (const item of tx.items) {
+        list.appendChild(createOrderItem(item));
+      }
+
+      card.appendChild(list);
+    }
+
+    /**
+     * Creates a single order row for one purchased item.
+     * Row shows item title, quantity, unit price, and a Rate button.
+     * @param {Object} item - Item object (id, title, quantity, price).
+     * @returns {HTMLElement} The created li element.
+     */
+    function createOrderItem(item) {
+      const li = gen("li");
+      li.classList.add("order-item");
+      li.dataset.itemId = item.id;
+
+      const main = gen("section");
+      main.classList.add("main");
+
+      const title = gen("p");
+      title.classList.add("title");
+      title.textContent = item.title;
+
+      const meta = gen("p");
+      meta.classList.add("meta");
+
+      meta.textContent = "Qty " + item.quantity + " · $" + item.price + " each";
+
+      main.appendChild(title);
+      main.appendChild(meta);
+
+      const rateBtn = gen("button");
+      rateBtn.classList.add("rate-btn");
+      rateBtn.textContent = "Rate";
+      rateBtn.addEventListener("click", showRatePanel);
+
+      li.appendChild(main);
+      li.appendChild(rateBtn);
+
+      return li;
+    }
+
+  /**
+   * Adds the rating footer panel to a transaction card.
+   * Footer shows the current rating target and inputs for stars/comment.
+   * @param {HTMLElement} card - Transaction card to append to.
+   */
+  function addTransactionFooter(card) {
+    const footer = gen("footer");
+    footer.classList.add("rate-panel", "hidden");
+
+    addFooterTargetRow(footer);
+    addFooterStarsRow(footer);
+    addFooterCommentRow(footer);
+    addFooterActionRow(footer);
+
+    card.appendChild(footer);
   }
 
   /**
-   * Handles clicking on "Rate this item": prompts for stars/comment,
-   * sends to backend, then updates the display text.
+   * Adds the "Rating item" label and dynamic target title row.
+   * @param {HTMLElement} footer - Footer element to append to.
    */
+  function addFooterTargetRow(footer) {
+    const label = gen("p");
+    label.classList.add("target-label");
+    label.textContent = "Rating item:";
+
+    const targetTitle = gen("p");
+    targetTitle.classList.add("target-title");
+
+    footer.appendChild(label);
+    footer.appendChild(targetTitle);
+  }
+
   /**
-   * Create star rating select dropdown.
-   * @returns {Element} Select element with star options.
+   * Adds the stars select row to the rating footer.
+   * @param {HTMLElement} footer - Footer element to append to.
    */
-  function createStarSelect() {
-    const starLabel = document.createElement('label');
-    starLabel.textContent = 'Stars: ';
-    const starSelect = document.createElement('select');
-    starSelect.name = 'stars';
-    for (let i = 1; i <= MAX_STARS; i++) {
-      const opt = document.createElement('option');
+  function addFooterStarsRow(footer) {
+    const starsRow = gen("section");
+
+    const starsLabel = gen("label");
+    starsLabel.textContent = "Stars:";
+
+    const select = gen("select");
+    select.classList.add("rate-stars");
+    select.name = "stars";
+
+    for (let i = 1; i <= 5; i++) {
+      const opt = gen("option");
       opt.value = String(i);
       opt.textContent = String(i);
-      starSelect.appendChild(opt);
-    }
-    starLabel.appendChild(starSelect);
-    return starLabel;
-  }
-
-  /**
-   * Create comment input textarea with label.
-   * @returns {Element} Label containing textarea element.
-   */
-  function createCommentInput() {
-    const commentLabel = document.createElement('label');
-    commentLabel.textContent = ' Comment: ';
-    const commentInput = document.createElement('textarea');
-    commentInput.name = 'comment';
-    commentInput.rows = 2;
-    commentInput.cols = 30;
-    commentLabel.appendChild(commentInput);
-    return commentLabel;
-  }
-
-  /**
-   * Build form with inputs and buttons.
-   * @returns {Object} Object with form, starSelect, commentInput, submitBtn, cancelBtn, status.
-   */
-  function buildRatingFormElements() {
-    const form = document.createElement('form');
-    form.className = 'inline-rating-form';
-
-    const starLabel = createStarSelect();
-    const starSelect = starLabel.querySelector('select');
-    const commentLabel = createCommentInput();
-    const commentInput = commentLabel.querySelector('textarea');
-
-    const submitBtn = document.createElement('button');
-    submitBtn.type = 'submit';
-    submitBtn.textContent = 'Submit';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.textContent = 'Cancel';
-
-    const status = document.createElement('span');
-    status.className = 'rating-status';
-
-    form.appendChild(starLabel);
-    form.appendChild(commentLabel);
-    form.appendChild(submitBtn);
-    form.appendChild(cancelBtn);
-    form.appendChild(status);
-
-    return {form, starSelect, commentInput, submitBtn, cancelBtn, status};
-  }
-
-  /**
-   * Handle form submission for rating.
-   * @param {HTMLFormElement} form - Form element.
-   * @param {HTMLSelectElement} starSelect - Star select element.
-   * @param {HTMLTextAreaElement} commentInput - Comment textarea element.
-   * @param {HTMLSpanElement} status - Status display element.
-   * @param {Object} tx - Transaction object.
-   * @param {Element} displayElem - Element to update after submission.
-   * @returns {void}
-   */
-  function handleRatingSubmit(form, starSelect, commentInput, status, tx, displayElem) {
-    const stars = Number(starSelect.value);
-    if (!Number.isInteger(stars) || stars < 1 || stars > MAX_STARS) {
-      status.textContent = `Enter a whole number 1-${MAX_STARS}`;
-      return;
+      select.appendChild(opt);
     }
 
-    const comment = commentInput.value || '';
-    tx['user_rating'] = stars;
-    tx['user_comment'] = comment;
-
-    const body = {
-      'item_id': tx.item_id,
-      'stars': stars,
-      'comment': comment
-    };
-
-    submitRating(body)
-      .then(() => {
-        if (displayElem) {
-          displayElem.textContent = 'Your rating: ' + tx['user_rating'] + '⭐️';
-        }
-        form.remove();
-      })
-      .catch(err => {
-        console.error(err);
-        status.textContent = err.message || 'Could not submit rating.';
-      });
+    starsLabel.appendChild(select);
+    starsRow.appendChild(starsLabel);
+    footer.appendChild(starsRow);
   }
 
   /**
-   * Wire form submit and cancel events for rating submission.
-   * @param {Object} elements - Form elements object from buildRatingFormElements.
-   * @param {Object} tx - Transaction object.
-   * @param {Element} displayElem - Display element to update after submission.
-   * @returns {void}
+   * Adds the comment textarea row to the rating footer.
+   * @param {HTMLElement} footer - Footer element to append to.
    */
-  function wireRatingFormEvents(elements, tx, displayElem) {
-    const {form, starSelect, commentInput, cancelBtn, status} = elements;
+  function addFooterCommentRow(footer) {
+    const commentRow = gen("section");
 
-    cancelBtn.addEventListener('click', () => form.remove());
+    const commentLabel = gen("label");
+    commentLabel.textContent = "Comment:";
 
-    form.addEventListener('submit', evt => {
-      evt.preventDefault();
-      handleRatingSubmit(form, starSelect, commentInput, status, tx, displayElem);
-    });
+    const textarea = gen("textarea");
+    textarea.classList.add("rate-comment");
+    textarea.name = "comment";
+    textarea.rows = 3;
+
+    commentLabel.appendChild(textarea);
+    commentRow.appendChild(commentLabel);
+    footer.appendChild(commentRow);
   }
 
   /**
-   * Show an inline rating form instead of using prompt/alert.
-   * @param {Element} container - Container article element.
-   * @param {Object} tx - Transaction object.
-   * @param {Element} displayElem - Element to update with rating text.
-   * @returns {void}
+   * Adds the submit and cancel buttons row to the rating footer.
+   * @param {HTMLElement} footer - Footer element to append to.
    */
-  function showInlineRatingForm(container, tx, displayElem) {
-    // avoid creating multiple forms
-    const existing = container.querySelector('.inline-rating-form');
-    if (existing) {
-      return;
-    }
+  function addFooterActionRow(footer) {
+    const actions = gen("section");
+    actions.classList.add("rate-actions");
 
-    const elements = buildRatingFormElements();
-    wireRatingFormEvents(elements, tx, displayElem);
+    const submitBtn = gen("button");
+    submitBtn.classList.add("submit-btn");
+    submitBtn.textContent = "Submit";
+    submitBtn.addEventListener("click", handleRateSubmit);
 
-    // append form into the article after the rating row
-    const row = container.querySelector('.rating-row') || container;
-    row.appendChild(elements.form);
+    const cancelBtn = gen("button");
+    cancelBtn.classList.add("cancel-btn", "secondary-btn");
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", closeRatePanel);
+
+    actions.appendChild(submitBtn);
+    actions.appendChild(cancelBtn);
+    footer.appendChild(actions);
   }
 
   /**
-   * Sends a POST /ratings request to the backend.
-   * @param {Object} body - Request body with user_id, item_id, stars, comment.
-   * @returns {Promise} Promise resolving to JSON response from server.
+   * Shows the rating panel for the clicked order item and fills in its metadata.
+   * @param {MouseEvent} evt - Click event from a Rate button.
    */
-  async function submitRating(body) {
-    const resp = await fetch("/ratings", {
-      method: "POST",
-      headers: {"Content-Type": JSON_TYPE},
-      body: JSON.stringify(body)
+  function showRatePanel(evt) {
+    const itemRow = evt.currentTarget.closest(".order-item");
+    const card = itemRow.closest(".transaction-card");
+    const footer = card.querySelector(".rate-panel");
+
+    qsa(".rate-panel").forEach(panel => {
+      if (panel !== footer) {
+        panel.classList.add("hidden");
+      }
     });
 
-    if (!resp.ok) {
-      const msg = await resp.text();
-      throw new Error(msg || "Failed to submit rating.");
+    const titleText = itemRow.querySelector(".title").textContent;
+    const targetTitle = footer.querySelector(".target-title");
+    const starsSelect = footer.querySelector(".rate-stars");
+    const commentArea = footer.querySelector(".rate-comment");
+
+    footer.dataset.itemId = itemRow.dataset.itemId;
+    targetTitle.textContent = titleText;
+
+    starsSelect.value = "1";
+    commentArea.value = "";
+
+    footer.classList.remove("hidden");
+  }
+
+  /**
+   * Hides the rating panel for the current transaction card.
+   * @param {MouseEvent} evt - Click event from the Cancel button.
+   */
+  function closeRatePanel(evt) {
+    const footer = evt.currentTarget.closest(".rate-panel");
+    hideRatePanel(footer);
+  }
+
+  /**
+   * Utility to hide a rating panel element without affecting other cards.
+   * @param {HTMLElement} footer - Rating panel footer element to hide.
+   */
+  function hideRatePanel(footer) {
+    footer.classList.add("hidden");
+  }
+
+  /**
+   * Submits the current rating for the selected item and updates page status.
+   * @param {MouseEvent} evt - Click event from the Submit button.
+   */
+  async function handleRateSubmit(evt) {
+    evt.preventDefault();
+
+    const footer = evt.currentTarget.closest(".rate-panel");
+    const itemId = footer.dataset.itemId;
+
+    const starsSelect = footer.querySelector(".rate-stars");
+    const commentArea = footer.querySelector(".rate-comment");
+
+    const stars = Number(starsSelect.value);
+
+    const comment = commentArea.value.trim();
+
+    const form = new FormData();
+    form.append("item_id", itemId);
+    form.append("stars", stars);
+    if (comment) {
+      form.append("comment", comment);
     }
 
-    return resp.json();
+    showStatus("Submitting rating...", "Sending your rating. Please wait.", false);
+
+    try {
+      await dataFetch("/ratings", true, form);
+      showStatus("Rating submitted", "Thank you for rating this item!", false);
+      hideRatePanel(footer);
+    } catch (err) {
+      showStatus("Could not submit rating", err.message, true);
+    }
   }
 
   /**
-   * Navigate back to the main page.
+   * Retrieves and parses a JSON value from localStorage.
+   * @param {string} key - localStorage key to read.
+   * @returns {*} Parsed value stored under the given key, or null if not set.
    */
-  function back() {
-    window.location.href = "../main-page/main.html";
+  function localItemGet(key) {
+    return JSON.parse(localStorage.getItem(key));
   }
 
   /**
-   * Shortcut for `document.getElementById`.
-   * @param {string} idName - ID of element to find.
-   * @returns {?Element} The element or null if not found.
+   * Fetches data from the given URL using GET or POST and returns the response
+   * as parsed JSON or plain text.
+   * @param {string} url - Endpoint URL to request.
+   * @param {boolean} isJson - Whether to parse the response as JSON (true) or text.
+   * @param {FormData} [postParams] - Optional form data to send via POST.
+   * @returns {Object|string} Parsed JSON data or response text from the request.
    */
-  function id(idName) {
-    return document.getElementById(idName);
+  async function dataFetch(url, isJson, postParams) {
+    try {
+      let response;
+      if (postParams) {
+        response = await fetch(url, {method: "POST", body: postParams});
+      } else {
+        response = await fetch(url);
+      }
+      await statusCheck(response);
+      if (isJson) {
+        return await response.json();
+      }
+      return await response.text();
+    } catch (err) {
+      throw new Error(err);
+    }
   }
 
+  /**
+   * Update the global status message area.
+   * @param {string} title - Short heading text for the status area.
+   * @param {string|Error} message - Detailed status text or Error.
+   * @param {boolean} isError - When true, apply error styling
+   */
+  function showStatus(title, message, isError) {
+    const status = id("status-message");
+
+    status.querySelector("h2").textContent = title;
+    status.querySelector("p").textContent = message;
+    if (isError) {
+      status.classList.add("error");
+    } else {
+      status.classList.remove("error");
+    }
+  }
+
+  /**
+   * Helper function to return the response's result text if successful, otherwise
+   * returns the rejected Promise result with an error status and corresponding text
+   * @param {object} res - response to check for success/error
+   * @return {object} - valid response if response was successful, otherwise rejected
+   *                    Promise result
+   */
+  async function statusCheck(res) {
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+    return res;
+  }
+
+  /**
+   * Returns the array of elements that match the given CSS selector.
+   * @param {string} query - CSS query selector
+   * @returns {object[]} array of DOM objects matching the query.
+   */
+  function qsa(query) {
+    return document.querySelectorAll(query);
+  }
+
+  /**
+   * Returns the element that has the ID attribute with the specified value.
+   * @param {string} id - element ID.
+   * @returns {object} - DOM object associated with id.
+   */
+  function id(id) {
+    return document.getElementById(id);
+  }
+
+  /**
+   * Returns a element with the given tagname.
+   * @param {string} tagname - HTML element tagname
+   * @returns {HTMLElement} a HTML element that hasn't bind with DOM yet.
+   */
+  function gen(tagname) {
+    return document.createElement(tagname);
+  }
 })();

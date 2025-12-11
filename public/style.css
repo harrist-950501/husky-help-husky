@@ -102,10 +102,6 @@ button:hover {
   opacity: 0.9;
 }
 
-.hidden {
-  display: none;
-}
-
 #status-message h2 {
   margin: 0 0 0.2rem 0;
   color: #4c1d95;
@@ -160,4 +156,8 @@ html[data-theme="dark"] #status-message.error h2 {
 
 html[data-theme="dark"] #status-message.error p {
   color: #f9a8d4;
+}
+
+.hidden {
+  display: none !important;
 }
