@@ -216,7 +216,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
       return res.status(CLIENT_SIDE_ERROR).send(missing);
     }
 
-    let user = req.userId
+    let user = req.userId;
     let items = req.body.items;
 
     if (typeof items === "string") {
