@@ -44,8 +44,6 @@
 
 *400 Bad Request – Missing Parameters*
 
-*Returned when one or more required body parameters are missing or blank.*
-
 *Error response (Plain text):*
 
 ```
@@ -54,8 +52,6 @@ Missing parameter: 'username' 'password'.
 
 *400 Bad Request – Invalid Credentials*
 
-*Returned when the username and password do not match any existing account.*
-
 *Error response (Plain text):*
 
 ```
@@ -63,8 +59,6 @@ Incorrect username or password.
 ```
 
 *500 Server-side Error*
-
-*Generic server error when the login request cannot be processed.*
 
 *Error response (Plain text):*
 
@@ -77,9 +71,9 @@ Server error, try again later.
 
 **Request Type:** *POST*
 
-**Returned Data Format:** Plain text
+**Returned Data Format:** JSON
 
-**Description:** *Creates a new user account with the provided username and password. Validates that the username is unique and password meets requirements.*
+**Description:** *Creates a new user account with the provided username, password, and UW email. Validates that the username is unique and that the email ends with @uw.edu. On success, also starts a login session: sets the same HTTP-only session cookie as /login and returns the user’s basic info.*
 
 **Example Request:** */signup*
 
@@ -87,57 +81,53 @@ Server error, try again later.
 
 ```
 {
-  "username": "newuser@uw.edu",
-  "password": "secure123"
+  "username": "newuser",
+  "password": "secure123",
+  "email": "newuser@uw.edu"
 }
 ```
 
 **Example Success Response (200):**
 
 ```
-User registered successfully
+{
+  "id": 2,
+  "username": "newuser"
+}
 ```
 
 **Error Handling:**
 
 *400 Bad Request – Missing Parameters*
 
-*Occurs when username and/or password are missing or empty in the request body.*
+*Error response (Plain text):*
+
+```
+Missing parameter: 'username' 'password' 'email'.
+```
+
+*400 Bad Request – Username Already Taken*
 
 *Error response (Plain text):*
 
 ```
-Missing parameter: 'username' 'password'.
+Username already taken.
 ```
 
-*400 Bad Request – Username Already Exists*
-
-*Occurs when the provided username is already registered.*
+*400 Bad Request – Non-UW Email*
 
 *Error response (Plain text):*
 
 ```
-Username already exists.
-```
-
-*400 Bad Request – Invalid Password*
-
-*Occurs when the password does not meet requirements.*
-
-*Error response (Plain text):*
-
-```
-Password does not meet requirements.
+Please use your uw email to sign up.
 ```
 
 *500 Server-side Error*
 
-*Generic server-side error during signup.*
-
 *Error response (Plain text):*
 
 ```
-Server error registering user.
+Server error, try again later.
 ```
 
 ## *3. Item List*
