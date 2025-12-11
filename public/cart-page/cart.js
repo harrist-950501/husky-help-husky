@@ -433,7 +433,8 @@
    * and restores the confirm/submit button visibility.
    */
   function disconfirmOrder() {
-    let orderConfirm = localStorage.getItem("order-confirm");
+    let orderConfirm = JSON.parse(localStorage.getItem("order-confirm"));
+    console.log(orderConfirm);
     if (orderConfirm) {
       localStorage.setItem("order-confirm", false);
 
