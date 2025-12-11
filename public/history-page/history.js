@@ -21,7 +21,7 @@
 (function() {
   const MAX_STARS = 5;
 
-  // The transaction history grouded by code, for sorting purpose
+  // The transaction history grouped by code, for sorting purpose
   let transByCode = [];
 
   window.addEventListener("load", init);
@@ -75,7 +75,7 @@
 
         applySortAndRender();
 
-        showStatus("Trantaction board", "Transaction load sucessful! Here you are!!", false);
+        showStatus("Transaction board", "Transaction load sucessful! Here you are!!", false);
       }
     } catch (err) {
       showStatus("Could not load transacitons", err.message, true);
