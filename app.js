@@ -95,7 +95,9 @@ app.post("/signup", async (req, res) => {
     res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
     res.json(sessionData.user);
   } catch (err) {
-    handleServerError(res, err);
+    res.status(SERVER_SIDE_ERROR)
+      .type("text")
+      .send(SERVER_ERROR_MESSAGE);
   }
 });
 
@@ -126,7 +128,7 @@ app.get("/items", async (req, res) => {
       res.json(await dbItemGetAll());
     }
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR).type("text")
+    res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -148,7 +150,7 @@ app.get("/items/search", async (req, res) => {
       res.json(searchResult);
     }
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR).type("text")
+    res.status(SERVER_SIDE_ERROR)
       .type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -171,7 +173,6 @@ app.post("/buy", requireLogin, async (req, res) => {
     let code = await processSinglePurchase(req.userId, item);
     res.send(code);
   } catch (err) {
-    handleServerError(res);
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -195,7 +196,6 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
     await multipleTransactionMade(items, req.userId, code);
     res.send(code);
   } catch (err) {
-    handleServerError(res);
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -425,15 +425,6 @@ async function validateSignupBody(body) {
   }
 
   return {username, password, email};
-}
-
-/**
- * Sends a generic server error response.
- * @param {Object} res - Express response object
- */
-function handleServerError(res) {
-  res.status(SERVER_SIDE_ERROR).type("text")
-    .send(SERVER_ERROR_MESSAGE);
 }
 
 /**
