@@ -68,7 +68,7 @@
    * order state.
    */
   function back() {
-    disconfirmOrder();
+    localStorage.removeItem("order-confirm");
     window.location.href = "/main-page/main.html";
   }
 

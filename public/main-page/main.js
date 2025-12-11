@@ -109,6 +109,9 @@
 
       localStorage.removeItem("userId");
       localStorage.removeItem("username");
+      localStorage.removeItem("cart");
+      localStorage.removeItem("board-layout");
+      localStorage.removeItem("page-color-theme");
 
       window.location.href = "/index.html";
     } catch (err) {
