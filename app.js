@@ -28,14 +28,10 @@ app.use(cookieParser());
 const CLIENT_SIDE_ERROR = 400;
 const CLIENT_INVALID_PARAM = 401;
 const SERVER_SIDE_ERROR = 500;
-const TS = 36;
-const TEN = 10;
-const PORTNUM = 8000;
-const MAXSTAR = 5;
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  maxAge: TS * TEN * TEN * TEN * TEN * TEN,
+  maxAge: 36 * 10 * 10 * 10 * 10 * 10,
   sameSite: "strict",
   path: "/"
 };
@@ -51,11 +47,9 @@ let sessions = {};
  */
 app.post("/login", async (req, res) => {
   try {
-    res.type("text");
-
     let missing = requireParams(["username", "password"], req.body);
     if (missing) {
-      return res.status(CLIENT_SIDE_ERROR)
+      return res.status(CLIENT_SIDE_ERROR).type("text")
         .send(missing);
     }
 
@@ -64,7 +58,7 @@ app.post("/login", async (req, res) => {
 
     let user = await dbUserCheck(username, password);
     if (!user) {
-      return res.status(CLIENT_SIDE_ERROR)
+      return res.status(CLIENT_SIDE_ERROR).type("text")
         .send("Incorrect username or password.");
     }
 
@@ -72,7 +66,7 @@ app.post("/login", async (req, res) => {
     res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
     res.json(sessionData.user);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -82,11 +76,9 @@ app.post("/login", async (req, res) => {
  */
 app.post("/signup", async (req, res) => {
   try {
-    res.type("text");
-
     let missing = requireParams(["username", "password", "email"], req.body);
     if (missing) {
-      return res.status(CLIENT_SIDE_ERROR)
+      return res.status(CLIENT_SIDE_ERROR).type("text")
         .send(missing);
     }
 
@@ -97,13 +89,13 @@ app.post("/signup", async (req, res) => {
     // Check if username already exists
     let user = await dbUserGetByUsername(username);
     if (user) {
-      return res.status(CLIENT_SIDE_ERROR)
+      return res.status(CLIENT_SIDE_ERROR).type("text")
         .send("Username already taken.");
     }
 
     // Check if email end with uw.edu
     if (!email.endsWith("@uw.edu")) {
-      return res.status(CLIENT_SIDE_ERROR)
+      return res.status(CLIENT_SIDE_ERROR).type("text")
         .send("Please use your uw email to sign up.");
     }
 
@@ -114,7 +106,7 @@ app.post("/signup", async (req, res) => {
     res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
     res.json(sessionData.user);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -146,7 +138,7 @@ app.get("/items", async (req, res) => {
       res.json(await dbItemGetAll());
     }
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -160,7 +152,7 @@ app.get("/items/search", async (req, res) => {
     let keyword = req.query.search;
     let filter = req.query.filter;
     if (!keyword && !filter) {
-      res.status(CLIENT_SIDE_ERROR)
+      res.status(CLIENT_SIDE_ERROR).type("text")
         .type("text")
         .send("Missing query parameter: 'search' 'filter'");
     } else {
@@ -168,7 +160,7 @@ app.get("/items/search", async (req, res) => {
       res.json(searchResult);
     }
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
@@ -184,14 +176,17 @@ app.post("/buy", requireLogin, async (req, res) => {
     // Client only needs to send the item_id, bc already logging in
     let missing = requireParams(["item_id"], req.body);
     if (missing) {
-      return res.status(CLIENT_SIDE_ERROR).send(missing);
+      return res.status(CLIENT_SIDE_ERROR)
+        .send(missing);
     }
 
     let item = await dbItemGet(req.body.item_id);
     if (!item) {
-      return res.status(CLIENT_SIDE_ERROR).send("Item does not exist.");
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Item does not exist.");
     } else if (item.stock <= 0) {
-      return res.status(CLIENT_SIDE_ERROR).send("Item out of stock.");
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Item out of stock.");
     }
 
     await dbItemStockSubtract(item.id);
@@ -218,7 +213,8 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
 
     let missing = requireParams(["items"], req.body);
     if (missing) {
-      return res.status(CLIENT_SIDE_ERROR).send(missing);
+      return res.status(CLIENT_SIDE_ERROR).type("text")
+        .send(missing);
     }
 
     let user = req.userId;
@@ -227,7 +223,8 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
     try {
       items = JSON.parse(items);
     } catch (err) {
-      return res.status(CLIENT_SIDE_ERROR).send("Items must be in JSON form.");
+      return res.status(CLIENT_SIDE_ERROR)
+        .send("Items must be in JSON form.");
     }
 
     let code = generateCode();
@@ -237,7 +234,8 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
 
     let itemError = checkItems(items);
     if (itemError) {
-      return res.status(CLIENT_SIDE_ERROR).send(itemError);
+      return res.status(CLIENT_SIDE_ERROR)
+        .send(outOfStock);
     }
     await multipleTransactionMade(items, user, code);
 
@@ -257,8 +255,7 @@ app.get("/history", requireLogin, async (req, res) => {
     let transactions = await dbTransactionUserGet(req.userId);
     res.json(transactions);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
-      .type("text")
+    res.status(SERVER_SIDE_ERROR).type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -269,8 +266,6 @@ app.get("/history", requireLogin, async (req, res) => {
  */
 app.post("/ratings", requireLogin, async (req, res) => {
   try {
-    res.type("text");
-
     // Normalize incoming payload to camelCase keys and inject logged-in user id
     let payload = {
       itemId: req.body.item_id || req.body.itemId,
@@ -282,7 +277,7 @@ app.post("/ratings", requireLogin, async (req, res) => {
     let result = await processRatingSubmission(payload);
     res.json(result);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -292,15 +287,13 @@ app.post("/ratings", requireLogin, async (req, res) => {
  */
 app.get("/items/:id/ratings", async (req, res) => {
   try {
-    res.type("text");
-
     let itemId = req.params.id;
     let db = await getDBConnection();
 
     let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
     if (!item) {
       await db.close();
-      res.status(CLIENT_SIDE_ERROR)
+      res.status(CLIENT_SIDE_ERROR).type("text")
         .send("Item does not exist.");
       return;
     }
@@ -315,7 +308,7 @@ app.get("/items/:id/ratings", async (req, res) => {
       ratings: summary.ratings
     });
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -325,12 +318,10 @@ app.get("/items/:id/ratings", async (req, res) => {
  * If a profile does not exist yet, an empty one is created.
  */
 app.get("/users/:id/profile", async (req, res) => {
-  res.type("text");
-
   try {
     let user = await dbUserGet(req.params.id);
     if (!user) {
-      res.status(CLIENT_SIDE_ERROR)
+      res.status(CLIENT_SIDE_ERROR).type("text")
         .send("No such user.");
       return;
     }
@@ -340,7 +331,7 @@ app.get("/users/:id/profile", async (req, res) => {
     let profile = await dbUserProfileGet(user.id);
     res.json(profile);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
 });
@@ -350,11 +341,9 @@ app.get("/users/:id/profile", async (req, res) => {
  */
 app.post("/users/:id/profile", async (req, res) => {
   try {
-    res.type("text");
-
     let user = await dbUserGet(req.params.id);
     if (!user) {
-      res.status(CLIENT_SIDE_ERROR)
+      res.status(CLIENT_SIDE_ERROR).type("text")
         .send("No such user.");
       return;
     }
@@ -368,12 +357,11 @@ app.post("/users/:id/profile", async (req, res) => {
     let saved = await dbUserProfileUpsert(user.id, profileData);
     res.json(saved);
   } catch (err) {
-    res.status(SERVER_SIDE_ERROR)
+    res.status(SERVER_SIDE_ERROR).type("text")
       .send(SERVER_ERROR_MESSAGE);
   }
 });
 
-/* HELPERS */
 /**
  * Inserts a new rating row into the DB (no validation here).
  * @param {Object} db - Database connection.
@@ -690,7 +678,7 @@ function buildSession(userId, username) {
  * @return {string} A unique session id to be stored in the cookie and sessions map.
  */
 function createSessionId() {
-  let sessionId = Math.random().toString(TS)
+  let sessionId = Math.random().toString(36)
     .slice(2) + Date.now();
 
   return sessionId;
@@ -721,8 +709,8 @@ function requireLogin(req, res, next) {
  */
 function generateCode() {
   return Math.random()
-    .toString(TS)
-    .substring(2, TEN)
+    .toString(36)
+    .substring(2, 10)
     .toUpperCase();
 }
 
@@ -773,7 +761,7 @@ async function multipleTransactionMade(items, user, code) {
  * @return {boolean} True if valid, false otherwise.
  */
 function isValidStars(stars) {
-  return Number.isInteger(stars) && stars >= 1 && stars <= MAXSTAR;
+  return Number.isInteger(stars) && stars >= 1 && stars <= 5;
 }
 
 /**
@@ -847,5 +835,5 @@ async function getDBConnection() {
 }
 
 app.use(express.static("public"));
-const PORT = process.env.PORT || PORTNUM;
+const PORT = process.env.PORT || 8000;
 app.listen(PORT);
