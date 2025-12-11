@@ -1,4 +1,9 @@
 /**
+ * Name: Rena Yin & Harry Cheng
+ * Date: Nov 2025
+ * Section: CSE 154 AA
+ * TA: Oscar Song
+ *
  * The javascript file for profile.html.
  * It allows the following interactivity:
  *  - Back button to main page

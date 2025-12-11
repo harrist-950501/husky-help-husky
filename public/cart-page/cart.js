@@ -40,17 +40,23 @@
   }
 
   /**
+   * Ensures user is login, otherwise redirect to login page
    * Ensures required cart-related keys exist in localStorage and initializes
    * them when absent.
    */
   function checkLocalStorage() {
-    let cart = localItemGet("cart");
+    let userId = localItemGet("userId", false);
+    if (!userId) {
+      window.location.href = "../index.html";
+    }
+
+    let cart = localItemGet("cart", true);
     if (!cart) {
       cart = {};
       localItemSet("cart", cart);
     }
 
-    let isConfirm = localItemGet("order-confirm");
+    let isConfirm = localItemGet("order-confirm", false);
     if (!isConfirm) {
       isConfirm = false;
       localItemSet("order-confirm", isConfirm);
@@ -74,7 +80,7 @@
   async function loadItems() {
     let emptyCheck = checkEmptyCart();
     if (!emptyCheck) {
-      let cart = localItemGet("cart");
+      let cart = localItemGet("cart", true);
       let ids = Object.keys(cart);
       id("cart-count").textContent = ids.length;
 
@@ -292,7 +298,7 @@
     disconfirmOrder();
 
     let cartId = card.id;
-    let cart = localItemGet("cart");
+    let cart = localItemGet("cart", true);
     let quantity = cart[cartId];
 
     quantity += delta;
@@ -360,7 +366,7 @@
     let card = this.closest(".cart-card");
 
     let cartId = card.id;
-    let cart = localItemGet("cart");
+    let cart = localItemGet("cart", true);
     let qty = cart[cartId];
 
     let price = parseInt(card.dataset.price);
@@ -387,7 +393,7 @@
    *                       otherwise null.
    */
   function checkEmptyCart() {
-    let cart = localItemGet("cart");
+    let cart = localItemGet("cart", true);
     let cartNum = Object.keys(cart).length;
     id("cart-count").textContent = cartNum;
     if (cartNum === 0) {
@@ -427,7 +433,7 @@
    * and restores the confirm/submit button visibility.
    */
   function disconfirmOrder() {
-    let orderConfirm = localItemGet("order-confirm");
+    let orderConfirm = localItemGet("order-confirm", false);
     if (orderConfirm) {
       localItemSet("order-confirm", false);
 
@@ -468,7 +474,7 @@
    *                        otherwise null.
    */
   function checkSelfBuying() {
-    let userId = localItemGet("userId");
+    let userId = localItemGet("userId", false);
 
     let cart = qsa(".cart-card");
 
@@ -490,7 +496,7 @@
    * @return {string} Confirmation code string returned by the backend.
    */
   async function handleBulkBuy() {
-    let cart = localItemGet("cart");
+    let cart = localItemGet("cart", true);
 
     let postForm = buildBulkBuyForm(cart);
 
@@ -544,12 +550,17 @@
   }
 
   /**
-   * Retrieves and parses a JSON value from localStorage.
+   * Retrieves a value from localStorage, optionally parsing it as JSON.
    * @param {string} key - localStorage key to read.
-   * @returns {string} Parsed value stored under the given key, or null if not set.
+   * @param {boolean} isJson - Whether to parse the stored value as JSON.
+   * @returns {string|Object|null} Parsed value if isJson is true, the raw string
+   *          value otherwise, or null if the key is not set.
    */
-  function localItemGet(key) {
-    return JSON.parse(localStorage.getItem(key));
+  function localItemGet(key, isJson) {
+    if (isJson) {
+      return JSON.parse(localStorage.getItem(key));
+    }
+    return localStorage.getItem(key);
   }
 
   /**

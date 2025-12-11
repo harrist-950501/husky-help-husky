@@ -43,7 +43,7 @@
    * Redirects to the login page when no user id is stored locally.
    */
   function checkLocalStorage() {
-    let userId = localItemGet("userId");
+    let userId = localItemGet("userId", false);
     if (!userId) {
       window.location.href = "../index.html";
     }
@@ -518,12 +518,17 @@
   }
 
   /**
-   * Retrieves and parses a JSON value from localStorage.
+   * Retrieves a value from localStorage, optionally parsing it as JSON.
    * @param {string} key - localStorage key to read.
-   * @returns {*} Parsed value stored under the given key, or null if not set.
+   * @param {boolean} isJson - Whether to parse the stored value as JSON.
+   * @returns {string|Object|null} Parsed value if isJson is true, the raw string
+   *          value otherwise, or null if the key is not set.
    */
-  function localItemGet(key) {
-    return JSON.parse(localStorage.getItem(key));
+  function localItemGet(key, isJson) {
+    if (isJson) {
+      return JSON.parse(localStorage.getItem(key));
+    }
+    return localStorage.getItem(key);
   }
 
   /**

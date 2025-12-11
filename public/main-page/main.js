@@ -33,14 +33,14 @@
 
     id("nav-toggle-btn").addEventListener("click", navToggle);
     id("open-cart-page").addEventListener("click", openCartPage);
-    id("open-history-page").addEventListener("click", openHistroyPage);
+    id("open-history-page").addEventListener("click", openHistoryPage);
     id("open-profile-page").addEventListener("click", openProfilePage);
     id("logout-btn").addEventListener("click", logout);
 
     id("search-bar").addEventListener("input", checkSearch);
     id("search-btn").addEventListener("click", itemSearch);
-    id("search-btn").disabled = "true";
-    id("unsearch-btn").addEventListener("click", reavealAllItems);
+    id("search-btn").disabled = true;
+    id("unsearch-btn").addEventListener("click", revealAllItems);
 
     id("category-filter").addEventListener("change", checkSearch);
 
@@ -54,14 +54,14 @@
    * Default board layout: "list"
    */
   function checkLocalStorage() {
-    let layout = localStorage.getItem("board-layout");
+    let layout = localItemGet("board-layout", false);
     if (!layout) {
       localItemSet("board-layout", "list");
     } else if (layout === "grid") {
       id("item-board").classList.toggle("grid-layout");
     }
 
-    let cart = localStorage.getItem("cart");
+    let cart = localItemGet("cart", true);
     if (!cart) {
       cart = {};
       localItemSet("cart", JSON.stringify(cart));
@@ -88,7 +88,7 @@
   /**
    * Opens the transaction history page.
    */
-  function openHistroyPage() {
+  function openHistoryPage() {
     window.location.href = "/history-page/history.html";
   }
 
@@ -220,7 +220,7 @@
   /**
    * Let all items become visible again.
    */
-  function reavealAllItems() {
+  function revealAllItems() {
     let items = qsa(".item-card");
     searchResult = [];
     items.forEach(item => {
@@ -236,7 +236,7 @@
   function toggleLayout() {
     id("item-board").classList.toggle("grid-layout");
 
-    let layout = localStorage.getItem("board-layout");
+    let layout = localItemGet("board-layout", false);
     if (layout === "list") {
       localItemSet("board-layout", "grid");
     } else {
@@ -297,9 +297,7 @@
   /**
    * Creates the info section (right side) of an item card,
    * including title, rating, description, price, meta info
-   * and action buttons.
-   * In list view, elements marked with the "detail" class are
-   * initially hidden and can be revealed for the detail view.
+   * and action buttons. The detail elements are hidden until detail view.
    * @param {Object} item - Item data object from the backend.
    * @returns {HTMLElement} section.info element.
    */
@@ -442,7 +440,7 @@
     cartBtn.classList.add("cart-btn");
     cartBtn.addEventListener("click", addItemToCart);
 
-    let cart = localItemGet("cart");
+    let cart = localItemGet("cart", true);
     let cartQty = cart[item.id];
     let stock = item.stock;
     if ((cartQty && cartQty >= stock) || stock === 0) {
@@ -472,7 +470,7 @@
    */
   function addItemToCart() {
     let card = this.closest(".item-card");
-    let cart = localItemGet("cart");
+    let cart = localItemGet("cart", true);
     let itemId = card.id;
 
     let cartQty = cart[itemId];
@@ -517,7 +515,7 @@
       // Exiting detail view
       showStatus("Product board", "Browse items and add something you like", false);
 
-      let layout = localStorage.getItem("board-layout");
+      let layout = localItemGet("board-layout", false);
       if (layout === "grid") {
         id("item-board").classList.add("grid-layout");
       }
@@ -545,12 +543,17 @@
   }
 
   /**
-   * Retrieves and parses a JSON value from localStorage.
+   * Retrieves a value from localStorage, optionally parsing it as JSON.
    * @param {string} key - localStorage key to read.
-   * @returns {string} Parsed value stored under the given key, or null if not set.
+   * @param {boolean} isJson - Whether to parse the stored value as JSON.
+   * @returns {string|Object|null} Parsed value if isJson is true, the raw string
+   *          value otherwise, or null if the key is not set.
    */
-  function localItemGet(key) {
-    return JSON.parse(localStorage.getItem(key));
+  function localItemGet(key, isJson) {
+    if (isJson) {
+      return JSON.parse(localStorage.getItem(key));
+    }
+    return localStorage.getItem(key);
   }
 
   /**
