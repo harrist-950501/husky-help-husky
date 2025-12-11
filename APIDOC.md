@@ -419,11 +419,9 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns the transaction history for the currently logged-in user, ordered from most recent to oldest. Requires user to be authenticated via session cookie.*
+**Description:** *Returns the transaction history for the currently logged-in user, ordered from most recent to oldest. The user ID is obtained from the authenticated session, not from the client.*
 
 **Example Request:** */history*
-
-*No body parameters required. User ID is obtained from the authenticated session.*
 
 **Example Success Response (200):**
 
@@ -434,6 +432,7 @@ Server error, try again later.
     "buyer_id": 2,
     "seller_id": 1,
     "item_id": 1,
+    "confirmation_code": "JHDNV3VM",
     "date": "2025-11-29 14:18:58",
     "title": "CSE 142 Textbook",
     "category": "books",
@@ -446,6 +445,7 @@ Server error, try again later.
     "buyer_id": 2,
     "seller_id": 3,
     "item_id": 3,
+    "confirmation_code": "KR7XM2HJ",
     "date": "2025-11-29 14:18:58",
     "title": "TI-84 Calculator",
     "category": "electronics",
@@ -460,12 +460,12 @@ Server error, try again later.
 
 **Error Handling:**
 
-*400 Bad Request – No Such User*
+*401 Unauthorized – Not Logged In*
 
 *Returned Data Format:* Plain Text
 
 ```
-No such user.
+Not logged in.
 ```
 
 *500 Internal Server Error*
@@ -473,7 +473,7 @@ No such user.
 *Returned Data Format:* Plain Text
 
 ```
-Could not retrieve history..
+Server error, try again later.
 ```
 
 ## *9. Ratings*
@@ -483,9 +483,27 @@ Could not retrieve history..
 
 **Returned Data Format:** JSON
 
-**Description:** *Allows a buyer to submit a star rating and optional comment for an item they purchased. Validates that the user and item exist, and that the star rating is whole number between 1 and 5.*
+**Description:** *Allows a logged-in user to submit a star rating and optional comment for an item. The user ID is taken from the current session; the client does not provide a user_id. Validates that the item and user exist and that the star rating is an integer between 1 and 5.*
 
 **Example Request:** */ratings*
+
+**Required Body Parameters:**
+
+item_id or itemId (integer): ID of the rated item.
+stars (integer): Star rating between 1 and 5 inclusive.
+
+**Optional Body Parameters:**
+comment (string): Free-form feedback. May be omitted or null.
+
+**Example Request:**
+
+```
+{
+  "item_id": 3,
+  "stars": 5,
+  "comment": "Very helpful textbook!"
+}
+```
 
 **Example Success Response (200):**
 
@@ -497,44 +515,12 @@ Could not retrieve history..
 
 **Error Handling:**
 
-*400 Bad Request – Missing Parameters*
+*401 Unauthorized – Not Logged In*
 
 *Returned Data Format:* Plain Text
 
 ```
-Missing parameter: 'user_id' 'item_id' 'stars'.
-```
-
-*400 Bad Request – Invalid Star Rating*
-
-*Returned Data Format:* Plain Text
-
-```
-Stars must be an integer between 1 and 5.
-```
-
-*400 Bad Request – Item Does Not Exist*
-
-*Returned Data Format:* Plain Text
-
-```
-Item does not exist.
-```
-
-*400 Bad Request – User Does Not Exist*
-
-*Returned Data Format:* Plain Text
-
-```
-User does not exist.
-```
-
-*400 Bad Request – Other Client Error*
-
-*Returned Data Format:* Plain Text
-
-```
-Error submitting rating.
+Not logged in.
 ```
 
 *500 Internal Server Error*
@@ -542,7 +528,7 @@ Error submitting rating.
 *Returned Data Format:* Plain Text
 
 ```
-Error submitting rating.
+Server error, try again later.
 ```
 
 ## *10. Ratings - Retrieve Ratings*
