@@ -177,7 +177,7 @@ Server error, try again later.
 *Returned Data Format:* Plain Text
 
 ```
-Error retrieving items.
+Server error, try again later.
 ```
 
 ## *4. Item Details*
@@ -187,7 +187,7 @@ Error retrieving items.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns the full details for a single item with the given id. The response is a single JSON object containing the columns from the items table.*
+**Description:** *Returns the full details for a single item with the given id as a query parameter. If no such item exists, the response body is null.*
 
 **Example Request:** */items?id=1*
 
@@ -208,21 +208,12 @@ Error retrieving items.
 ```
 
 **Error Handling:**
-
-*400 Bad Request – Item Not Found*
-
-*Returned Data Format:* Plain Text
-
-```
-Item not found.
-```
-
 *500 Internal Server Error.*
 
 *Returned Data Format:* Plain Text
 
 ```
-Error retrieving item details.
+Server error, try again later.
 ```
 
 ## *5. Search Items*
@@ -232,7 +223,7 @@ Error retrieving item details.
 
 **Returned Data Format:** JSON
 
-**Description:** *Searches items by keyword. Optional category filtering is supported.*
+**Description:** *Searches items by an optional keyword and/or category filter. The keyword is matched against title and description. At least one of search or filter must be provided.*
 
 **Query Parameters**
 search (optional): text to match
@@ -262,14 +253,12 @@ filter (optional): category name
 
 **Error Handling:**
 
-*400 Bad Request – Missing Search Term*
+*400 Bad Request – Neither search nor filter Provided*
 
 *Returned Data Format:* Plain Text
 
-*If the search query parameter is missing or empty:*
-
 ```
-Missing query parameter: 'keyword'
+Missing query parameter: 'search' 'filter'
 ```
 
 *500 Internal Server Error*
@@ -277,7 +266,7 @@ Missing query parameter: 'keyword'
 *Returned Data Format:* Plain Text
 
 ```
-Search failed.
+Server error, try again later.
 ```
 
 ## *6. Submit Purchase (Buy)*
@@ -287,13 +276,12 @@ Search failed.
 
 **Returned Data Format:** Plain text
 
-**Description:** *Look up for the item customer wants to buy, creates a purchase record for an item and updates its availability after buying.*
+**Description:** *Creates a purchase record for a single item and decrements its stock by 1. The buyer is determined from the authenticated session (session cookie); the client only provides the item_id. Requires the user to be logged in.*
 
 **Example Request:** */buy*
 
 ```
 {
-  "buyer_id": 2,
   "item_id": 3
 }
 ```
@@ -303,15 +291,24 @@ Search failed.
 ```
 JHDNV3VM
 ```
+(A randomly generated confirmation code.)
 
 **Error Handling:**
 
-*400 Bad Request – Missing Parameters*
+*401 Unauthorized – Not Logged In*
 
 *Returned Data Format:* Plain Text
 
 ```
-Missing parameter: 'buyer_id' 'item_id'.
+Not logged in.
+```
+
+*400 Bad Request – Missing Parameter*
+
+*Returned Data Format:* Plain Text
+
+```
+Missing parameter: 'item_id'.
 ```
 
 *400 Bad Request – Item Does Not Exist*
@@ -335,7 +332,7 @@ Item out of stock.
 *Returned Data Format:* Plain Text
 
 ```
-Transaction failed.
+Server error, try again later.
 ```
 
 ## *7. Bulk Purchase (Bulk Buy)*
