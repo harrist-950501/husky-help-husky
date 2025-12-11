@@ -426,8 +426,7 @@
     const metaInfo = gen("p");
     metaInfo.textContent =
       "Seller: #" + item.seller_id +
-      " · Stock: " + item.stock + " left" +
-      " · Posted: " + item.date;
+      " · Stock: " + item.stock + " left";
     metaInfo.classList.add("meta-info", "detail");
     return metaInfo;
   }
