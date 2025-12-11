@@ -209,16 +209,13 @@ app.post("/buy", requireLogin, async (req, res) => {
  */
 app.post("/bulk-buy", requireLogin, async (req, res) => {
   try {
-    res.type("text");
-
     let missing = requireParams(["items"], req.body);
     if (missing) {
       return res.status(CLIENT_SIDE_ERROR).type("text")
         .send(missing);
     }
 
-    let user = req.userId;
-    let items = req.body.items;
+    let user = req.userId, items = req.body.items;
 
     try {
       items = JSON.parse(items);
@@ -239,7 +236,7 @@ app.post("/bulk-buy", requireLogin, async (req, res) => {
     }
     await multipleTransactionMade(items, user, code);
 
-    res.send(code);
+    res.type("text").send(code);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
       .send(SERVER_ERROR_MESSAGE);
