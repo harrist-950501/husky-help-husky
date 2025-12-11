@@ -581,7 +581,7 @@ Item does not exist.
 *Returned Data Format:* Plain Text
 
 ```
-Error retrieving ratings.
+Server error, try again later.
 ```
 
 ## *11. Logout*
@@ -591,43 +591,17 @@ Error retrieving ratings.
 
 **Returned Data Format:** Plain text
 
-**Description:** *Logs out the current user by clearing their session.*
+**Description:** *Logs out the current user by clearing their session entry on the server and removing the session cookie. No request body is required; the session is determined from the cookie.*
 
 **Example Request:** */logout*
-
-```
-{
-  "user_id": 2
-}
-```
 
 **Example Success Response (200):**
 
 ```
-User logged out successfully
+Logout successful.
 ```
 
 **Error Handling:**
-
-*400 Bad Request – Missing Parameters*
-
-*Occurs when user_id is missing or empty in the request body.*
-
-*Error response (Plain text):*
-
-```
-Missing parameter: 'user_id'.
-```
-
-*400 Bad Request – Invalid User*
-
-*Occurs when no user matches the given user_id.*
-
-*Error response (Plain text):*
-
-```
-Invalid user.
-```
 
 *500 Server-side Error*
 
@@ -636,7 +610,7 @@ Invalid user.
 *Error response (Plain text):*
 
 ```
-Server error logging out.
+Server error, try again later.
 ```
 
 ## *12. Get User Profile*
@@ -652,7 +626,7 @@ Server error logging out.
 
 **Example Success Response (200):**
 
-```json
+```
 {
   "user_id": 2,
   "display_name": "Alice Smith",
@@ -676,7 +650,7 @@ No such user.
 *Returned Data Format:* Plain Text
 
 ```
-Could not retrieve profile.
+Server error, try again later.
 ```
 
 ## *13. Update User Profile*
@@ -686,7 +660,7 @@ Could not retrieve profile.
 
 **Returned Data Format:** JSON
 
-**Description:** *Creates or updates the profile information for a user. Accepts displayName (or display_name for backwards compatibility), address, and quote fields.*
+**Description:** *Creates or updates the profile information for a user. Accepts displayName (or display_name), address, and quote. Any field not provided will be stored as null (or left unchanged if you send the previous value).*
 
 **Optional Body Parameters:**
 
@@ -696,7 +670,7 @@ Could not retrieve profile.
 
 **Example Request:** */users/2/profile*
 
-```json
+```
 {
   "displayName": "Alice Smith",
   "address": "Seattle, WA",
@@ -706,7 +680,7 @@ Could not retrieve profile.
 
 **Example Success Response (200):**
 
-```json
+```
 {
   "user_id": 2,
   "display_name": "Alice Smith",
@@ -730,5 +704,5 @@ No such user.
 *Returned Data Format:* Plain Text
 
 ```
-Could not save profile.
+Server error, try again later.
 ```
