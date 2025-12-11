@@ -76,7 +76,6 @@
       allTransactions = Array.isArray(data) ? data : [];
       applySortAndRender();
     } catch (err) {
-      console.error(err);
       if (board) {
         board.textContent = "Could not load transactions.";
       }
@@ -423,7 +422,6 @@
         form.remove();
       })
       .catch(err => {
-        console.error(err);
         status.textContent = err.message || 'Could not submit rating.';
       });
   }

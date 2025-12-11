@@ -51,7 +51,6 @@
       const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile");
       if (!resp.ok) {
         const msg = await resp.text();
-        console.error("Failed to load profile:", msg);
         return;
       }
 
@@ -70,7 +69,7 @@
         id("quote-display").textContent = quote;
       }
     } catch (err) {
-      console.error(err);
+      // Error handling managed by UI status display
     }
   }
 
@@ -109,7 +108,6 @@
         showProfileStatus("Failed to save profile.", true);
       }
     } catch (err) {
-      console.error(err);
       showProfileStatus("Failed to save profile.", true);
     }
   }
