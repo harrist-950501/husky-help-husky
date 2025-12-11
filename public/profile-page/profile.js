@@ -16,7 +16,6 @@
 (function() {
   // Same demo user id as other pages for now.
   const CURRENT_USER_ID = Number(localStorage.getItem("userId"));
-  const JSON_TYPE = "application/json";
   const STATUS_TIMEOUT = 3000;
 
   window.addEventListener("load", init);
