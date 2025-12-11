@@ -364,6 +364,7 @@ app.post("/users/:id/profile", async (req, res) => {
   }
 });
 
+/* HELPERS */
 /**
  * Inserts a new rating row into the DB (no validation here).
  * @param {Object} db - Database connection.

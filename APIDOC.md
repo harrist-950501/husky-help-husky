@@ -348,16 +348,79 @@ Item out of stock.
 Transaction failed.
 ```
 
-## *7. Purchase History*
-**Request Format:** */history/:user_id*
+## *7. Bulk Purchase (Bulk Buy)*
+**Request Format:** */bulk-buy*
+
+**Request Type:** *POST*
+
+**Returned Data Format:** Plain text
+
+**Description:** *Processes a bulk purchase of multiple items at once. Creates a single transaction record with a shared confirmation code for all items. Requires user to be logged in (authenticated via session cookie).*
+
+**Required Body Parameters:**
+
+- `items` (JSON string): Array of item IDs to purchase, e.g., `"[1, 3, 5]"`
+
+**Example Request:** */bulk-buy*
+
+```
+{
+  "items": "[1, 3, 5]"
+}
+```
+
+**Example Success Response (200):**
+
+```
+KR7XM2HJ
+```
+
+**Error Handling:**
+
+*400 Bad Request – Missing Parameters*
+
+*Returned Data Format:* Plain Text
+
+```
+Missing parameter: 'items'.
+```
+
+*400 Bad Request – Invalid JSON*
+
+*Returned Data Format:* Plain Text
+
+```
+Items must be in JSON form.
+```
+
+*401 Unauthorized – Not Logged In*
+
+*Returned Data Format:* Plain Text
+
+```
+Not logged in.
+```
+
+*500 Internal Server Error*
+
+*Returned Data Format:* Plain Text
+
+```
+Transaction failed.
+```
+
+## *8. Purchase History*
+**Request Format:** */history*
 
 **Request Type:** *GET*
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns a list of user’s transaction history, including time, price and item information for each transaction.*
+**Description:** *Returns the transaction history for the currently logged-in user, ordered from most recent to oldest. Requires user to be authenticated via session cookie.*
 
-**Example Request:** */history/2*
+**Example Request:** */history*
+
+*No body parameters required. User ID is obtained from the authenticated session.*
 
 **Example Success Response (200):**
 
@@ -410,7 +473,7 @@ No such user.
 Could not retrieve history..
 ```
 
-## *8. Ratings*
+## *9. Ratings*
 **Request Format:** */ratings*
 
 **Request Type:** *POST*
@@ -479,7 +542,7 @@ Error submitting rating.
 Error submitting rating.
 ```
 
-## *9. Ratings - Retrieve Ratings*
+## *10. Ratings - Retrieve Ratings*
 **Request Format:** */items/:id/ratings*
 
 **Request Type:** *GET*
@@ -532,7 +595,7 @@ Item does not exist.
 Error retrieving ratings.
 ```
 
-## *10. Logout*
+## *11. Logout*
 **Request Format:** */logout*
 
 **Request Type:** *POST*
@@ -587,96 +650,36 @@ Invalid user.
 Server error logging out.
 ```
 
-# *Future Extensions (Not Implemented)*
-
-*This section describes a potential extension to the API for a future version of Husky Help Husky.*
-
-## Optional Feature 1: User Registration*
-**Request Format:** */users*
-
-**Request Type:** *POST*
-
-**Returned Data Format:** JSON
-
-**Description:** *Creates a new user account, validating uniqueness of username/email.*
-
-**Example Request:** */users*
-
-*with JSON Body:*
-
-```
-{
-  "username": "sarah@uw.edu",
-  "email": "sarah@uw.edu",
-  "password": "p@ssw0rd!"
-}
-```
-
-**Example Response:**
-
-```
-{
-  "userId": "u_2001",
-  "username": "sarah@uw.edu"
-}
-```
-
-**Error Handling:**
-
-*400 Bad Request*
-
-*Returned Data Format:* Plain Text
-
-```
-Provide valid 'username', 'email', and 'password'.
-```
-
-*500 Internal Server Error*
-
-*Returned Data Format:* Plain Text
-
-```
-Failed to create user.
-```
-
-## User Profile*
-**Request Format:** */users/:id*
+## *12. Get User Profile*
+**Request Format:** */users/:id/profile*
 
 **Request Type:** *GET*
 
 **Returned Data Format:** JSON
 
-**Description:** *Retrieves profile information for a specific user, including displayname, avatar, address and optionally their item listings or ratings if enabled.*
+**Description:** *Retrieves the profile information for a specific user, including display name, address, and quote. If no profile exists, a default one is created with the username as the initial display name.*
 
-**Example Request:** */users/u_1027*
+**Example Request:** */users/2/profile*
 
-**Example Response:**
+**Example Success Response (200):**
 
-```
+```json
 {
-  "userId": "u_1027",
-  "username": "dubs@uw.edu",
-  "profile": {
-    "displayName": "Dubs",
-    "bio": "Go Huskies!",
-    "avatarUrl": "/img/avatars/u_1027.png"
-  },
-  "stats": {
-    "itemsListed": 12,
-    "ratingsReceived": 5,
-    "avgRating": 4.8
-  }
+  "user_id": 2,
+  "display_name": "Alice Smith",
+  "address": "Seattle, WA",
+  "quote": "Go Huskies!"
 }
 ```
 
 **Error Handling:**
 
-*404 Not Found*
+*400 Bad Request – User Not Found*
 
 *Returned Data Format:* Plain Text
 
 ```
-User not found.
+No such user.
 ```
 
 *500 Internal Server Error*
@@ -684,5 +687,59 @@ User not found.
 *Returned Data Format:* Plain Text
 
 ```
-Failed to load user profile.
+Could not retrieve profile.
+```
+
+## *13. Update User Profile*
+**Request Format:** */users/:id/profile*
+
+**Request Type:** *POST*
+
+**Returned Data Format:** JSON
+
+**Description:** *Creates or updates the profile information for a user. Accepts displayName (or display_name for backwards compatibility), address, and quote fields.*
+
+**Optional Body Parameters:**
+
+- `displayName` (string): User's display name
+- `address` (string): User's address or location
+- `quote` (string): User's profile quote or bio
+
+**Example Request:** */users/2/profile*
+
+```json
+{
+  "displayName": "Alice Smith",
+  "address": "Seattle, WA",
+  "quote": "Go Huskies!"
+}
+```
+
+**Example Success Response (200):**
+
+```json
+{
+  "user_id": 2,
+  "display_name": "Alice Smith",
+  "address": "Seattle, WA",
+  "quote": "Go Huskies!"
+}
+```
+
+**Error Handling:**
+
+*400 Bad Request – User Not Found*
+
+*Returned Data Format:* Plain Text
+
+```
+No such user.
+```
+
+*500 Internal Server Error*
+
+*Returned Data Format:* Plain Text
+
+```
+Could not save profile.
 ```
