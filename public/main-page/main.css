@@ -390,6 +390,12 @@ html[data-theme="dark"] .cart-btn {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
 }
 
+html[data-theme="dark"] .cart-btn:disabled {
+  background: #40394f;
+  color: #b3accf;
+  border: 1px solid #5c5475;
+}
+
 /* ===== Item card detail ===== */
 
 .detail-view {
