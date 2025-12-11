@@ -434,7 +434,6 @@
    */
   function disconfirmOrder() {
     let orderConfirm = JSON.parse(localStorage.getItem("order-confirm"));
-    console.log(orderConfirm);
     if (orderConfirm) {
       localStorage.setItem("order-confirm", false);
 
