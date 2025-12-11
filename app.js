@@ -6,7 +6,8 @@
  *
  * This is the backend API for the Husky Help Husky second-hand trading site.
  * It handles login authentication, retrieving items, searching/filtering,
- * fetching item details, creating transactions, and viewing transaction history.
+ * fetching item details, creating transactions, ratings, and user profiles,
+ * as well as viewing transaction history.
  */
 "use strict";
 
@@ -264,7 +265,6 @@ app.get("/history", requireLogin, async (req, res) => {
  */
 app.post("/ratings", requireLogin, async (req, res) => {
   try {
-    // Normalize incoming payload to camelCase keys and inject logged-in user id
     let payload = {
       itemId: req.body.item_id || req.body.itemId,
       stars: req.body.stars,
