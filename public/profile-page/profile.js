@@ -147,11 +147,14 @@
    * @returns {Promise<boolean>} True when saved successfully, false otherwise.
    */
   async function persistProfile(profile) {
+    const form = new FormData();
+    form.append("displayName", profile.displayName || "");
+    form.append("address", profile.address || "");
+    form.append("quote", profile.quote || "");
+
     const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile", {
       method: "POST",
-      headers: {"Content-Type": JSON_TYPE},
-      body: JSON.stringify({displayName: profile.displayName,
-        address: profile.address, quote: profile.quote})
+      body: form
     });
 
     if (!resp.ok) {
