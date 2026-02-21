@@ -34,9 +34,11 @@ const TEN = 10;
 const FIVE = 5;
 const PORTNUM = 8000;
 
-const SESSION_COOKIE_OPTIONS = {
+const SESSION_MAX_AGE = 36 * 10 * 10 * 10 * 10 * 10; // 1 hour
+const REMEMBER_MAX_AGE = 30 * 24 * 60 * 60 * 1000;       // 30 days
+
+const BASE_COOKIE_OPTIONS = {
   httpOnly: true,
-  maxAge: TS * TEN * TEN * TEN * TEN * TEN,
   sameSite: "strict",
   path: "/"
 };
@@ -68,7 +70,11 @@ app.post("/login", async (req, res) => {
     }
 
     let sessionData = buildSession(user.id, user.username);
-    res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
+    const remember = String(req.body.remember) === "true";
+    res.cookie("session", sessionData.sessionId, {
+      ...BASE_COOKIE_OPTIONS,
+      maxAge: remember ? REMEMBER_MAX_AGE : SESSION_MAX_AGE
+    });
     res.json(sessionData.user);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR).type("text")
@@ -92,7 +98,13 @@ app.post("/signup", async (req, res) => {
     let newUserId = await dbUserCreate(username, password, email);
 
     let sessionData = buildSession(newUserId, username);
-    res.cookie("session", sessionData.sessionId, SESSION_COOKIE_OPTIONS);
+    // Check whether the user wants to be rememebered
+    // If so, set a longer expiration for the cookie
+    const remember = String(req.body.remember) === "true";
+    res.cookie("session", sessionData.sessionId, {
+      ...BASE_COOKIE_OPTIONS,
+      maxAge: remember ? REMEMBER_MAX_AGE : SESSION_MAX_AGE
+    });
     res.json(sessionData.user);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR)
@@ -111,7 +123,7 @@ app.post("/logout", (req, res) => {
     delete sessions[sessionId];
   }
 
-  res.clearCookie("session");
+  res.clearCookie("session", {path: "/"});
   res.type("text")
     .send("Logout successful.");
 });

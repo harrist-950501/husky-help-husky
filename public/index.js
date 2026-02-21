@@ -24,7 +24,26 @@
   function init() {
     // One handler for both login and signup.
     id("auth-form").addEventListener("submit", handleAuthSubmit);
+
+    // const saved = localStorage.getItem("rememberedUsername");
+    // if (saved) {
+    //   id("username").value = saved;
+    //   id("remember").checked = true;
+    // }
   }
+
+  // function rememberLogin(data) {
+  //   localStorage.setItem("userId", data.id);
+  //   localStorage.setItem("username", data.username);
+
+  //   if (id("remember").checked) {
+  //     localStorage.setItem("rememberedUsername", data.username);
+  //   } else {
+  //     localStorage.removeItem("rememberedUsername");
+  //   }
+
+  //   window.location.href = "main-page/main.html";
+  // }
 
   /**
    * Master submit handler: decides login vs signup based on which button was pressed.
@@ -108,6 +127,7 @@
     let body = new FormData();
     body.append("username", username);
     body.append("password", password);
+    body.append("remember", id("remember").checked);
     if (mode === "signup") {
       body.append("email", email);
     }
