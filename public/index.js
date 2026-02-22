@@ -17,33 +17,16 @@
 
 (function() {
   window.addEventListener("DOMContentLoaded", init);
+  const REMEMBERED_USERNAME_KEY = "rememberedUsername";
 
   /**
    * Initializes the auth page by wiring the form submit handler.
    */
-  function init() {
+  async function init() {
     // One handler for both login and signup.
     id("auth-form").addEventListener("submit", handleAuthSubmit);
-
-    // const saved = localStorage.getItem("rememberedUsername");
-    // if (saved) {
-    //   id("username").value = saved;
-    //   id("remember").checked = true;
-    // }
+    await restoreRememberedUsername();
   }
-
-  // function rememberLogin(data) {
-  //   localStorage.setItem("userId", data.id);
-  //   localStorage.setItem("username", data.username);
-
-  //   if (id("remember").checked) {
-  //     localStorage.setItem("rememberedUsername", data.username);
-  //   } else {
-  //     localStorage.removeItem("rememberedUsername");
-  //   }
-
-  //   window.location.href = "main-page/main.html";
-  // }
 
   /**
    * Master submit handler: decides login vs signup based on which button was pressed.
@@ -167,7 +150,44 @@
   function persistLoginAndRedirect(data) {
     localStorage.setItem("userId", data.id);
     localStorage.setItem("username", data.username);
+    if (id("remember").checked) {
+      localStorage.setItem(REMEMBERED_USERNAME_KEY, data.username);
+    } else {
+      localStorage.removeItem(REMEMBERED_USERNAME_KEY);
+    }
     window.location.href = "main-page/main.html";
+  }
+
+  /**
+   * Prefills username only when a remembered username exists and session is valid.
+   */
+  async function restoreRememberedUsername() {
+    const rememberedUsername = localStorage.getItem(REMEMBERED_USERNAME_KEY);
+    if (!rememberedUsername) {
+      return;
+    }
+
+    const validSession = await hasValidSession();
+    if (validSession) {
+      id("username").value = rememberedUsername;
+      id("remember").checked = true;
+    } else {
+      localStorage.removeItem(REMEMBERED_USERNAME_KEY);
+    }
+  }
+
+  /**
+   * Returns true when the current session cookie can access a protected endpoint.
+   * @returns {Promise<boolean>} Whether session is still valid.
+   */
+  async function hasValidSession() {
+    try {
+      const response = await fetch("/session-status");
+      await statusCheck(response);
+      return true;
+    } catch (err) {
+      return false;
+    }
   }
 
   /**

@@ -129,6 +129,13 @@ app.post("/logout", (req, res) => {
 });
 
 /**
+ * Returns whether the current cookie maps to a valid logged-in session.
+ */
+app.get("/session-status", requireLogin, (req, res) => {
+  res.json({loggedIn: true});
+});
+
+/**
  * Returns one item by id or all items when no id is given.
  */
 app.get("/items", async (req, res) => {

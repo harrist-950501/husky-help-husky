@@ -84,6 +84,28 @@ html[data-theme="dark"] #welcome-area p {
   padding: 6px 0;
 }
 
+#remember-row {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d9d2f1;
+  border-radius: 12px;
+  background: #f8f6ff;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.remember-label {
+  gap: 8px !important;
+  color: #4d4096;
+  font-weight: 600;
+}
+
+.remember-label input[type="checkbox"] {
+  margin: 0;
+  width: auto;
+  accent-color: #887ec9;
+}
+
 html[data-theme="dark"] #login-area {
   background-color: #1f1b2e;
   border-color: #4b4268;
@@ -106,4 +128,13 @@ html[data-theme="dark"] #login-area input {
 
 html[data-theme="dark"] #login-area input::placeholder {
   color: #9a94b8;
+}
+
+html[data-theme="dark"] #remember-row {
+  background: #2a243c;
+  border-color: #5f5685;
+}
+
+html[data-theme="dark"] .remember-label {
+  color: #d6cef8;
 }

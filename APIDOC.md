@@ -130,7 +130,46 @@ Please use your uw email to sign up.
 Server error, try again later.
 ```
 
-## *3. Item List*
+## *3. Session Status*
+**Request Format:** */session-status*
+
+**Request Type:** *GET*
+
+**Returned Data Format:** JSON
+
+**Description:** *Checks whether the current `session` cookie maps to a valid logged-in session.*
+
+**Authentication:** *Required (`session` cookie).*
+
+**Example Request:** */session-status*
+
+**Example Success Response (200):**
+
+```
+{
+  "loggedIn": true
+}
+```
+
+**Error Handling:**
+
+*401 Unauthorized – Not Logged In*
+
+*Error response (Plain text):*
+
+```
+Not logged in.
+```
+
+*500 Server-side Error*
+
+*Error response (Plain text):*
+
+```
+Server error, try again later.
+```
+
+## *4. Item List*
 **Request Format:** */items*
 
 **Request Type:** *GET*
@@ -180,7 +219,7 @@ Server error, try again later.
 Server error, try again later.
 ```
 
-## *4. Item Details*
+## *5. Item Details*
 **Request Format:** */items?id=:id*
 
 **Request Type:** *GET*
@@ -216,7 +255,7 @@ Server error, try again later.
 Server error, try again later.
 ```
 
-## *5. Search Items*
+## *6. Search Items*
 **Request Format:** */items/search?search=&filter=*
 
 **Request Type:** *GET*
@@ -269,7 +308,7 @@ Missing query parameter: 'search' 'filter'
 Server error, try again later.
 ```
 
-## *6. Submit Purchase (Buy)*
+## *7. Submit Purchase (Buy)*
 **Request Format:** */buy*
 
 **Request Type:** *POST*
@@ -335,7 +374,7 @@ Item out of stock.
 Server error, try again later.
 ```
 
-## *7. Bulk Purchase (Bulk Buy)*
+## *8. Bulk Purchase (Bulk Buy)*
 **Request Format:** */bulk-buy*
 
 **Request Type:** *POST*
@@ -412,7 +451,7 @@ Not enough stock for purchase.
 Server error, try again later.
 ```
 
-## *8. Purchase History*
+## *9. Purchase History*
 **Request Format:** */history*
 
 **Request Type:** *GET*
@@ -476,7 +515,7 @@ Not logged in.
 Server error, try again later.
 ```
 
-## *9. Ratings*
+## *10. Ratings*
 **Request Format:** */ratings*
 
 **Request Type:** *POST*
@@ -531,7 +570,7 @@ Not logged in.
 Server error, try again later.
 ```
 
-## *10. Ratings - Retrieve Ratings*
+## *11. Ratings - Retrieve Ratings*
 **Request Format:** */items/:id/ratings*
 
 **Request Type:** *GET*
@@ -584,7 +623,7 @@ Item does not exist.
 Server error, try again later.
 ```
 
-## *11. Logout*
+## *12. Logout*
 **Request Format:** */logout*
 
 **Request Type:** *POST*
@@ -613,7 +652,7 @@ Logout successful.
 Server error, try again later.
 ```
 
-## *12. Get User Profile*
+## *13. Get User Profile*
 **Request Format:** */users/:id/profile*
 
 **Request Type:** *GET*
@@ -653,7 +692,7 @@ No such user.
 Server error, try again later.
 ```
 
-## *13. Update User Profile*
+## *14. Update User Profile*
 **Request Format:** */users/:id/profile*
 
 **Request Type:** *POST*
