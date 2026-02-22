@@ -132,7 +132,10 @@ app.post("/logout", (req, res) => {
  * Returns whether the current cookie maps to a valid logged-in session.
  */
 app.get("/session-status", requireLogin, (req, res) => {
-  res.json({loggedIn: true});
+  res.json({
+    loggedIn: true,
+    userId: req.userId
+  });
 });
 
 /**
@@ -162,7 +165,6 @@ app.get("/items/search", async (req, res) => {
     let filter = req.query.filter;
     if (!keyword && !filter) {
       res.status(CLIENT_SIDE_ERROR).type("text")
-        .type("text")
         .send("Missing query parameter: 'search' 'filter'");
     } else {
       let searchResult = await dbItemSearch(keyword, filter);
@@ -290,7 +292,7 @@ app.get("/items/:id/ratings", async (req, res) => {
  * Returns the profile information for a user.
  * If a profile does not exist yet, an empty one is created.
  */
-app.get("/users/:id/profile", async (req, res) => {
+app.get("/users/:id/profile", requireLogin, async (req, res) => {
   try {
     let user = await dbUserGet(req.params.id);
     if (!user) {
@@ -312,7 +314,7 @@ app.get("/users/:id/profile", async (req, res) => {
 /**
  * Creates or updates the profile information for a user.
  */
-app.post("/users/:id/profile", async (req, res) => {
+app.post("/users/:id/profile", requireLogin, async (req, res) => {
   try {
     let user = await dbUserGet(req.params.id);
     if (!user) {

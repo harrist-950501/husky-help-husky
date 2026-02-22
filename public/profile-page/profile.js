@@ -14,8 +14,7 @@
 "use strict";
 
 (function() {
-  // Same demo user id as other pages for now.
-  const CURRENT_USER_ID = Number(localStorage.getItem("userId"));
+  let currentUserId = null;
   const STATUS_TIMEOUT = 3000;
 
   window.addEventListener("load", init);
@@ -23,7 +22,23 @@
   /**
    * Initialize event listeners and load the profile.
    */
-  function init() {
+  async function init() {
+    let session = null;
+    try {
+      session = await dataFetch("/session-status", true);
+    } catch (err) {
+      window.location.href = "../index.html";
+      return;
+    }
+
+    if (!session || !session.loggedIn || !session.userId) {
+      window.location.href = "../index.html";
+      return;
+    }
+
+    currentUserId = Number(session.userId);
+    localStorage.setItem("userId", String(currentUserId));
+
     let backBtn = id("back");
     if (backBtn) {
       backBtn.addEventListener("click", back);
@@ -48,17 +63,11 @@
   }
 
   /**
-   * Fetch profile information for CURRENT_USER_ID and render it.
+   * Fetch profile information for the logged-in user and render it.
    */
   async function loadProfile() {
     try {
-      const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile");
-      if (!resp.ok) {
-        const msg = await resp.text();
-        return msg;
-      }
-
-      const data = await resp.json();
+      const data = await dataFetch("/users/" + currentUserId + "/profile", true);
       const displayName = data['display_name'] || data.username || "";
       const address = data.address || "";
       const quote = data.quote || "";
@@ -73,7 +82,7 @@
         id("quote-display").textContent = quote;
       }
     } catch (err) {
-      // Error handling managed by UI status display
+      showStatus("Could not load profile.", err.message, true);
     }
   }
 
@@ -109,10 +118,10 @@
     try {
       const ok = await persistProfile(profile);
       if (!ok) {
-        showProfileStatus("Failed to save profile.", true);
+        showStatus("Save failed.", "Failed to save profile.", true);
       }
     } catch (err) {
-      showProfileStatus("Failed to save profile.", true);
+      showStatus("Save failed.", "Failed to save profile.", true);
     }
   }
 
@@ -156,43 +165,82 @@
     form.append("address", profile.address || "");
     form.append("quote", profile.quote || "");
 
-    const resp = await fetch("/users/" + CURRENT_USER_ID + "/profile", {
-      method: "POST",
-      body: form
-    });
-
-    if (!resp.ok) {
-      const msg = await resp.text();
-      showProfileStatus(msg || "Failed to save profile.", true);
+    try {
+      await dataFetch("/users/" + currentUserId + "/profile", true, form);
+      showStatus("Profile saved.", "Your changes were saved successfully.", false);
+      return true;
+    } catch (err) {
+      if (err.message) {
+        showStatus("Save failed.", err.message, true);
+      } else {
+        showStatus("Save failed.", "Failed to save profile.", true);
+      }
       return false;
     }
-    showProfileStatus("Profile saved.", false);
-    return true;
   }
 
   /**
    * Show a short status message on the profile page.
+   * @param {string} title - Short heading text for the status area.
    * @param {string} message - Message text to show to the user.
    * @param {boolean} isError - When true, style the message as an error.
    */
-  function showProfileStatus(message, isError) {
-    let status = id("profile-status");
-    if (!status) {
-      status = document.createElement("div");
-      status.id = "profile-status";
-      status.className = "profile-status";
-      const main = document.querySelector("main") || document.body;
-      main.insertBefore(status, main.firstChild);
-    }
-    status.textContent = message;
+  function showStatus(title, message, isError) {
+    const status = id("status-message");
+    status.classList.remove("hidden");
+    qs("#status-message h2").textContent = title;
+    qs("#status-message p").textContent = message;
     if (isError) {
       status.classList.add("error");
     } else {
       status.classList.remove("error");
     }
     setTimeout(() => {
-      status.textContent = "";
+      status.classList.add("hidden");
+      status.classList.remove("error");
+      qs("#status-message h2").textContent = "";
+      qs("#status-message p").textContent = "";
     }, STATUS_TIMEOUT);
+  }
+
+  /**
+   * Fetches data from the given URL using GET or POST and returns the response
+   * as parsed JSON or plain text.
+   * @param {string} url - Endpoint URL to request.
+   * @param {boolean} isJson - Whether to parse the response as JSON (true) or text.
+   * @param {FormData} [postParams] - Optional form data to send via POST.
+   * @returns {Object|string} Parsed JSON data or response text from the request.
+   */
+  async function dataFetch(url, isJson, postParams) {
+    try {
+      let response;
+      if (postParams) {
+        response = await fetch(url, {method: "POST", body: postParams});
+      } else {
+        response = await fetch(url);
+      }
+      await statusCheck(response);
+      if (isJson) {
+        return await response.json();
+      }
+      return await response.text();
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
+  /**
+   * Helper function to return the response's result text if successful, otherwise
+   * returns the rejected Promise result with an error status and corresponding text.
+   * @param {object} res - response to check for success/error.
+   * @return {object} - valid response if response was successful, otherwise rejected
+   *                    Promise result.
+   */
+  async function statusCheck(res) {
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+    return res;
   }
 
   /**
@@ -253,5 +301,14 @@
    */
   function id(id) {
     return document.getElementById(id);
+  }
+
+  /**
+   * Returns first element matching selector.
+   * @param {string} selector - CSS query selector.
+   * @returns {object} - DOM object associated selector.
+   */
+  function qs(selector) {
+    return document.querySelector(selector);
   }
 })();

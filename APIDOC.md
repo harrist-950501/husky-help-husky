@@ -137,7 +137,7 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Checks whether the current `session` cookie maps to a valid logged-in session.*
+**Description:** *Checks whether the current `session` cookie maps to a valid logged-in session and returns the authenticated user id.*
 
 **Authentication:** *Required (`session` cookie).*
 
@@ -147,7 +147,8 @@ Server error, try again later.
 
 ```
 {
-  "loggedIn": true
+  "loggedIn": true,
+  "userId": 2
 }
 ```
 
@@ -317,6 +318,8 @@ Server error, try again later.
 
 **Description:** *Creates a purchase record for a single item and decrements its stock by 1. The buyer is determined from the authenticated session (session cookie); the client only provides the item_id. Requires the user to be logged in.*
 
+**Authentication:** *Required (`session` cookie).*
+
 **Example Request:** */buy*
 
 ```
@@ -382,6 +385,8 @@ Server error, try again later.
 **Returned Data Format:** Plain text
 
 **Description:** *Processes a bulk purchase of multiple items at once. Uses a single shared confirmation code for all items. Each item in the bulk request includes an id and a quantity to purchase. The buyer is determined from the authenticated session (session cookie). Requires the user to be logged in.*
+
+**Authentication:** *Required (`session` cookie).*
 
 **Example Request:** */bulk-buy*
 
@@ -460,6 +465,8 @@ Server error, try again later.
 
 **Description:** *Returns the transaction history for the currently logged-in user, ordered from most recent to oldest. The user ID is obtained from the authenticated session, not from the client.*
 
+**Authentication:** *Required (`session` cookie).*
+
 **Example Request:** */history*
 
 **Example Success Response (200):**
@@ -523,6 +530,8 @@ Server error, try again later.
 **Returned Data Format:** JSON
 
 **Description:** *Allows a logged-in user to submit a star rating and optional comment for an item. The user ID is taken from the current session; the client does not provide a user_id. Validates that the item and user exist and that the star rating is an integer between 1 and 5.*
+
+**Authentication:** *Required (`session` cookie).*
 
 **Example Request:** */ratings*
 
@@ -661,6 +670,8 @@ Server error, try again later.
 
 **Description:** *Retrieves the profile information for a specific user, including display name, address, and quote. If no profile exists, a default one is created with the username as the initial display name.*
 
+**Authentication:** *Required (`session` cookie).*
+
 **Example Request:** */users/2/profile*
 
 **Example Success Response (200):**
@@ -675,6 +686,14 @@ Server error, try again later.
 ```
 
 **Error Handling:**
+
+*401 Unauthorized – Not Logged In*
+
+*Returned Data Format:* Plain Text
+
+```
+Not logged in.
+```
 
 *400 Bad Request – User Not Found*
 
@@ -700,6 +719,8 @@ Server error, try again later.
 **Returned Data Format:** JSON
 
 **Description:** *Creates or updates the profile information for a user. Accepts displayName (or display_name), address, and quote. Any field not provided will be stored as null (or left unchanged if you send the previous value).*
+
+**Authentication:** *Required (`session` cookie).*
 
 **Optional Body Parameters:**
 
@@ -729,6 +750,14 @@ Server error, try again later.
 ```
 
 **Error Handling:**
+
+*401 Unauthorized – Not Logged In*
+
+*Returned Data Format:* Plain Text
+
+```
+Not logged in.
+```
 
 *400 Bad Request – User Not Found*
 

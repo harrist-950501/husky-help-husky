@@ -18,6 +18,11 @@ main {
   gap: 30px;
 }
 
+#status-message {
+  width: 90%;
+  box-sizing: border-box;
+}
+
 /* ===== Header ===== */
 header {
   display: flex;
