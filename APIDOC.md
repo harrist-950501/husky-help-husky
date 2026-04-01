@@ -586,29 +586,38 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns the average rating, count, and list of all ratings for a specific item.*
+**Description:** *Returns the average rating, count, and list of all ratings for a specific item. Also, it includes rater's information.*
 
-**Example Request:** */items/1/ratings*
+**Example Request:** */items/8/ratings*
 
 **Example Success Response (200):**
 
 ```
 {
-  "itemId": 1,
-  "average": 4.5,
-  "count": 2,
+  "itemId": 8,
+  "average": 2.8333333333333335,
+  "count": 6,
   "ratings": [
     {
-      "stars": 5,
-      "comment": "Great textbook, very helpful!",
-      "date": "2025-12-03 10:30:00",
-      "user_id": 2
+      "stars": 3,
+      "comment": "test",
+      "date": "2025-12-10 20:20:52",
+      "user_id": 10,
+      "username": "harry"
     },
     {
       "stars": 4,
+      "comment": "Good quality!!",
+      "date": "2025-12-08 22:31:30",
+      "user_id": 10,
+      "username": "harry"
+    },
+    {
+      "stars": 3,
       "comment": null,
-      "date": "2025-12-02 14:15:00",
-      "user_id": 3
+      "date": "2025-12-03 15:19:56",
+      "user_id": 1,
+      "username": "alice"
     }
   ]
 }

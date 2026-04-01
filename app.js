@@ -475,15 +475,27 @@ async function getRatingsForItem(db, itemId) {
     "SELECT AVG(stars) AS average, COUNT(*) AS count FROM ratings WHERE item_id = ?;",
     [itemId]
   );
-  let ratings = await db.all(
-    "SELECT stars, comment, date, user_id FROM ratings WHERE item_id = ? ORDER BY date DESC;",
-    [itemId]
-  );
+  let ratings = await dbRatingsGetWithUser(db, itemId);
   return {
     average: summary.average || null,
     count: summary.count || 0,
     ratings: ratings
   };
+}
+
+/**
+ * Retrieves ratings for an item joined with reviewer username.
+ * @param {Object} db - Database connection.
+ * @param {number} itemId - Item ID to get ratings for.
+ * @return {Object[]} Ratings rows with username.
+ */
+async function dbRatingsGetWithUser(db, itemId) {
+  let query = "SELECT r.stars, r.comment, r.date, r.user_id, u.username " +
+    "FROM ratings r " +
+    "JOIN users u ON r.user_id = u.id " +
+    "WHERE r.item_id = ? " +
+    "ORDER BY r.date DESC;";
+  return await db.all(query, [itemId]);
 }
 
 /**
@@ -548,6 +560,23 @@ async function dbItemGetAll() {
  */
 async function dbItemGet(id) {
   let query = "SELECT * FROM items WHERE id = ?;";
+  let db = await getDBConnection();
+  let item = await db.get(query, [id]);
+  await db.close();
+  return item;
+}
+
+/**
+ * Retrieves a single item joined with seller username.
+ * This helper keeps dbItemGet unchanged for existing callers.
+ * @param {number} id - The id of the item to retrieve.
+ * @return {Object|null} Joined row with item fields and seller_username.
+ */
+async function dbItemGetWithSeller(id) {
+  let query = "SELECT i.*, u.username AS seller_username " +
+    "FROM items i " +
+    "JOIN users u ON i.seller_id = u.id " +
+    "WHERE i.id = ?;";
   let db = await getDBConnection();
   let item = await db.get(query, [id]);
   await db.close();
