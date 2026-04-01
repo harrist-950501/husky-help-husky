@@ -32,7 +32,9 @@ This project was built as a creative full-stack web application centered on camp
 
 ## Live Site
 
-Add deployment URL here.
+GitHub does not support hosting this project’s backend API and SQLite database setup, so there is not a live deployed site yet. A demo video link will be added here instead.
+
+I may deploy the full site in the future, but there is no guaranteed timeline.
 
 ## Author
 
