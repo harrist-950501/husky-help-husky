@@ -3,3 +3,17 @@ node_modules
 !/.gitignore
 !/.gitlab-ci.yml
 project-summary.md
+
+# Dependencies
+node_modules/
+
+# Local database (replaced by PostgreSQL on Railway)
+husky.db
+*.db
+
+# Environment variables - never commit secrets
+.env
+
+# OS junk
+.DS_Store
+Thumbs.db
