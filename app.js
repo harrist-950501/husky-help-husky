@@ -11,6 +11,8 @@
  */
 "use strict";
 
+require('dotenv').config();
+
 const express = require("express");
 const app = express();
 
@@ -25,6 +27,24 @@ app.use(multer().none());
 
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
+
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+async function query(text, params) {
+  let result = await pool.query(text, params);
+  return result.rows;
+}
+
+async function testConnection() {
+  const result = await query('SELECT NOW()');
+  console.log('Database connected:', result[0].now);
+}
+testConnection();
 
 const CLIENT_SIDE_ERROR = 400;
 const CLIENT_INVALID_PARAM = 401;
