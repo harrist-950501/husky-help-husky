@@ -10,6 +10,7 @@ node_modules/
 # Local database (replaced by PostgreSQL on Railway)
 husky.db
 *.db
+seed.sql
 
 # Environment variables - never commit secrets
 .env
