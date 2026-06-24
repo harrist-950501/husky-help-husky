@@ -40,12 +40,6 @@ async function query(text, params) {
   return result.rows;
 }
 
-async function testConnection() {
-  const result = await query('SELECT NOW()');
-  console.log('Database connected:', result[0].now);
-}
-testConnection();
-
 const CLIENT_SIDE_ERROR = 400;
 const CLIENT_INVALID_PARAM = 401;
 const SERVER_SIDE_ERROR = 500;
