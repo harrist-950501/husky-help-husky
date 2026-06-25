@@ -519,10 +519,9 @@ async function dbRatingsGetWithUser(db, itemId) {
  * @return {Object|null} Matching user row if credentials are valid, otherwise null.
  */
 async function dbUserCheck(username, password) {
-  let query = "SELECT * FROM users WHERE username = ? AND password = ?;";
-  let db = await getDBConnection();
-  let user = await db.get(query, [username, password]);
-  await db.close();
+  let texts = "SELECT * FROM users WHERE username = $1 AND password = $2;";
+  let result = await query(texts, [username, password]);
+  let user = result[0];
   return user;
 }
 
@@ -547,12 +546,10 @@ async function dbUserGetByUsername(username) {
  * @return {number} The id of the newly created user.
  */
 async function dbUserCreate(username, password, email) {
-  let db = await getDBConnection();
-  let query = "INSERT INTO users (username, password, email) VALUES (?, ?, ?);";
-  let result = await db.run(query, [username, password, email]);
-  await db.close();
+  let texts = "INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id;";
+  let result = await query(texts, [username, password, email]);
 
-  let userId = result.lastID;
+  let userId = result[0].id;
   return userId;
 }
 
