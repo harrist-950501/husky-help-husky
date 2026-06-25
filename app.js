@@ -159,7 +159,13 @@ app.get("/items", async (req, res) => {
   try {
     let id = req.query.id;
     if (id) {
-      res.json(await dbItemGet(id));
+      let item = await dbItemGet(id);
+      if (!item) {
+        res.status(CLIENT_SIDE_ERROR).type("text")
+          .send("Item does not exist.");
+        return;
+      }
+      res.json(item);
     } else {
       res.json(await dbItemGetAll());
     }
@@ -558,10 +564,7 @@ async function dbUserCreate(username, password, email) {
  * @return {Object[]} array of all item rows.
  */
 async function dbItemGetAll() {
-  let db = await getDBConnection();
-  let items = await db.all("SELECT * FROM items;");
-  await db.close();
-  return items;
+  return await query("SELECT * FROM items;");
 }
 
 /**
@@ -570,10 +573,9 @@ async function dbItemGetAll() {
  * @return {Object|null} Item row for the given id, or null if no such item exists.
  */
 async function dbItemGet(id) {
-  let query = "SELECT * FROM items WHERE id = ?;";
-  let db = await getDBConnection();
-  let item = await db.get(query, [id]);
-  await db.close();
+  let texts = "SELECT * FROM items WHERE id = $1;";
+  let result = await query(texts, [id]);
+  let item = result[0];
   return item;
 }
 
@@ -595,35 +597,32 @@ async function dbItemGetWithSeller(id) {
 }
 
 /**
- * Searches items by a keyword and optional category filter.
+ * Searches items by an optional keyword and/or optional category filter.
+ * At least one must be provided.
  * The keyword is matched against the title and description fields.
- * @param {string} keyword - Keyword to search for in title and description.
+ * @param {string} keyword - Optional keyword to search for in title and description.
  * @param {string} filter - Optional category name to filter results by.
  * @return {Object[]} array of items that match the search criteria.
  */
 async function dbItemSearch(keyword, filter) {
-  let query = "SELECT * FROM items ";
+  let texts = "SELECT * FROM items ";
   let params = [];
 
   if (keyword && filter) {
-    query += "WHERE (title LIKE ? OR description LIKE ?) AND category = ?";
+    texts += "WHERE (title ILIKE $1 OR description ILIKE $1) AND category = $2";
     keyword = "%" + keyword + "%";
-    params.push(keyword);
     params.push(keyword);
     params.push(filter);
   } else if (keyword) {
-    query += "WHERE title LIKE ? OR description LIKE ?";
+    texts += "WHERE title ILIKE $1 OR description ILIKE $1";
     keyword = "%" + keyword + "%";
     params.push(keyword);
-    params.push(keyword);
   } else {
-    query += "WHERE category = ?";
+    texts += "WHERE category = $1";
     params.push(filter);
   }
 
-  let db = await getDBConnection();
-  let searchResult = await db.all(query, params);
-  await db.close();
+  let searchResult = await query(texts, params);
 
   return searchResult;
 }
@@ -634,11 +633,9 @@ async function dbItemSearch(keyword, filter) {
  * @return {boolean} True if code exists, false otherwise.
  */
 async function dbCheckCodeDuplicate(code) {
-  let db = await getDBConnection();
-  let query = "SELECT * FROM transactions WHERE confirmation_code = ?";
-  let transaction = await db.get(query, [code]);
-  await db.close();
-  if (transaction) {
+  let texts = "SELECT * FROM transactions WHERE confirmation_code = $1;";
+  let transaction = await query(texts, [code]);
+  if (transaction[0]) {
     return true;
   }
   return false;
@@ -649,10 +646,8 @@ async function dbCheckCodeDuplicate(code) {
  * @param {number} id - The id of the item whose stock should be reduced.
  */
 async function dbItemStockSubtract(id) {
-  let query = "UPDATE items SET stock = stock - 1 WHERE id = ?";
-  let db = await getDBConnection();
-  await db.run(query, [id]);
-  await db.close();
+  let texts = "UPDATE items SET stock = stock - 1 WHERE id = $1;";
+  await query(texts, [id]);
 }
 
 /**
@@ -663,11 +658,9 @@ async function dbItemStockSubtract(id) {
  * @param {string} code - Confirmation code for the transaction.
  */
 async function dbTransactionMade(buyerId, sellerId, itemId, code) {
-  let query = "INSERT INTO transactions (buyer_id, seller_id, item_id, confirmation_code) " +
-    "VALUES (?, ?, ?, ?)";
-  let db = await getDBConnection();
-  await db.run(query, [buyerId, sellerId, itemId, code]);
-  await db.close();
+  let texts = "INSERT INTO transactions (buyer_id, seller_id, item_id, confirmation_code) " +
+    "VALUES ($1, $2, $3, $4)";
+  await query(texts, [buyerId, sellerId, itemId, code]);
 }
 
 /**
