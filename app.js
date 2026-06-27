@@ -16,9 +16,6 @@ require('dotenv').config();
 const express = require("express");
 const app = express();
 
-const sqlite3 = require('sqlite3');
-const sqlite = require('sqlite');
-
 const multer = require("multer");
 
 app.use(express.urlencoded({extended: true}));
@@ -110,6 +107,8 @@ app.post("/signup", async (req, res) => {
 
     let {username, password, email} = validationResult;
     let newUserId = await dbUserCreate(username, password, email);
+
+    await dbProfileCreate(newUserId, username);
 
     let sessionData = buildSession(newUserId, username);
     // Check whether the user wants to be rememebered
@@ -283,18 +282,14 @@ app.post("/ratings", requireLogin, async (req, res) => {
 app.get("/items/:id/ratings", async (req, res) => {
   try {
     let itemId = req.params.id;
-    let db = await getDBConnection();
-
-    let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
+    let item = await dbItemGet(itemId);
     if (!item) {
-      await db.close();
       res.status(CLIENT_SIDE_ERROR).type("text")
         .send("Item does not exist.");
       return;
     }
 
-    let summary = await getRatingsForItem(db, itemId);
-    await db.close();
+    let summary = await getRatingsForItem(itemId);
 
     res.json({
       itemId: itemId,
@@ -310,7 +305,6 @@ app.get("/items/:id/ratings", async (req, res) => {
 
 /**
  * Returns the profile information for a user.
- * If a profile does not exist yet, an empty one is created.
  */
 app.get("/users/:id/profile", requireLogin, async (req, res) => {
   try {
@@ -321,8 +315,6 @@ app.get("/users/:id/profile", requireLogin, async (req, res) => {
       return;
     }
 
-    // Ensure there is at least a default profile row.
-    await dbUserProfileEnsure(user.id, user.username);
     let profile = await dbUserProfileGet(user.id);
     res.json(profile);
   } catch (err) {
@@ -332,10 +324,16 @@ app.get("/users/:id/profile", requireLogin, async (req, res) => {
 });
 
 /**
- * Creates or updates the profile information for a user.
+ * Updates the profile information for a user.
  */
 app.post("/users/:id/profile", requireLogin, async (req, res) => {
   try {
+    if (Number(req.params.id) !== req.userId) {
+      res.status(CLIENT_INVALID_PARAM).type("text")
+        .send("Cannot update another user's profile.");
+      return;
+    }
+
     let user = await dbUserGet(req.params.id);
     if (!user) {
       res.status(CLIENT_SIDE_ERROR).type("text")
@@ -349,7 +347,7 @@ app.post("/users/:id/profile", requireLogin, async (req, res) => {
       quote: req.body.quote || null
     };
 
-    let saved = await dbUserProfileUpsert(user.id, profileData);
+    let saved = await dbUserProfileUpdate(user.id, profileData);
     res.json(saved);
   } catch (err) {
     res.status(SERVER_SIDE_ERROR).type("text")
@@ -470,32 +468,31 @@ async function validateSignupBody(body) {
 
 /**
  * Inserts a new rating row into the DB (no validation here).
- * @param {Object} db - Database connection.
  * @param {number} itemId - Item ID for rating.
  * @param {number} userId - User ID for rating.
  * @param {number} stars - Star rating value.
  * @param {string} comment - Optional comment text.
  */
-async function insertRatingRow(db, itemId, userId, stars, comment) {
+async function insertRatingRow(itemId, userId, stars, comment) {
   let finalComment = comment || null;
-  await db.run(
-    "INSERT INTO ratings (item_id, user_id, stars, comment) VALUES (?, ?, ?, ?);",
+  await query(
+    "INSERT INTO ratings (item_id, user_id, stars, comment) VALUES ($1, $2, $3, $4);",
     [itemId, userId, stars, finalComment]
   );
 }
 
 /**
  * Gets rating summary + list for an item.
- * @param {Object} db - Database connection.
  * @param {number} itemId - Item ID to get ratings for.
  * @return {Object} Object with average, count, and ratings array.
  */
-async function getRatingsForItem(db, itemId) {
-  let summary = await db.get(
-    "SELECT AVG(stars) AS average, COUNT(*) AS count FROM ratings WHERE item_id = ?;",
+async function getRatingsForItem(itemId) {
+  let result = await query(
+    "SELECT AVG(stars) AS average, COUNT(*) AS count FROM ratings WHERE item_id = $1;",
     [itemId]
   );
-  let ratings = await dbRatingsGetWithUser(db, itemId);
+  let summary = result[0];
+  let ratings = await dbRatingsGetWithUser(itemId);
   return {
     average: summary.average || null,
     count: summary.count || 0,
@@ -505,17 +502,16 @@ async function getRatingsForItem(db, itemId) {
 
 /**
  * Retrieves ratings for an item joined with reviewer username.
- * @param {Object} db - Database connection.
  * @param {number} itemId - Item ID to get ratings for.
  * @return {Object[]} Ratings rows with username.
  */
-async function dbRatingsGetWithUser(db, itemId) {
-  let query = "SELECT r.stars, r.comment, r.date, r.user_id, u.username " +
+async function dbRatingsGetWithUser(itemId) {
+  let texts = "SELECT r.stars, r.comment, r.date, r.user_id, u.username " +
     "FROM ratings r " +
     "JOIN users u ON r.user_id = u.id " +
-    "WHERE r.item_id = ? " +
+    "WHERE r.item_id = $1 " +
     "ORDER BY r.date DESC;";
-  return await db.all(query, [itemId]);
+  return await query(texts, [itemId]);
 }
 
 /**
@@ -537,11 +533,9 @@ async function dbUserCheck(username, password) {
  * @return {Object|null} user row if found, otherwise null.
  */
 async function dbUserGetByUsername(username) {
-  let query = "SELECT * FROM users WHERE username = ?;";
-  let db = await getDBConnection();
-  let user = await db.get(query, [username]);
-  await db.close();
-  return user;
+  let texts = "SELECT * FROM users WHERE username = $1;";
+  let result = await query(texts, [username]);
+  return result[0];
 }
 
 /**
@@ -557,6 +551,16 @@ async function dbUserCreate(username, password, email) {
 
   let userId = result[0].id;
   return userId;
+}
+
+/**
+ * Creates a default profile row for a newly registered user.
+ * @param {number} newUserId - The id of the newly created user.
+ * @param {string} username - Username to use as the initial display name.
+ */
+async function dbProfileCreate(newUserId, username) {
+  let texts = "INSERT INTO user_profiles (user_id, display_name) VALUES ($1, $2);";
+  await query(texts, [newUserId, username]);
 }
 
 /**
@@ -586,14 +590,12 @@ async function dbItemGet(id) {
  * @return {Object|null} Joined row with item fields and seller_username.
  */
 async function dbItemGetWithSeller(id) {
-  let query = "SELECT i.*, u.username AS seller_username " +
+  let texts = "SELECT i.*, u.username AS seller_username " +
     "FROM items i " +
     "JOIN users u ON i.seller_id = u.id " +
-    "WHERE i.id = ?;";
-  let db = await getDBConnection();
-  let item = await db.get(query, [id]);
-  await db.close();
-  return item;
+    "WHERE i.id = $1;";
+  let result = await query(texts, [id]);
+  return result[0];
 }
 
 /**
@@ -669,11 +671,9 @@ async function dbTransactionMade(buyerId, sellerId, itemId, code) {
  * @return {Object|null} User row for the given id, or null if no such user exists.
  */
 async function dbUserGet(id) {
-  let query = "SELECT * FROM users WHERE id = ?;";
-  let db = await getDBConnection();
-  let user = await db.get(query, [id]);
-  await db.close();
-  return user;
+  let texts = "SELECT * FROM users WHERE id = $1;";
+  let result = await query(texts, [id]);
+  return result[0];
 }
 
 /**
@@ -682,43 +682,25 @@ async function dbUserGet(id) {
  * @return {Object|null} profile row.
  */
 async function dbUserProfileGet(id) {
-  let db = await getDBConnection();
-  let profile = await db.get(
+  let result = await query(
     "SELECT user_id, display_name, address, quote " +
-    "FROM user_profiles WHERE user_id = ?;",
+    "FROM user_profiles WHERE user_id = $1;",
     [id]
   );
-  await db.close();
-  return profile;
+  return result[0];
 }
 
 /**
- * Ensures there is at least a default profile row for the given user.
- * Uses the username as an initial display name if no profile exists yet.
- * @param {number} id - user id.
- * @param {string} username - username to use as default display name.
- */
-async function dbUserProfileEnsure(id, username) {
-  let db = await getDBConnection();
-  await db.run(
-    "INSERT OR IGNORE INTO user_profiles (user_id, display_name) VALUES (?, ?);",
-    [id, username]
-  );
-  await db.close();
-}
-
-/**
- * Inserts or updates the profile row for a user.
+ * Updates the profile row for a user.
  * @param {number} id - user id.
  * @param {Object} profileData - display_name, address, quote.
  * @return {Object} the saved profile row.
  */
-async function dbUserProfileUpsert(id, profileData) {
-  let db = await getDBConnection();
-  await db.run(
-    "INSERT OR REPLACE INTO user_profiles " +
-    "(user_id, display_name, address, quote) " +
-    "VALUES (?, ?, ?, ?);",
+async function dbUserProfileUpdate(id, profileData) {
+  await query(
+    "UPDATE user_profiles " +
+    "SET display_name = $2, address = $3, quote = $4 " +
+    "WHERE user_id = $1;",
     [
       id,
       profileData.displayName,
@@ -726,13 +708,13 @@ async function dbUserProfileUpsert(id, profileData) {
       profileData.quote
     ]
   );
-  let profile = await db.get(
+
+  let result = await query(
     "SELECT user_id, display_name, address, quote " +
-    "FROM user_profiles WHERE user_id = ?;",
+    "FROM user_profiles WHERE user_id = $1;",
     [id]
   );
-  await db.close();
-  return profile;
+  return result[0];
 }
 
 /**
@@ -742,14 +724,12 @@ async function dbUserProfileUpsert(id, profileData) {
  * @return {Object[]} Array of joined transaction and item rows for the user.
  */
 async function dbTransactionUserGet(id) {
-  let db = await getDBConnection();
-  let query = "SELECT * FROM transactions t" +
+  let texts = "SELECT t.*, i.title, i.category, i.description" +
+    " FROM transactions t" +
     " JOIN items i ON t.item_id = i.id" +
-    " WHERE t.buyer_id = ? " +
+    " WHERE t.buyer_id = $1 " +
     " ORDER BY t.date DESC;";
-  let transactions = await db.all(query, [id]);
-  await db.close();
-  return transactions;
+  return await query(texts, [id]);
 }
 
 /**
@@ -808,7 +788,7 @@ function createSessionId() {
  * @param {Object} req - Express request object containing cookies.
  * @param {Object} res - Express response object for sending an error if not logged in.
  * @param {Function} next - Callback to continue to the route handler.
- * @returns {void} Does not return a value, meanifully bread the route.
+ * @returns {void} Does not return a value, meaningfully break the route.
  */
 function requireLogin(req, res, next) {
   let sessionId = req.cookies.session;
@@ -885,23 +865,22 @@ function isValidStars(stars) {
 
 /**
  * Ensures both item and user exist, throws an error if not.
- * @param {Object} db - Database connection.
  * @param {number} itemId - Item ID to check.
  * @param {number} userId - User ID to check.
  * @return {Object} Object with item and user properties.
  */
-async function getExistingItemAndUser(db, itemId, userId) {
-  let item = await db.get("SELECT id FROM items WHERE id = ?;", [itemId]);
-  if (!item) {
+async function getExistingItemAndUser(itemId, userId) {
+  let item = await query("SELECT id FROM items WHERE id = $1;", [itemId]);
+  if (!item[0]) {
     throw new Error("Item does not exist.");
   }
 
-  let user = await db.get("SELECT id FROM users WHERE id = ?;", [userId]);
-  if (!user) {
+  let user = await query("SELECT id FROM users WHERE id = $1;", [userId]);
+  if (!user[0]) {
     throw new Error("User does not exist.");
   }
 
-  return {item, user};
+  return {item: item[0], user: user[0]};
 }
 
 /**
@@ -920,37 +899,18 @@ async function processRatingSubmission(reqBody) {
     throw new Error("Stars must be an integer between 1 and 5.");
   }
 
-  let db = await getDBConnection();
   let itemAndUser = await getExistingItemAndUser(
-    db,
     reqBody.itemId,
     reqBody.userId
   );
   await insertRatingRow(
-    db,
     itemAndUser.item.id,
     itemAndUser.user.id,
     stars,
     reqBody.comment
   );
-  await db.close();
 
   return {message: "Rating submitted successfully."};
-}
-
-/* DB CONNECTION */
-/**
- *
- * Establishes a database connection to the database and returns the database object.
- * Any errors that occur should be caught in the function that calls this one.
- * @return {sqlite3.Database} - The database object for the connection.
- */
-async function getDBConnection() {
-  const db = await sqlite.open({
-    filename: "husky.db",
-    driver: sqlite3.Database
-  });
-  return db;
 }
 
 app.use(express.static("public"));

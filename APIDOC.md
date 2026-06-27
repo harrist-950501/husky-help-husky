@@ -1,6 +1,6 @@
 # *Husky Help Husky* API Documentation
 
-*This API powers the Husky Help Husky campus marketplace web app. It allows clients to authenticate users, browse and search items for sale, view detailed item information, submit purchases (single or bulk), manage ratings, view a user’s purchase history, and manage basic user profile information.*
+*This API powers the Husky Help Husky campus marketplace web app. It allows clients to authenticate users, browse and search items for sale, view detailed item information, submit purchases (single or bulk), manage ratings, view a user's purchase history, and manage basic user profile information.*
 
 *All authenticated endpoints rely on an HTTP-only `session` cookie set by `/login` or `/signup`.*
 
@@ -13,12 +13,12 @@
 
 **Returned Data Format:** JSON
 
-**Description:** *Authenticates a user with a username and password. On success, creates a new login session, sets an HTTP-only `session` cookie on the client, and returns the user’s basic information. This cookie must be included automatically by the browser for all future authenticated requests.*
+**Description:** *Authenticates a user with a username and password. On success, creates a new login session, sets an HTTP-only `session` cookie on the client, and returns the user's basic information. This cookie must be included automatically by the browser for all future authenticated requests.*
 
 **Required Body Parameters:**
 
-- `username` (string): The user’s login name.
-- `password` (string): The user’s password.
+- `username` (string): The user's login name.
+- `password` (string): The user's password.
 
 **Example Request:** */login*
 
@@ -73,7 +73,7 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Creates a new user account with the provided username, password, and UW email. Validates that the username is unique and that the email ends with @uw.edu. On success, also starts a login session: sets the same HTTP-only session cookie as /login and returns the user’s basic info.*
+**Description:** *Creates a new user account with the provided username, password, and UW email. Validates that the username is unique and that the email ends with @uw.edu. On success, also starts a login session: sets the same HTTP-only session cookie as /login and returns the user's basic info.*
 
 **Example Request:** */signup*
 
@@ -192,9 +192,7 @@ Server error, try again later.
     "category": "books",
     "description": "Used but good condition.",
     "price": 18.0,
-    "stock": 4,
-    "status": null,
-    "date": "2025-11-29 13:55:09"
+    "stock": 4
   },
   {
     "id": 2,
@@ -203,9 +201,7 @@ Server error, try again later.
     "category": "books",
     "description": "Minor wear, lots of annotations.",
     "price": 20.0,
-    "stock": 2,
-    "status": null,
-    "date": "2025-11-29 13:55:09"
+    "stock": 2
   }
 ]
 ```
@@ -227,7 +223,7 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns the full details for a single item with the given id as a query parameter. If no such item exists, the response body is null.*
+**Description:** *Returns the full details for a single item with the given id as a query parameter.*
 
 **Example Request:** */items?id=1*
 
@@ -241,13 +237,20 @@ Server error, try again later.
   "category": "books",
   "description": "Used but good condition.",
   "price": 18.0,
-  "stock": 4,
-  "status": null,
-  "date": "2025-11-29 13:55:09"
+  "stock": 4
 }
 ```
 
 **Error Handling:**
+
+*400 Bad Request – Item Not Found*
+
+*Returned Data Format:* Plain Text
+
+```
+Item does not exist.
+```
+
 *500 Internal Server Error.*
 
 *Returned Data Format:* Plain Text
@@ -263,11 +266,11 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Searches items by an optional keyword and/or category filter. The keyword is matched against title and description. At least one of search or filter must be provided.*
+**Description:** *Searches items by an optional keyword and/or category filter. The keyword is matched against title and description (case-insensitive). At least one of search or filter must be provided.*
 
 **Query Parameters**
 search (optional): text to match
-filter (optional): category name
+filter (optional): category name (exact match, case-sensitive)
 
 **Example Request (keyword only):** *GET /items/search?search=textbook*
 
@@ -284,9 +287,7 @@ filter (optional): category name
     "category": "electronics",
     "description": "Perfect for STAT and math classes.",
     "price": 35.0,
-    "stock": 1,
-    "status": null,
-    "date": "2025-11-29 13:55:09"
+    "stock": 1
   }
 ]
 ```
@@ -482,27 +483,12 @@ Server error, try again later.
     "date": "2025-11-29 14:18:58",
     "title": "CSE 142 Textbook",
     "category": "books",
-    "price": 18.0,
-    "stock": 3,
-    "status": null
-  },
-  {
-    "id": 3,
-    "buyer_id": 2,
-    "seller_id": 3,
-    "item_id": 3,
-    "confirmation_code": "KR7XM2HJ",
-    "date": "2025-11-29 14:18:58",
-    "title": "TI-84 Calculator",
-    "category": "electronics",
-    "price": 35.0,
-    "stock": 0,
-    "status": null
+    "description": "Used but good condition."
   }
 ]
 ```
 
-*Note: Exact field order may differ, but the idea is a merged row of transaction + item info.*
+*Note: Each row is a merged result of transaction fields and selected item fields (title, category, description).*
 
 **Error Handling:**
 
@@ -586,7 +572,7 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Returns the average rating, count, and list of all ratings for a specific item. Also, it includes rater's information.*
+**Description:** *Returns the average rating, count, and list of all ratings for a specific item. Also includes the rater's username.*
 
 **Example Request:** */items/8/ratings*
 
@@ -611,13 +597,6 @@ Server error, try again later.
       "date": "2025-12-08 22:31:30",
       "user_id": 10,
       "username": "harry"
-    },
-    {
-      "stars": 3,
-      "comment": null,
-      "date": "2025-12-03 15:19:56",
-      "user_id": 1,
-      "username": "alice"
     }
   ]
 }
@@ -662,8 +641,6 @@ Logout successful.
 
 *500 Server-side Error*
 
-*Generic server-side error during logout.*
-
 *Error response (Plain text):*
 
 ```
@@ -677,7 +654,7 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Retrieves the profile information for a specific user, including display name, address, and quote. If no profile exists, a default one is created with the username as the initial display name.*
+**Description:** *Retrieves the profile information for a specific user, including display name, address, and quote.*
 
 **Authentication:** *Required (`session` cookie).*
 
@@ -727,7 +704,7 @@ Server error, try again later.
 
 **Returned Data Format:** JSON
 
-**Description:** *Creates or updates the profile information for a user. Accepts displayName (or display_name), address, and quote. Any field not provided will be stored as null (or left unchanged if you send the previous value).*
+**Description:** *Updates the profile information for the currently logged-in user. The id in the URL must match the logged-in user's id. Accepts displayName (or display_name), address, and quote. Any field not provided will be stored as null.*
 
 **Authentication:** *Required (`session` cookie).*
 
@@ -766,6 +743,14 @@ Server error, try again later.
 
 ```
 Not logged in.
+```
+
+*401 Unauthorized – Editing Another User's Profile*
+
+*Returned Data Format:* Plain Text
+
+```
+Cannot update another user's profile.
 ```
 
 *400 Bad Request – User Not Found*
