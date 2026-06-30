@@ -2,9 +2,21 @@
 
 A full-stack campus marketplace web app for UW students to buy and sell second-hand items.
 
+> **You're on the `sqlite-local` branch** — this version uses SQLite and runs locally with zero setup.
+> For the production PostgreSQL version, see the `main` branch.
+
 ## Overview
 
-Husky Help Husky is a database-backed marketplace that lets users create accounts, browse listings, search by keyword or category, add items to a cart, complete purchases, review past transactions, leave ratings, and update a basic user profile. The project combines a multi-page frontend with a Node/Express API and a SQLite database for persistent marketplace data.
+Husky Help Husky is a peer-to-peer campus marketplace — think cozy Craigslist for Huskies. Users can create accounts, browse listings, search by keyword or category, add items to a cart, complete purchases, review past transactions, leave ratings, and update a basic user profile. The project combines a multi-page frontend with a Node/Express API and a SQLite database for persistent marketplace data.
+
+## Running Locally
+
+```bash
+npm install
+node app.js
+```
+
+No environment variables or database setup required — SQLite runs out of the box.
 
 ## Features
 
@@ -17,25 +29,16 @@ Husky Help Husky is a database-backed marketplace that lets users create account
 
 ## Built With
 
-- HTML
-- CSS
-- JavaScript
-- Node.js
-- Express
+- HTML / CSS / JavaScript
+- Node.js + Express
 - SQLite
 - Multer
 - cookie-parser
 
-## Purpose
-
-This project was built as a creative full-stack web application centered on campus reuse and peer-to-peer exchange. It demonstrates frontend interaction, API integration, and relational data storage in a single web product.
-
 ## Live Site
 
-GitHub does not support hosting this project’s backend API and SQLite database setup, so there is not a live deployed site yet. A demo video link will be added here instead.
+The production version of this app is deployed on Railway using PostgreSQL. See the `main` branch for details.
 
-I may deploy the full site in the future, but there is no guaranteed timeline.
-
-## Author
+## Authors
 
 Rena Yin and Harry Cheng
