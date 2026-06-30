@@ -724,7 +724,7 @@ async function dbUserProfileUpdate(id, profileData) {
  * @return {Object[]} Array of joined transaction and item rows for the user.
  */
 async function dbTransactionUserGet(id) {
-  let texts = "SELECT t.*, i.title, i.category, i.description" +
+  let texts = "SELECT t.*, i.title, i.category, i.description, i.price" +
     " FROM transactions t" +
     " JOIN items i ON t.item_id = i.id" +
     " WHERE t.buyer_id = $1 " +

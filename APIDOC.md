@@ -483,7 +483,8 @@ Server error, try again later.
     "date": "2025-11-29 14:18:58",
     "title": "CSE 142 Textbook",
     "category": "books",
-    "description": "Used but good condition."
+    "description": "Used but good condition.",
+    "price": 18
   }
 ]
 ```
