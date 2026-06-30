@@ -7,9 +7,6 @@ project-summary.md
 # Dependencies
 node_modules/
 
-# Environment variables - never commit secrets
-.env
-
 # OS junk
 .DS_Store
 Thumbs.db
