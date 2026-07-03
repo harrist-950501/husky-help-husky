@@ -37,10 +37,15 @@
     id("open-profile-page").addEventListener("click", openProfilePage);
     id("logout-btn").addEventListener("click", logout);
 
-    id("search-bar").addEventListener("input", checkSearch);
-    id("search-btn").addEventListener("click", itemSearch);
-    id("search-btn").disabled = true;
-    id("unsearch-btn").addEventListener("click", revealAllItems);
+    id("search-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        checkSearch();
+      }
+    });
+    // id("search-bar").addEventListener("input", checkSearch);
+    // id("search-btn").addEventListener("click", itemSearch);
+    // id("search-btn").disabled = true;
+    // id("unsearch-btn").addEventListener("click", revealAllItems);
 
     id("category-filter").addEventListener("change", checkSearch);
 
@@ -58,7 +63,7 @@
     if (!layout) {
       localStorage.setItem("board-layout", "list");
     } else if (layout === "grid") {
-      id("item-board").classList.toggle("grid-layout");
+      id("item-list").classList.toggle("grid-layout");
     }
 
     let cart = localStorage.getItem("cart");
@@ -73,9 +78,8 @@
    */
   function navToggle() {
     qs("aside").classList.toggle("collapsed");
-    qs("aside h1").classList.toggle("hidden");
-    qs("aside section").classList.toggle("hidden");
-    qs("aside footer").classList.toggle("hidden");
+    qs("aside nav").classList.toggle("hidden");
+    id("logout-section").classList.toggle("hidden");
   }
 
   /**
@@ -124,20 +128,21 @@
    * the search input has any non-whitespace characters.
    */
   function checkSearch() {
-    let search = id("search-bar").value.trim();
+    let search = id("search-input").value.trim();
     let filter = id("category-filter").value;
-    if (search !== "" || filter !== "") {
-      id("search-btn").disabled = false;
-    } else {
-      id("search-btn").disabled = true;
-    }
+    itemSearch();
+    // if (search !== "" || filter !== "") {
+    //   id("search-btn").disabled = false;
+    // } else {
+    //   id("search-btn").disabled = true;
+    // }
   }
 
   /**
    * Loads all items from the backend and renders them onto the item board.
    */
   async function loadItems() {
-    let board = id("item-board");
+    let board = id("item-list");
     board.innerHTML = "";
 
     try {
@@ -172,7 +177,6 @@
       showStatus("Website Error", "Failed to search Item", true);
     }
 
-    id("search-bar").value = "";
     id("category-filter").value = "";
     id("search-btn").disabled = true;
   }
@@ -183,7 +187,7 @@
    */
   function buildSearchUrl() {
     let url = "/items/search?";
-    let keyword = id("search-bar").value.trim();
+    let keyword = id("search-input").value.trim();
     if (keyword !== "") {
       url += "search=" + keyword + "&";
     }
@@ -237,7 +241,7 @@
    * Switches the item board between list and grid layouts.
    */
   function toggleLayout() {
-    id("item-board").classList.toggle("grid-layout");
+    id("item-list").classList.toggle("grid-layout");
 
     let layout = localStorage.getItem("board-layout");
     if (layout === "list") {
@@ -284,7 +288,7 @@
    * @returns {HTMLElement} a <section> representing the imgae section.
    */
   function createCardImg(title) {
-    let imgContainer = gen("section");
+    let imgContainer = gen("figure");
     imgContainer.classList.add("img-container");
 
     let img = gen("img");
@@ -305,7 +309,7 @@
    * @returns {HTMLElement} section.info element.
    */
   async function createCardInfo(item) {
-    const info = gen("section");
+    const info = gen("div");
     info.classList.add("info");
 
     info.appendChild(createInfoTitle(item));
@@ -331,7 +335,7 @@
    * @returns {HTMLElement} h2.title element.
    */
   function createInfoTitle(item) {
-    const title = gen("h2");
+    const title = gen("h3");
     title.textContent = item.title;
     title.classList.add("title");
 
@@ -360,8 +364,8 @@
     const rating = gen("p");
     rating.classList.add("rating");
 
-    const ratingNum = gen("span");
-    ratingNum.textContent = "No ratings yet";
+    const starSpan = gen("span");
+    starSpan.textContent = "No ratings yet";
 
     try {
       let isJson = true;
@@ -380,14 +384,19 @@
       }
 
       if (count !== 0) {
-        rating.textContent = star + " ";
-        ratingNum.textContent = avgStar + " / " + maxStar + " (" + count + ")";
+        starSpan.textContent = star + " ";
+        starSpan.setAttribute("aria-hidden", "true");
+        rating.appendChild(starSpan);
+
+        const numRating = gen("span");
+        numRating.textContent = "Average rating: " + avgStar + " out of " + maxStar + " stars, based on " + count + " ratings.";
+        rating.appendChild(numRating);
       }
     } catch (err) {
       showStatus("Website Error", "Failed to load rating", true);
     }
 
-    rating.appendChild(ratingNum);
+    rating.appendChild(starSpan);
 
     return rating;
   }
@@ -519,7 +528,7 @@
 
       let layout = localStorage.getItem("board-layout");
       if (layout === "grid") {
-        id("item-board").classList.add("grid-layout");
+        id("item-list").classList.add("grid-layout");
       }
 
       card.querySelector(".title").addEventListener("click", toggleItemDetail);
@@ -528,7 +537,7 @@
       // Entering detail view
       showStatus("Detail view", "Check out the item or return to the list", false);
 
-      id("item-board").classList.remove("grid-layout");
+      id("item-list").classList.remove("grid-layout");
 
       card.querySelector(".title").removeEventListener("click", toggleItemDetail);
       card.querySelector(".img-container img").removeEventListener("click", toggleItemDetail);

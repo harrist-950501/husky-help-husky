@@ -11,6 +11,10 @@ html, body {
   height: 100%;
 }
 
+.no-transition * {
+  transition: none !important;
+}
+
 body {
   margin: 0;
   background: radial-gradient(circle at top left, #DAD3EE 0%, #C8BFE7 60%, #F4F1FA 100%);
@@ -33,6 +37,17 @@ html[data-theme="dark"] body {
   color: #e2e7ff;
 }
 
+body > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 20px;
+  border-bottom: 2px solid #E0DAF3;
+}
+
 h1, h2, h3 {
   font-family: "Poppins", sans-serif;
   font-style: normal;
@@ -40,27 +55,31 @@ h1, h2, h3 {
 }
 
 #theme-toggle {
-  position: static;
-  align-self: flex-end;
-  margin: 0 8px 12px 0;
+   margin: 0;
 }
 
-main {
+.page-layout {
   width: 90%;
-  height: 90%;
+  flex: 1;
+  min-height: 0;
   background: #fff;
   border: 5px solid #A39BD8;
   border-radius: 30px;
   display: flex;
-  overflow-y: hidden;
-  overflow-x: hidden;
+  overflow: hidden;
   box-shadow: 0 0 20px rgba(163, 155, 216, 0.2);
 }
 
-html[data-theme="dark"] main {
+html[data-theme="dark"] .page-layout {
   background: #26242f;
   border-color: #4b4268;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
+}
+
+main {
+  flex: 1;
+  min-width: 0;
+
 }
 
 button {
@@ -165,4 +184,16 @@ html[data-theme="dark"] #status-message.error p {
 
 .hidden {
   display: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

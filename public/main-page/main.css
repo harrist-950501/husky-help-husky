@@ -8,6 +8,23 @@
   Defines layout for the left navigation, right content area, search controls,
   item board, item cards, and detail view.
  */
+
+/* ===== Header ===== */
+body > header h1 {
+  font-family: "Poppins", sans-serif;
+  font-size: 2rem;
+  color: #7E6FCF;
+  margin: 0;
+}
+
+html[data-theme="dark"] body > header {
+  border-bottom-color: #4b4268;
+}
+
+html[data-theme="dark"] body > header h1 {
+  color: #e4ddff;
+}
+
 /* ===== Left Navigation ===== */
 aside {
   flex-basis: 200px;
@@ -29,26 +46,13 @@ html[data-theme="dark"] aside {
   border-right-color: #4b4268;
 }
 
-aside header {
+#nav-toggle {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
+  justify-content: flex-end;
 }
 
-aside.collapsed header {
+aside.collapsed #nav-toggle {
   justify-content: center;
-}
-
-aside h1 {
-  font-family: "Poppins", sans-serif;
-  font-size: 1.5em;
-  color: #7E6FCF;
-  margin: 0;
-}
-
-html[data-theme="dark"] aside h1 {
-  color: #e4ddff;
 }
 
 aside ul {
@@ -57,6 +61,7 @@ aside ul {
 }
 
 aside li {
+  font-size: 1.1rem;
   margin: 10px 0;
   padding: 8px 12px;
   border-radius: 8px;
@@ -85,7 +90,7 @@ html[data-theme="dark"] aside li:hover {
   flex-direction: column;
   justify-content: flex-start;
   padding: 15px;
-  overflow-y: visible;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -101,63 +106,42 @@ html[data-theme="dark"] #content {
   gap: 1.25rem;
 }
 
-#content header.hidden {
-  display: none;
-}
-
 #search-section {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.4rem;
   flex: 1;
 }
 
-#search-bar {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 15px;
-  border: 1.5px solid #D9D4EF;
-  border-radius: 10px;
-  font-size: 0.95em;
-  outline: none;
-}
-
-html[data-theme="dark"] #search-bar {
-  background: #312e3f;
-  border-color: #4b4268;
-  color: #e5e7ff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.55);
-}
-
-html[data-theme="dark"] #search-bar::placeholder {
-  color: #9f9ac5;
-}
-
-#search-bar:focus {
-  border-color: #A39BD8;
-  box-shadow: 0 0 8px rgba(163, 155, 216, 0.3);
-}
-
-html[data-theme="dark"] #search-bar:focus {
-  border-color: #b4a7ff;
-  box-shadow: 0 0 8px rgba(140, 130, 230, 0.75);
-}
-
-#search-section > section {
+#search-bar-section {
   display: flex;
-  gap: 0.8rem;
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 3px solid #D9D4EF;
+}
+
+#search-bar-section:focus-within {
+  border-color: #7C6FF7;
+}
+
+html[data-theme="dark"] #search-bar-section {
+  border-color: #4b4268;
+}
+
+html[data-theme="dark"] #search-bar-section:focus-within {
+  border-color: #9d93f9;
 }
 
 #category-filter {
-  padding: 0.35rem 0.9rem;
-  min-width: 150px;
-  border-radius: 999px;
-  border: 1.5px solid #D9D4EF;
-  background: #F9F8FF;
-  font-family: "Poppins", sans-serif;
-  font-size: 0.82rem;
-  color: #4c1d95;
+  width: 3.5rem;
+  padding: 0.3rem 0.5rem;
+  border: none;
   outline: none;
+  background: #EDE9FF ;
+  font-family: "Poppins", sans-serif;
+  color: #4c1d95;
   cursor: pointer;
 }
 
@@ -167,13 +151,86 @@ html[data-theme="dark"] #search-bar:focus {
 }
 
 html[data-theme="dark"] #category-filter {
-  background: #312e3f;
-  border-color: #4b4268;
-  color: #e5e7ff;
+  background: #4a4270;
+  color: #c4bcf7;
 }
 
 html[data-theme="dark"] #category-filter:focus {
   box-shadow: 0 0 6px rgba(129, 140, 248, 0.6);
+}
+
+#search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0 0.5rem;
+  font-size: 0.95rem;
+  font-family: "Inter", sans-serif;
+}
+
+html[data-theme="dark"] #search-input {
+  background: #312e3f;
+  color: #e5e7ff;
+}
+
+html[data-theme="dark"] #search-input::placeholder {
+  color: #9f9ac5;
+}
+
+#search-btn {
+  border-radius: 0;
+  flex: 0 0 auto;
+  background: #7C6FF7;
+}
+
+#search-btn:hover {
+  background: #9d93f9;
+  opacity: 1;
+}
+
+#filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 0;
+}
+
+.filter-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #EDE9FF;
+  color: #534AB7;
+  border: 1.5px solid #7C6FF7;
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+  font-family: "Poppins", sans-serif;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.filter-pill:hover {
+  background: #D9D4EF;
+}
+
+.filter-pill span {
+  font-size: 0.9rem;
+  color: #7C6FF7;
+}
+
+html[data-theme="dark"] .filter-pill {
+  background: #3d3660;
+  color: #c4bcf7;
+  border-color: #9d93f9;
+}
+
+html[data-theme="dark"] .filter-pill:hover {
+  background: #4a4270;
+}
+
+html[data-theme="dark"] .filter-pill span {
+  color: #9d93f9;
 }
 
 #layout-toggle {
@@ -194,16 +251,25 @@ html[data-theme="dark"] #profile-pic {
 #item-board {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+#item-list {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 1rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 10px;
-  box-sizing: border-box;
 }
 
-#item-board.grid-layout {
+#item-list.grid-layout {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1.2rem;
@@ -211,7 +277,7 @@ html[data-theme="dark"] #profile-pic {
   justify-items: center;
 }
 
-#item-board.grid-layout .item-card {
+#item-list.grid-layout .item-card {
   width: 100%;
   min-width: 0;
   height: auto;
@@ -223,19 +289,19 @@ html[data-theme="dark"] #profile-pic {
   box-sizing: border-box;
 }
 
-#item-board.grid-layout .item-card.hidden {
+#item-list.grid-layout .item-card.hidden {
   display: none;
 }
 
-#item-board.grid-layout .img-container {
+#item-list.grid-layout .img-container {
   margin-bottom: 0.5rem;
 }
 
-#item-board.grid-layout .img-container img {
+#item-list.grid-layout .img-container img {
   width: 150px;
 }
 
-#item-board.grid-layout .info {
+#item-list.grid-layout .info {
   flex: 1;
   align-items: center;
   justify-content: flex-start;
@@ -243,15 +309,15 @@ html[data-theme="dark"] #profile-pic {
   gap: 0.35rem;
 }
 
-#item-board.grid-layout .title {
+#item-list.grid-layout .title {
   font-size: 1rem;
 }
 
-#item-board.grid-layout .price {
+#item-list.grid-layout .price {
   margin-top: 0.3rem;
 }
 
-#item-board.grid-layout .item-card button {
+#item-list.grid-layout .item-card button {
   align-self: center;
   margin-top: 0.6rem;
 }

@@ -48,6 +48,9 @@
    * @fires Event when data-theme attribute changes
    */
   function toggleTheme() {
+    // Prevent transition animations during theme switch
+    document.body.classList.add("no-transition");
+
     let theme = localStorage.getItem("page-color-theme");
     if (theme === "light") {
       document.documentElement.setAttribute("data-theme", "dark");
@@ -56,5 +59,9 @@
       document.documentElement.removeAttribute("data-theme");
       localStorage.setItem("page-color-theme", "light");
     }
+
+    requestAnimationFrame(() => {
+      document.body.classList.remove("no-transition");
+    });
   }
 })();
