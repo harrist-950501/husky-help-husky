@@ -6,7 +6,8 @@
 
   This is the css file for the login page. It is welcoming back the user.
 */
-h1 span {
+
+h2 span {
   font-weight: bolder;
 }
 

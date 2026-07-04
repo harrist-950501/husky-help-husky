@@ -12,8 +12,8 @@
   <head lang="en">
     <meta charset="utf-8">
     <title>User Login</title>
-    <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
@@ -21,10 +21,13 @@
     <script src="../theme.js"></script>
   </head>
   <body>
-    <button id="theme-toggle">Toggle Theme</button>
-    <main>
+    <header>
+      <h1>Husky Help Husky</h1>
+      <button id="theme-toggle">Toggle Theme</button>
+    </header>
+    <main class="page-layout">
       <section id="welcome-area">
-        <h1>Welcome to <span>Husky Help Husky</span></h1>
+        <h2>Welcome to <span>Husky Help Husky</span></h2>
         <p>
           A community where UW students can easily trade, share, and reuse second-hand goods.
           <br>
@@ -53,12 +56,12 @@
             Sign Up
           </button>
         </form>
-        <section id="remember-row">
+        <div id="remember-row">
           <label for="remember" class="remember-label">
             <input id="remember" name="remember" type="checkbox">
             <span>Remember me on this device</span>
           </label>
-        </section>
+        </div>
         <section id="status-message" class="hidden">
           <h2></h2>
           <p></p>
