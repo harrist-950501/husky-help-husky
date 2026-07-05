@@ -42,12 +42,9 @@
         checkSearch();
       }
     });
-    // id("search-bar").addEventListener("input", checkSearch);
-    // id("search-btn").addEventListener("click", itemSearch);
-    // id("search-btn").disabled = true;
-    // id("unsearch-btn").addEventListener("click", revealAllItems);
+    id("search-btn").addEventListener("click", checkSearch);
 
-    id("category-filter").addEventListener("change", checkSearch);
+    // id("category-filter").addEventListener("change", checkSearch);
 
     id("layout-toggle").addEventListener("click", toggleLayout);
 
@@ -124,18 +121,65 @@
   }
 
   /**
-   * Enables or disables the search button depending on whether
-   * the search input has any non-whitespace characters.
+   * Applies the selected category as a filter pill, then searches using the
+   * current keyword and active filter pills. If no keyword or pills are active,
+   * all items are revealed.
    */
   function checkSearch() {
     let search = id("search-input").value.trim();
     let filter = id("category-filter").value;
-    itemSearch();
-    // if (search !== "" || filter !== "") {
-    //   id("search-btn").disabled = false;
-    // } else {
-    //   id("search-btn").disabled = true;
-    // }
+
+    updateFilterPills(filter);
+
+    let filters = getActiveFilters();
+
+    if (search !== "" || filters.length > 0) {
+      itemSearch();
+    } else {
+      revealAllItems();
+    }
+  }
+
+  /**
+   * Replaces the current filter pill with the given category filter.
+   * For now only one pill is supported, but the DOM shape supports future
+   * multi-filter search.
+   * @param {string} filter - Category filter value selected from the dropdown.
+   */
+  function updateFilterPills(filter) {
+    // Note: We only support single filter at a time for now.
+    let pillContainer = id("filter-pills");
+    pillContainer.innerHTML = "";
+
+    if (filter === "") {
+      return;
+    }
+
+    let pill = gen("div");
+    pill.classList.add("filter-pill");
+    pill.dataset.filter = filter;
+
+    let label = gen("span");
+    label.textContent = filter;
+
+    let close = gen("span");
+    close.textContent = "×";
+    close.addEventListener("click", clearFilterPill);
+
+    pill.appendChild(label);
+    pill.appendChild(close);
+    pillContainer.appendChild(pill);
+  }
+
+  /**
+   * Removes the clicked filter pill, clears the pending dropdown value, and
+   * reruns the search with any remaining keyword or active filter pills.
+   */
+  function clearFilterPill() {
+    this.closest(".filter-pill").remove();
+
+    id("category-filter").value = "";
+    checkSearch();
   }
 
   /**
@@ -164,8 +208,8 @@
   }
 
   /**
-   * Searches for items using the current keyword and category filter
-   * and updates the board so that only matching items are shown.
+   * Searches for items using the current keyword and active filter pills,
+   * then updates the board so that only matching items are shown.
    */
   async function itemSearch() {
     try {
@@ -176,26 +220,43 @@
     } catch (err) {
       showStatus("Website Error", "Failed to search Item", true);
     }
-
-    id("category-filter").value = "";
-    id("search-btn").disabled = true;
   }
 
   /**
-   * Builds the search URL from the current keyword input and category filter.
+   * Builds the search URL from the current keyword input and active filter pills.
+   * The backend currently supports one category filter, so only the first active
+   * pill is included.
    * @returns {string} Fully constructed URL for the search endpoint.
    */
   function buildSearchUrl() {
     let url = "/items/search?";
     let keyword = id("search-input").value.trim();
+
     if (keyword !== "") {
       url += "search=" + keyword + "&";
     }
-    let category = id("category-filter").value;
-    if (category !== "") {
-      url += "filter=" + category;
+
+    let filters = getActiveFilters();
+    if (filters.length > 0) {
+      url += "filter=" + filters[0];
     }
+
     return url;
+  }
+
+  /**
+   * Reads the active filter values from the current filter pills.
+   * @returns {string[]} Active category filters represented by filter pills.
+   */
+  function getActiveFilters() {
+    let pills = qsa("#filter-pills .filter-pill");
+    let filters = [];
+
+    pills.forEach(pill => {
+      filters.push(pill.dataset.filter);
+    });
+
+    return filters;
   }
 
   /**
