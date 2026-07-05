@@ -128,7 +128,7 @@ html[data-theme="dark"] #search-bar-section:focus-within {
 }
 
 #category-filter {
-  width: 3.5rem;
+  width: auto;
   padding: 0.3rem 0.5rem;
   border: none;
   outline: none;
