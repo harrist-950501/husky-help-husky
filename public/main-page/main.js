@@ -43,8 +43,7 @@
       }
     });
     id("search-btn").addEventListener("click", checkSearch);
-
-    // id("category-filter").addEventListener("change", checkSearch);
+    id("category-filter").addEventListener("change", checkSearch);
 
     id("layout-toggle").addEventListener("click", toggleLayout);
 
@@ -121,9 +120,9 @@
   }
 
   /**
-   * Applies the selected category as a filter pill, then searches using the
-   * current keyword and active filter pills. If no keyword or pills are active,
-   * all items are revealed.
+   * Applies the selected category as a filter pill, then refreshes the board
+   * using the current keyword and active filter pills. If no keyword or pills
+   * are active, all items are revealed.
    */
   function checkSearch() {
     let search = id("search-input").value.trim();
@@ -142,12 +141,10 @@
 
   /**
    * Replaces the current filter pill with the given category filter.
-   * For now only one pill is supported, but the DOM shape supports future
-   * multi-filter search.
+   * Only one category pill is currently supported.
    * @param {string} filter - Category filter value selected from the dropdown.
    */
   function updateFilterPills(filter) {
-    // Note: We only support single filter at a time for now.
     let pillContainer = id("filter-pills");
     pillContainer.innerHTML = "";
 
@@ -172,12 +169,11 @@
   }
 
   /**
-   * Removes the clicked filter pill, clears the pending dropdown value, and
-   * reruns the search with any remaining keyword or active filter pills.
+   * Removes the clicked filter pill, resets the category dropdown to "All",
+   * and refreshes the board using any remaining keyword.
    */
   function clearFilterPill() {
     this.closest(".filter-pill").remove();
-
     id("category-filter").value = "";
     checkSearch();
   }
@@ -286,7 +282,7 @@
   }
 
   /**
-   * Let all items become visible again.
+   * Makes all item cards visible again.
    */
   function revealAllItems() {
     let items = qsa(".item-card");
@@ -314,7 +310,7 @@
 
   /**
    * Creates a complete <article> item card, including media and body sections.
-   * This is the main entry point used by renderItems().
+   * This is the main entry point used while loading items.
    * @param {Object} item - Item row from the backend (id, title, seller_id, etc.).
    * @returns {HTMLElement} The constructed <article> card element.
    */
@@ -330,10 +326,10 @@
   }
 
   /**
-   * Converts a user name into an avatar image path by lowercasing it,
-   * replacing spaces with hyphens, and appending the ".png" extension.
-   * @param {string} name - User name to convert into an image file path.
-   * @return {string} - Relative path to the corresponding avatar image.
+   * Converts an item title into an image path by lowercasing it,
+   * replacing spaces with hyphens, and appending the ".jpg" extension.
+   * @param {string} name - Item title to convert into an image file path.
+   * @return {string} - Relative path to the corresponding item image.
    */
   function parseName(name) {
     name = name.toLowerCase();
@@ -344,9 +340,9 @@
   }
 
   /**
-   * Creates the card container for an item card.
-   * @param {Object} title - title of item.
-   * @returns {HTMLElement} a <section> representing the imgae section.
+   * Creates the image container for an item card.
+   * @param {string} title - Title of the item.
+   * @returns {HTMLElement} A <figure> representing the image section.
    */
   function createCardImg(title) {
     let imgContainer = gen("figure");
@@ -393,7 +389,7 @@
   /**
    * Creates the title element for an item card.
    * @param {Object} item - Item data object.
-   * @returns {HTMLElement} h2.title element.
+   * @returns {HTMLElement} h3.title element.
    */
   function createInfoTitle(item) {
     const title = gen("h3");
