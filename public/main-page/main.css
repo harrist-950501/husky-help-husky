@@ -412,6 +412,11 @@ html[data-theme="dark"] .title:hover {
 }
 
 .rating {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 1rem;
   color: #6b21a8;
 }
 
@@ -419,12 +424,21 @@ html[data-theme="dark"] .rating {
   color: #d8b4fe;
 }
 
-.rating span {
-  color: #6b7280;
-  margin-left: 0.25rem;
+.rating-stars {
+  color: #6b21a8;
+  letter-spacing: 0;
 }
 
-html[data-theme="dark"] .rating span {
+html[data-theme="dark"] .rating-stars {
+  color: #d8b4fe;
+}
+
+.rating-summary {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .rating-summary {
   color: #e5e7eb;
 }
 

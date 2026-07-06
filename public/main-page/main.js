@@ -422,17 +422,21 @@
     rating.classList.add("rating");
 
     const starSpan = gen("span");
-    starSpan.textContent = "No ratings yet";
+    starSpan.classList.add("rating-stars");
 
     try {
       let isJson = true;
-      let ratingValue = await dataFetch("/items/" + item.id + "/ratings", isJson);
-      let avgStar = parseInt(ratingValue.average);
-      let maxStar = MAXSTAR;
-      let count = ratingValue.count;
+      let ratings = await dataFetch("/items/" + item.id + "/ratings", isJson);
+      let avgStar = ratings.average;
+      if (avgStar) {
+        avgStar = Math.round(avgStar * 10) / 10;
+      } else {
+        avgStar = 0;
+      }
+      let count = parseInt(ratings.count);
 
       let star = "";
-      for (let i = 0; i < maxStar; i++) {
+      for (let i = 0; i < MAXSTAR; i++) {
         if (i < avgStar) {
           star += "★";
         } else {
@@ -443,17 +447,18 @@
       if (count !== 0) {
         starSpan.textContent = star + " ";
         starSpan.setAttribute("aria-hidden", "true");
-        rating.appendChild(starSpan);
 
-        const numRating = gen("span");
-        numRating.textContent = "Average rating: " + avgStar + " out of " + maxStar + " stars, based on " + count + " ratings.";
+        let numRating = gen("span");
+        numRating.classList.add("rating-summary");
+        numRating.textContent = avgStar + " / " + MAXSTAR + " (" + count + ")";
+        rating.appendChild(starSpan);
         rating.appendChild(numRating);
+      } else {
+        rating.textContent = "No ratings yet";
       }
     } catch (err) {
       showStatus("Website Error", "Failed to load rating", true);
     }
-
-    rating.appendChild(starSpan);
 
     return rating;
   }
