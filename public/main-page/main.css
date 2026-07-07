@@ -152,8 +152,17 @@ html[data-theme="dark"] #category-filter:focus {
   box-shadow: 0 0 6px rgba(129, 140, 248, 0.6);
 }
 
+#search-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  background: #fff;
+}
+
 #search-input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   padding: 0 0.5rem;
@@ -161,6 +170,7 @@ html[data-theme="dark"] #category-filter:focus {
   font-family: "Inter", sans-serif;
 }
 
+html[data-theme="dark"] #search-input-wrap,
 html[data-theme="dark"] #search-input {
   background: #312e3f;
   color: #e5e7ff;
@@ -168,6 +178,43 @@ html[data-theme="dark"] #search-input {
 
 html[data-theme="dark"] #search-input::placeholder {
   color: #9f9ac5;
+}
+
+#search-clear-btn {
+  flex: 0 0 2rem;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #6b7280;
+  font-size: 1.3rem;
+  line-height: 1;
+  opacity: 1;
+}
+
+#search-clear-btn:hover,
+#search-clear-btn:focus-visible {
+  background: transparent;
+  color: var(--brand-main, #7C6FF7);
+  opacity: 1;
+}
+
+#search-clear-btn:focus-visible {
+  outline: 2px solid var(--brand-main, #7C6FF7);
+  outline-offset: -3px;
+}
+
+html[data-theme="dark"] #search-clear-btn {
+  background: transparent;
+  color: #9f9ac5;
+}
+
+html[data-theme="dark"] #search-clear-btn:hover,
+html[data-theme="dark"] #search-clear-btn:focus-visible {
+  color: var(--brand-text, #e5e7ff);
 }
 
 #search-btn {

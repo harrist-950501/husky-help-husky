@@ -55,9 +55,13 @@
                 <option value="home">Home</option>
               </select>
                 <label for="search-input" class="sr-only">Search items</label>
-              <input type="text" id="search-input" placeholder="Search...">
+              <div id="search-input-wrap">
+                <input type="text" id="search-input" placeholder="Search...">
+                <button id="search-clear-btn" class="hidden" type="button" aria-label="Clear search keyword">
+                  &times;
+                </button>
+              </div>
               <button id="search-btn">&#128269;</button>
-              <!-- <button id="clear-btn">&times;</button> -->
             </div>
             <div id="filter-pills">
               <!-- Filter pills will be dynamically added here -->

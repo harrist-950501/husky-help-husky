@@ -42,6 +42,8 @@
         checkSearch();
       }
     });
+    id("search-input").addEventListener("input", updateSearchClearButton);
+    id("search-clear-btn").addEventListener("click", clearSearchKeyword);
     id("search-btn").addEventListener("click", checkSearch);
     id("category-filter").addEventListener("change", checkSearch);
 
@@ -125,9 +127,11 @@
    * are active, all items are revealed.
    */
   function checkSearch() {
-    let search = id("search-input").value.trim();
+    trimSearchKeyword();
+    let search = id("search-input").value;
     let filter = id("category-filter").value;
 
+    updateSearchClearButton();
     updateFilterPills(filter);
 
     let filters = getActiveFilters();
@@ -137,6 +141,32 @@
     } else {
       revealAllItems();
     }
+  }
+
+  /**
+   * Removes leading and trailing whitespace from the search keyword input.
+   */
+  function trimSearchKeyword() {
+    id("search-input").value = id("search-input").value.trim();
+  }
+
+  /**
+   * Shows the search keyword clear button only when the input has text.
+   */
+  function updateSearchClearButton() {
+    let hasKeyword = id("search-input").value !== "";
+    id("search-clear-btn").classList.toggle("hidden", !hasKeyword);
+  }
+
+  /**
+   * Clears only the search keyword, refreshes results with the active category,
+   * and returns keyboard focus to the search input.
+   */
+  function clearSearchKeyword() {
+    id("search-input").value = "";
+    updateSearchClearButton();
+    checkSearch();
+    id("search-input").focus();
   }
 
   /**
