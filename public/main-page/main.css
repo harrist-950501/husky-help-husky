@@ -274,7 +274,76 @@ html[data-theme="dark"] .filter-pill span {
 }
 
 #layout-toggle {
-  text-wrap: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 3px;
+  border: 1.5px solid #D9D4EF;
+  border-radius: 999px;
+  background: var(--brand-light, #EDE9FF);
+}
+
+.layout-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brand-text, #4c1d95);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.layout-option svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.layout-option.active {
+  background: var(--brand-main, #7C6FF7);
+  color: #fff;
+}
+
+.layout-option:not(.active):hover,
+.layout-option:not(.active):focus-visible {
+  background: rgba(124, 111, 247, 0.12);
+  opacity: 1;
+}
+
+.layout-option:focus-visible {
+  outline: 2px solid var(--brand-main, #7C6FF7);
+  outline-offset: 2px;
+}
+
+html[data-theme="dark"] #layout-toggle {
+  background: #312e3f;
+  border-color: #4b4268;
+}
+
+html[data-theme="dark"] .layout-option {
+  background: transparent;
+  color: var(--brand-text, #e5e7ff);
+}
+
+html[data-theme="dark"] .layout-option.active {
+  background: var(--brand-main, #7C6FF7);
+  color: #fff;
+}
+
+html[data-theme="dark"] .layout-option:not(.active):hover,
+html[data-theme="dark"] .layout-option:not(.active):focus-visible {
+  background: rgba(157, 147, 249, 0.16);
 }
 
 #profile-pic {

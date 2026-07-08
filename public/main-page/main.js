@@ -47,7 +47,8 @@
     id("search-btn").addEventListener("click", checkSearch);
     id("category-filter").addEventListener("change", checkSearch);
 
-    id("layout-toggle").addEventListener("click", toggleLayout);
+    id("layout-grid-btn").addEventListener("click", () => setLayout("grid"));
+    id("layout-list-btn").addEventListener("click", () => setLayout("list"));
 
     await loadItems();
   }
@@ -57,12 +58,14 @@
    * Default board layout: "list"
    */
   function checkLocalStorage() {
-    let layout = localStorage.getItem("board-layout");
+    let layout = getSavedLayout();
     if (!layout) {
       localStorage.setItem("board-layout", "list");
+      layout = "list";
     } else if (layout === "grid") {
-      id("item-list").classList.toggle("grid-layout");
+      id("item-list").classList.add("grid-layout");
     }
+    updateLayoutControl(layout);
 
     let cart = localStorage.getItem("cart");
     if (!cart) {
@@ -325,17 +328,37 @@
   }
 
   /**
-   * Switches the item board between list and grid layouts.
+   * Reads the saved board layout value.
+   * @returns {string|null} Current saved layout value.
    */
-  function toggleLayout() {
-    id("item-list").classList.toggle("grid-layout");
+  function getSavedLayout() {
+    return localStorage.getItem("board-layout");
+  }
 
-    let layout = localStorage.getItem("board-layout");
-    if (layout === "list") {
-      localStorage.setItem("board-layout", "grid");
-    } else {
-      localStorage.setItem("board-layout", "list");
+  /**
+   * Switches the item board to the selected layout.
+   * @param {string} layout - "grid" or "list".
+   */
+  function setLayout(layout) {
+    if (getSavedLayout() === layout) {
+      return;
     }
+
+    localStorage.setItem("board-layout", layout);
+    id("item-list").classList.toggle("grid-layout", layout === "grid");
+    updateLayoutControl(layout);
+  }
+
+  /**
+   * Updates segmented control active state to match the selected layout.
+   * @param {string} layout - "grid" or "list".
+   */
+  function updateLayoutControl(layout) {
+    let isGrid = layout === "grid";
+    id("layout-grid-btn").classList.toggle("active", isGrid);
+    id("layout-list-btn").classList.toggle("active", !isGrid);
+    id("layout-grid-btn").setAttribute("aria-pressed", isGrid);
+    id("layout-list-btn").setAttribute("aria-pressed", !isGrid);
   }
 
   /**

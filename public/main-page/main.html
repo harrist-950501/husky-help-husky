@@ -67,7 +67,26 @@
               <!-- Filter pills will be dynamically added here -->
             </div>
           </search>
-          <button id="layout-toggle">Toggle layout</button>
+          <div id="layout-toggle" role="group" aria-label="Board layout">
+            <button id="layout-grid-btn" class="layout-option" type="button" aria-label="Grid view" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
+            </button>
+            <button id="layout-list-btn" class="layout-option" type="button" aria-label="List view" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <circle cx="4" cy="6" r="1.4"></circle>
+                <circle cx="4" cy="12" r="1.4"></circle>
+                <circle cx="4" cy="18" r="1.4"></circle>
+              </svg>
+            </button>
+          </div>
           <!-- <img id="profile-pic" src="../img/logo.png" alt="User profile"> -->
         </header>
         <section id="item-board">
