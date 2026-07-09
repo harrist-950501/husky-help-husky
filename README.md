@@ -22,6 +22,12 @@ Husky Help Husky is a peer-to-peer campus marketplace — think cozy Craigslist 
 - Removed the unclear `unsearch` button from the main page search controls.
 - Added a shared app header so the site name appears consistently across pages.
 
+### 2026/7/9
+
+- Added a clear (`×`) button inside the main page search input so typed keyword text can be cleared without manually retyping over it.
+- Clearing the keyword input now re-runs the filter, resetting results to whatever the active category alone would show.
+- Replaced the "Toggle layout" text button with a two-icon grid/list segmented control that clearly shows which view is currently active.
+
 ## Features
 
 - User login, signup, logout, and session checking
