@@ -1,8 +1,6 @@
 /**
  * Name: Rena Yin & Harry Cheng
- * Date: Nov 2025
- * Section: CSE 154 AA
- * TA: Oscar Song
+ * Husky Help Husky — Campus Marketplace Web App
  *
  * This is the backend API for the Husky Help Husky second-hand trading site.
  * It handles login authentication, retrieving items, searching/filtering,

@@ -1,8 +1,6 @@
 /**
  * Name: Rena Yin & Harry Cheng
- * Date: Nov 2025
- * Section: CSE 154 AA
- * TA: Oscar Song
+ * Husky Help Husky — Campus Marketplace Web App
  *
  * history.js
  * Handles the transaction history page:
@@ -67,7 +65,7 @@
       let isJson = true;
       let transactions = await dataFetch(url, isJson);
       if (transactions.length === 0) {
-        showStatus("No transaction yet", "Go buy something first!", false);
+        showStatus("No transactions yet", "Purchase items to see them here.", false);
       } else {
         transByCode = transGroup(transactions);
 
@@ -75,10 +73,10 @@
 
         applySortAndRender();
 
-        showStatus("Transaction board", "Transaction load sucessful! Here you are!!", false);
+        showStatus("Transaction board", "Transactions loaded successfully.", false);
       }
     } catch (err) {
-      showStatus("Could not load transacitons", err.message, true);
+      showStatus("Could not load transactions", err.message, true);
     }
   }
 
@@ -147,7 +145,7 @@
       board.appendChild(tx.node);
     });
 
-    showStatus("Trantaction board", "Sorting applied: " + sort, false);
+    showStatus("Transaction board", "Sorting applied: " + sort, false);
   }
 
   /**

@@ -1,4 +1,4 @@
-# Husky Help Husky
+# Husky Help Husky — Campus Marketplace Web App
 
 A full-stack campus marketplace web app for UW students to buy and sell second-hand items.
 

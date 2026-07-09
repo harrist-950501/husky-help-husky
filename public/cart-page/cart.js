@@ -1,8 +1,6 @@
 /**
  * Name: Rena Yin & Harry Cheng
- * Date: Nov 2025
- * Section: CSE 154 AA
- * TA: Oscar Song
+ * Husky Help Husky — Campus Marketplace Web App
  *
  * cart.js
  * Manages the shopping cart page: renders items from localStorage-backed cart
@@ -438,8 +436,8 @@
       localStorage.setItem("order-confirm", false);
 
       showStatus(
-        "Order disconfirmed!",
-        "Looks like you made some changes, please re-confirm the order.",
+        "Order needs confirmation",
+        "Review your changes and confirm the order again.",
         false
       );
 
@@ -461,7 +459,7 @@
       try {
         let confirmationCode = await handleBulkBuy();
         clearCart();
-        showStatus("Order submited!", "Your confirmation code is " + confirmationCode, false);
+        showStatus("Order submitted", "Your confirmation code is " + confirmationCode, false);
       } catch (err) {
         showStatus("Could not submit order", err.message, true);
       }
