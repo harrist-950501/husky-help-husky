@@ -119,7 +119,7 @@ Username already taken.
 *Error response (Plain text):*
 
 ```
-Please use your uw email to sign up.
+Please use a UW email address ending in @uw.edu.
 ```
 
 *500 Server-side Error*

@@ -91,7 +91,7 @@
       return "Please enter both username and password.";
     }
     if (mode === "signup" && !email) {
-      return "Please enter an email for signup.";
+      return "Please enter a UW email address ending in @uw.edu.";
     }
     return null;
   }

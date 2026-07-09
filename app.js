@@ -458,7 +458,7 @@ async function validateSignupBody(body) {
 
   // Check if email ends with uw.edu
   if (!email.endsWith("@uw.edu")) {
-    return "Please use your uw email to sign up.";
+    return "Please use a UW email address ending in @uw.edu.";
   }
 
   return {username, password, email};

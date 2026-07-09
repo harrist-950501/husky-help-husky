@@ -34,6 +34,7 @@
       </section>
       <section id="login-area">
         <h2>Sign In or Create Account</h2>
+        <!-- TODO: Add reviewer demo credentials here after Harry approves a safe demo account. -->
         <form id="auth-form" novalidate>
           <label for="username">
             Username
@@ -44,8 +45,9 @@
             <input id="password" name="password" type="password" required autocomplete="current-password">
           </label>
           <label for="email">
-            Email (for sign up)
+            UW Email (required for sign up)
             <input id="email" name="email" type="email" placeholder="you@uw.edu">
+            <small>Signups require a UW email address ending in @uw.edu.</small>
           </label>
           <button id="login-btn" type="submit" data-mode="login">
             Log In
@@ -65,7 +67,7 @@
           <p></p>
         </section>
         <p id="hint">
-          New here? Fill in username, password, and email, then click <strong>Sign Up</strong>.
+          New here? Fill in username, password, and UW email, then click <strong>Sign Up</strong>.
           Already have an account? Just use <strong>Log In</strong>.
         </p>
       </section>
