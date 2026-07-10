@@ -58,6 +58,36 @@ html[data-theme="dark"] #welcome-area p {
   color: #A39BD8;
 }
 
+#demo-account-note {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d9d2f1;
+  border-radius: 12px;
+  background: #f8f6ff;
+  color: #4d4096;
+  font-size: 0.9rem;
+}
+
+#demo-account-note p {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+#demo-account-note div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#demo-account-note span {
+  color: #6d629e;
+}
+
+#demo-account-note strong {
+  color: #2f256f;
+}
+
 #login-area form {
   display: flex;
   flex-direction: column;
@@ -117,6 +147,20 @@ html[data-theme="dark"] #login-area h2 {
 
 html[data-theme="dark"] #login-area label {
   color: #d8d6e8;
+}
+
+html[data-theme="dark"] #demo-account-note {
+  background: #2a243c;
+  border-color: #5f5685;
+  color: #d6cef8;
+}
+
+html[data-theme="dark"] #demo-account-note span {
+  color: #aaa1cf;
+}
+
+html[data-theme="dark"] #demo-account-note strong {
+  color: #f4f1ff;
 }
 
 html[data-theme="dark"] #login-area input {
