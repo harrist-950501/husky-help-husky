@@ -6,7 +6,16 @@ A full-stack campus marketplace web app for UW students to buy and sell second-h
 
 🟣 **[husky-help-husky-production.up.railway.app](https://husky-help-husky-production.up.railway.app)**
 
-Deployed on Railway with a PostgreSQL backend.
+Current public version: deployed on Railway with a PostgreSQL backend and recent UX updates for search, filtering, and layout controls.
+
+## Demo Access
+
+Reviewers can use the demo account below to explore the app. New signups require a UW email address ending in `@uw.edu`.
+
+```text
+Username: guest
+Password: 20260709
+```
 
 ## Overview
 
