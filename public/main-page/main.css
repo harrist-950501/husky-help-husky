@@ -212,7 +212,7 @@ html[data-theme="dark"] #search-clear-btn {
 
 html[data-theme="dark"] #search-clear-btn:hover,
 html[data-theme="dark"] #search-clear-btn:focus-visible {
-  color: var(--brand-text, #e5e7ff);
+  color: var(--brand-text, #f5e1ff);
 }
 
 #search-btn {
@@ -331,7 +331,7 @@ html[data-theme="dark"] #layout-toggle {
 
 html[data-theme="dark"] .layout-option {
   background: transparent;
-  color: var(--brand-text, #e5e7ff);
+  color: var(--brand-text, #f5e1ff);
 }
 
 html[data-theme="dark"] .layout-option.active {
