@@ -31,6 +31,7 @@
     checkLocalStorage();
 
     id("back").addEventListener("click", back);
+    qs("#status-message .status-dismiss-btn").addEventListener("click", hideStatus);
 
     id("transaction-sorting").addEventListener("change", () => {
       applySortAndRender(true);

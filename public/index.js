@@ -23,6 +23,7 @@
   async function init() {
     // One handler for both login and signup.
     id("auth-form").addEventListener("submit", handleAuthSubmit);
+    qs("#status-message .status-dismiss-btn").addEventListener("click", hideStauts);
     await restoreRememberedUsername();
   }
 
@@ -212,7 +213,11 @@
    * Hides the status message.
    */
   function hideStauts() {
-    id("status-message").classList.add("hidden");
+    const status = id("status-message");
+    status.classList.add("hidden");
+    status.classList.remove("error");
+    status.querySelector("h2").textContent = "";
+    status.querySelector("p").textContent = "";
   }
 
   /**

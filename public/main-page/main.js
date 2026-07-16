@@ -34,6 +34,7 @@
     id("open-history-page").addEventListener("click", openHistoryPage);
     id("open-profile-page").addEventListener("click", openProfilePage);
     id("logout-btn").addEventListener("click", logout);
+    qs("#status-message .status-dismiss-btn").addEventListener("click", hideStatus);
 
     id("search-input").addEventListener("keydown", (e) => {
       if (e.key === "Enter") {

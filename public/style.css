@@ -152,9 +152,13 @@ html[data-theme="dark"] #status-message p {
   display: none;
 }
 
+#status-message .status-dismiss-btn {
+  display: none;
+}
+
 #status-message.error {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   column-gap: 10px;
   align-items: start;
   background: #fde7f3;
@@ -194,6 +198,38 @@ html[data-theme="dark"] #status-message p {
   font-size: 0.9rem;
 }
 
+#status-message.error .status-dismiss-btn {
+  display: flex;
+  grid-column: 3;
+  grid-row: 1;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -2px -4px 0 4px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: #701a75;
+  font-size: 1.2rem;
+  line-height: 1;
+  opacity: 1;
+}
+
+#status-message.error .status-dismiss-btn:hover,
+#status-message.error .status-dismiss-btn:focus-visible {
+  background: transparent;
+  color: #831843;
+  opacity: 1;
+}
+
+#status-message.error .status-dismiss-btn:focus-visible {
+  outline: 2px solid #701a75;
+  outline-offset: 1px;
+}
+
 html[data-theme="dark"] #status-message.error {
   background: #3b1126;
   border-color: #6b2149;
@@ -207,6 +243,19 @@ html[data-theme="dark"] #status-message.error h2 {
 
 html[data-theme="dark"] #status-message.error .status-error-icon {
   color: #fbcfe8;
+}
+
+html[data-theme="dark"] #status-message.error .status-dismiss-btn {
+  color: #fbcfe8;
+}
+
+html[data-theme="dark"] #status-message.error .status-dismiss-btn:hover,
+html[data-theme="dark"] #status-message.error .status-dismiss-btn:focus-visible {
+  color: #f9a8d4;
+}
+
+html[data-theme="dark"] #status-message.error .status-dismiss-btn:focus-visible {
+  outline-color: #fbcfe8;
 }
 
 html[data-theme="dark"] #status-message.error p {

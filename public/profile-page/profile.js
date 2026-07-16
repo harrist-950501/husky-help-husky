@@ -57,6 +57,8 @@
       cancelBtn.addEventListener("click", cancelEdit);
     }
 
+    qs("#status-message .status-dismiss-btn").addEventListener("click", hideStatus);
+
     loadProfile();
   }
 
@@ -199,6 +201,17 @@
       qs("#status-message h2").textContent = "";
       qs("#status-message p").textContent = "";
     }, STATUS_TIMEOUT);
+  }
+
+  /**
+   * Clears and hides the dynamic status message area.
+   */
+  function hideStatus() {
+    const status = id("status-message");
+    status.classList.add("hidden");
+    status.classList.remove("error");
+    qs("#status-message h2").textContent = "";
+    qs("#status-message p").textContent = "";
   }
 
   /**
