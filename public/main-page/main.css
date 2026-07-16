@@ -385,6 +385,16 @@ html[data-theme="dark"] #board-title p {
   color: #e5e7ff;
 }
 
+#item-board > #status-message {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+#item-board > #status-message.hidden {
+  display: block;
+  visibility: hidden;
+}
+
 #item-list {
   display: flex;
   flex-direction: column;

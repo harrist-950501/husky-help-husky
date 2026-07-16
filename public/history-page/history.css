@@ -60,6 +60,17 @@ html[data-theme="dark"] #transaction-sorting {
   margin-bottom: 0.4rem;
 }
 
+#transaction-board > #status-message {
+  align-self: stretch;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+#transaction-board > #status-message.hidden {
+  display: block;
+  visibility: hidden;
+}
+
 /* ===== Transaction board ===== */
 
 #transaction-board {
