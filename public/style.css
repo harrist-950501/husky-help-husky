@@ -152,6 +152,38 @@ html[data-theme="dark"] #status-message p {
   display: none;
 }
 
+#status-message .status-info-icon {
+  display: none;
+}
+
+#status-message:not(.error) {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.55rem;
+  align-items: start;
+  padding: 8px 12px;
+  border-left: 4px solid #7C6FF7;
+}
+
+#status-message:not(.error) .status-info-icon {
+  display: block;
+  grid-row: 1 / span 2;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: #6b7280;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#status-message:not(.error) h2,
+#status-message:not(.error) p {
+  grid-column: 2;
+}
+
 #status-message .status-dismiss-btn {
   display: none;
 }
@@ -260,6 +292,14 @@ html[data-theme="dark"] #status-message.error .status-dismiss-btn:focus-visible 
 
 html[data-theme="dark"] #status-message.error p {
   color: #f9a8d4;
+}
+
+html[data-theme="dark"] #status-message:not(.error) {
+  border-left-color: #9d93f9;
+}
+
+html[data-theme="dark"] #status-message:not(.error) .status-info-icon {
+  color: #e5e7ff;
 }
 
 .hidden {
