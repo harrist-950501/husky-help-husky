@@ -71,6 +71,29 @@ html[data-theme="dark"] #transaction-sorting {
   overflow-y: auto;
 }
 
+#board-title {
+  align-self: stretch;
+}
+
+#board-title h2 {
+  margin: 0 0 0.2rem 0;
+  color: #4c1d95;
+}
+
+#board-title p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b21a8;
+}
+
+html[data-theme="dark"] #board-title h2 {
+  color: #f5e1ff;
+}
+
+html[data-theme="dark"] #board-title p {
+  color: #e5e7ff;
+}
+
 /* ===== Transaction card ===== */
 
 .transaction-card {

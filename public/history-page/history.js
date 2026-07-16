@@ -32,7 +32,9 @@
 
     id("back").addEventListener("click", back);
 
-    id("transaction-sorting").addEventListener("change", applySortAndRender);
+    id("transaction-sorting").addEventListener("change", () => {
+      applySortAndRender(true);
+    });
 
     loadHistory();
   }
@@ -71,9 +73,8 @@
 
         renderTransactionList(transByCode);
 
-        applySortAndRender();
-
-        showStatus("Transaction board", "Transactions loaded successfully.", false);
+        applySortAndRender(false);
+        hideStatus();
       }
     } catch (err) {
       showStatus("Could not load transactions", err.message, true);
@@ -127,7 +128,7 @@
   /**
    * Applies the current sort option to grouped transactions and updates the board.
    */
-  function applySortAndRender() {
+  function applySortAndRender(showSortStatus) {
     // Copy of transByCod, protect the original sequence
     let list = transByCode.slice();
 
@@ -145,7 +146,9 @@
       board.appendChild(tx.node);
     });
 
-    showStatus("Transaction board", "Sorting applied: " + sort, false);
+    if (showSortStatus) {
+      showStatus("Transaction board", "Sorting applied: " + sort, false);
+    }
   }
 
   /**
@@ -549,6 +552,7 @@
    */
   function showStatus(title, message, isError) {
     const status = id("status-message");
+    status.classList.remove("hidden");
 
     status.querySelector("h2").textContent = title;
     status.querySelector("p").textContent = message;
@@ -557,6 +561,17 @@
     } else {
       status.classList.remove("error");
     }
+  }
+
+  /**
+   * Clears and hides the dynamic status message area.
+   */
+  function hideStatus() {
+    const status = id("status-message");
+    status.classList.add("hidden");
+    status.classList.remove("error");
+    status.querySelector("h2").textContent = "";
+    status.querySelector("p").textContent = "";
   }
 
   /**

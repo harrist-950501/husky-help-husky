@@ -227,8 +227,6 @@
 
         searchResult.push(item.id);
       }
-
-      showStatus("Product board ", "Browse items and add something you like", false);
     } catch (err) {
       showStatus("Website Error", "Failed to load Item", true);
     }
@@ -322,7 +320,7 @@
       item.classList.remove("hidden");
       searchResult.push(item.id);
     });
-    showStatus("Product board ", "Browse items and add something you like", false);
+    hideStatus();
   }
 
   /**
@@ -637,7 +635,7 @@
 
     if (card.classList.contains("detail-view")) {
       // Exiting detail view
-      showStatus("Product board", "Browse items and add something you like", false);
+      hideStatus();
 
       let layout = localStorage.getItem("board-layout");
       if (layout === "grid") {
@@ -700,6 +698,7 @@
    */
   function showStatus(title, message, isError) {
     const status = id("status-message");
+    status.classList.remove("hidden");
 
     status.querySelector("h2").textContent = title;
     status.querySelector("p").textContent = message;
@@ -708,6 +707,17 @@
     } else {
       status.classList.remove("error");
     }
+  }
+
+  /**
+   * Clears and hides the dynamic status message area.
+   */
+  function hideStatus() {
+    const status = id("status-message");
+    status.classList.add("hidden");
+    status.classList.remove("error");
+    status.querySelector("h2").textContent = "";
+    status.querySelector("p").textContent = "";
   }
 
   /**
