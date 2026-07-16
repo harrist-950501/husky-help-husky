@@ -148,7 +148,15 @@ html[data-theme="dark"] #status-message p {
   color: #e5e7ff;
 }
 
+#status-message .status-error-icon {
+  display: none;
+}
+
 #status-message.error {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  align-items: start;
   background: #fde7f3;
   border: 1.5px solid #e4b4d1;
   color: #831843;
@@ -158,13 +166,29 @@ html[data-theme="dark"] #status-message p {
   box-shadow: 0 2px 6px rgba(131, 24, 67, 0.15);
 }
 
+#status-message.error .status-error-icon {
+  display: block;
+  grid-row: 1 / span 2;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: #701a75;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 #status-message.error h2 {
+  grid-column: 2;
   color: #701a75;
   margin: 0 0 6px 0;
   font-weight: 600;
 }
 
 #status-message.error p {
+  grid-column: 2;
   color: #831843;
   margin: 0;
   font-size: 0.9rem;
@@ -178,6 +202,10 @@ html[data-theme="dark"] #status-message.error {
 }
 
 html[data-theme="dark"] #status-message.error h2 {
+  color: #fbcfe8;
+}
+
+html[data-theme="dark"] #status-message.error .status-error-icon {
   color: #fbcfe8;
 }
 
