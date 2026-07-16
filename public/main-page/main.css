@@ -390,9 +390,49 @@ html[data-theme="dark"] #board-title p {
   box-sizing: border-box;
 }
 
+#item-board > #status-message:not(.error) {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.55rem;
+  align-items: start;
+  padding: 8px 12px;
+  border-left: 4px solid #7C6FF7;
+}
+
 #item-board > #status-message.hidden {
-  display: block;
+  display: grid;
   visibility: hidden;
+}
+
+#item-board > #status-message .status-info-icon {
+  display: none;
+}
+
+#item-board > #status-message:not(.error) .status-info-icon {
+  display: block;
+  grid-row: 1 / span 2;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: #6b7280;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#item-board > #status-message:not(.error) h2,
+#item-board > #status-message:not(.error) p {
+  grid-column: 2;
+}
+
+html[data-theme="dark"] #item-board > #status-message:not(.error) {
+  border-left-color: #9d93f9;
+}
+
+html[data-theme="dark"] #item-board > #status-message:not(.error) .status-info-icon {
+  color: #e5e7ff;
 }
 
 #item-list {
