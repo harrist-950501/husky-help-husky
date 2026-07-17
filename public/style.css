@@ -129,6 +129,11 @@ button:hover {
   opacity: 0.9;
 }
 
+#status-message {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
 #status-message h2 {
   margin: 0 0 0.2rem 0;
   color: #4c1d95;
@@ -300,6 +305,11 @@ html[data-theme="dark"] #status-message:not(.error) {
 
 html[data-theme="dark"] #status-message:not(.error) .status-info-icon {
   color: #e5e7ff;
+}
+
+#status-message.hidden {
+  display: grid !important;
+  visibility: hidden !important;
 }
 
 .hidden {

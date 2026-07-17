@@ -599,6 +599,15 @@
   }
 
   /**
+   * Returns the first element that matches the given CSS selector.
+   * @param {string} selector - CSS selector.
+   * @returns {object} DOM object matching selector.
+   */
+  function qs(selector) {
+    return document.querySelector(selector);
+  }
+
+  /**
    * Returns the element that has the ID attribute with the specified value.
    * @param {string} id - element ID.
    * @returns {object} - DOM object associated with id.
