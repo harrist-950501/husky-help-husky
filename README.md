@@ -37,6 +37,13 @@ Husky Help Husky is a peer-to-peer campus marketplace — think cozy Craigslist 
 - Clearing the keyword input now re-runs the filter, resetting results to whatever the active category alone would show.
 - Replaced the "Toggle layout" text button with a two-icon grid/list segmented control that clearly shows which view is currently active.
 
+### 2026/7/16
+
+- Separated the page's static title from its status messages, so main and history now show a clear board heading at all times, distinct from any pop-up message below it.
+- Added a warning icon to error messages, so they're signaled by more than just color.
+- Added an icon and a left accent line to regular status messages, so they're visually distinct from page titles.
+- Added a dismiss (`×`) button to error messages so they can be manually closed.
+
 ## Features
 
 - User login, signup, logout, and session checking
